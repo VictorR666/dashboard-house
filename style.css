@@ -988,3 +988,12 @@ body[data-tab="quetes"] .qtab{display:flex;flex-direction:column;gap:14px;max-wi
 .qtab .donetog{margin:4px}
 /* l'ancienne page plein écran : en-tête sans rectangle visible */
 .qv-head{background:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+/* v57 : titre de page en haut des onglets Routines, Courses et Voyages (comme Quêtes) */
+.ptitle{display:none;align-items:center;gap:12px;padding:4px 2px;max-width:1180px;width:100%;margin:0 auto}
+.ptitle h2{font-size:28px;flex:1}
+.ptitle .mini{font-size:12px;padding:7px 14px;margin:0}
+body[data-tab="maison"] .ptitle,body[data-tab="courses"] .ptitle,body[data-tab="voyage"] .ptitle{display:flex}
+body[data-tab="voyage"] .s-voyage>.ch{display:none}
+body[data-tab="voyage"] .grid>.s-voyage{background:none;box-shadow:none;padding:0}
+body[data-tab="voyage"] .grid>.s-voyage::before{display:none}
+@media (max-width:899px),(orientation:portrait){.ptitle{padding-top:0}}

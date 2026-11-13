@@ -594,6 +594,7 @@
   /* ---- Onglets (Accueil / Maison / Courses) ---- */
   var TAB=lsGet('maison-tab')||'home';if(TAB==='test')TAB='home';if(['home','maison','courses','voyage','quetes'].indexOf(TAB)<0)TAB='home';
   function setTab(t){TAB=t;lsSet('maison-tab',t);document.body.setAttribute('data-tab',t);
+    var PT={maison:'Routines',courses:'Courses',voyage:'Voyages'},ph=$('pt-h');if(ph)ph.textContent=PT[t]||'';var pa=$('pt-act');if(pa)pa.hidden=t!=='voyage';
     [].forEach.call(document.querySelectorAll('.tabbar button'),function(b){var on=b.getAttribute('data-tab')===t;b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false')});
     window.scrollTo(0,0);fitTodo();if(t==='home')renderHub();if(t==='quetes')renderQTab();if((t==='courses'||t==='voyage')&&Date.now()-lastLoad>15000)load()}
   function whoLabel(k){return k==='couple'?'Couple':(PEOPLE[k]||(k==='p1'?'Personne 1':k==='p2'?'Personne 2':''))}
