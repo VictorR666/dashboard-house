@@ -9,6 +9,7 @@
  * Réglages (Paramètres du projet → Propriétés du script) :
  *   ACCESS_CODE   (obligatoire) le code d'accès, 12 caractères minimum
  *   CALENDAR_IDS  (optionnel)  identifiants des agendas à afficher, séparés par des virgules
+ *   PERSON_1, PERSON_2 (optionnels) les deux prénoms affichés dans la wishlist
  *   WEATHER_LAT, WEATHER_LON, WEATHER_CITY (optionnels) — Paris par défaut
  */
 
@@ -71,7 +72,9 @@ function load_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheets = {};
   Object.keys(TABS).forEach(function (k) { sheets[k] = readTab_(ss, TABS[k]); });
-  var res = { sheets: sheets, settings: readSettings_(ss), weather: null, events: null };
+  var props = PropertiesService.getScriptProperties();
+  var people = { p1: String(props.getProperty('PERSON_1') || '').slice(0, 30), p2: String(props.getProperty('PERSON_2') || '').slice(0, 30) };
+  var res = { sheets: sheets, settings: readSettings_(ss), people: people, weather: null, events: null };
   try { res.weather = weather_(); } catch (e) { console.warn(e); }
   try { res.events = events_(); } catch (e) { console.warn(e); res.calError = true; }
   return res;

@@ -56,7 +56,7 @@
   }
   function logout(msg){
     KEY=null;lsSet(LS_KEY,null);lsSet(CK,null);
-    S={projects:[],routines:[],shop:[]};cal={status:'loading',events:[]};W=null;HID=[];EVN={};sig='';
+    S={projects:[],routines:[],shop:[]};PEOPLE={p1:'',p2:''};cal={status:'loading',events:[]};W=null;HID=[];EVN={};sig='';
     render();renderCal();renderWeather();
     showLogin(msg);
   }
@@ -92,6 +92,8 @@
   var URG={'un jour':'low',low:'low',bientot:'med',med:'med',vite:'high',high:'high',urgent:'high'};
   var URGL={low:'Un jour',med:'Bientôt',high:'Vite'};
   var DONE_RE=/^(✓|✔|✅|\[x\]|x\s)\s*/i;
+  var PEOPLE={p1:'',p2:''}; /* prénoms : réglés dans le script Google, jamais dans le code */
+  function setPeople(pp){pp=pp||{};PEOPLE={p1:String(pp.p1||'').slice(0,30),p2:String(pp.p2||'').slice(0,30)}}
   function fromRow(k,r,i){var c=SHT[k].cols,o={},t={};
     try{t=JSON.parse(r[c.indexOf('_t')]||'{}')||{}}catch(e){t={}}
     if(typeof t!=='object'||Array.isArray(t))t={};
@@ -101,7 +103,7 @@
     if(k==='routines'){o.lastDone=nDate(o.lastDone);o.everyN=o.everyN?(Number(String(o.everyN).replace(',','.'))||''):'';o.everyUnit=/^s/i.test(o.everyUnit)?'sem':'j';o.mode='rec';
       var g=nrm(o.group);o.group=g.indexOf('plant')===0?'Plantes':g.indexOf('kim')===0||g.indexOf('chien')===0?'Kimchi':'Maison'}
     if(k==='shop'){o.budget=o.budget?(Number(String(o.budget).replace(/[^\d.,]/g,'').replace(',','.'))||''):'';
-      var w=nrm(o.who);o.who=w.indexOf('v')===0?'victor':w.indexOf('s')===0?'sarah':'couple';o.urgency=URG[nrm(o.urgency)]||'med';o.done=yes(o.done)}
+      var w=nrm(o.who);o.who=(PEOPLE.p1&&w===nrm(PEOPLE.p1))?'p1':(PEOPLE.p2&&w===nrm(PEOPLE.p2))?'p2':'couple';o.urgency=URG[nrm(o.urgency)]||'med';o.done=yes(o.done)}
     if(k==='projects'){o.main=yes(o.main);o.steps=String(o.steps||'').split(/\n/).map(function(x){return x.trim()}).filter(Boolean).map(function(x){return {t:x.replace(DONE_RE,''),done:DONE_RE.test(x)}})}
     return o}
   function toRow(k,o){var c=SHT[k].cols,t={};
@@ -109,7 +111,7 @@
     return c.map(function(f){var v=o[f];
       if(f==='_t')return JSON.stringify(t);
       if(k==='routines'&&f==='everyUnit')return v==='sem'?'semaines':'jours';
-      if(k==='shop'&&f==='who')return v==='victor'?'Victor':v==='sarah'?'Sarah':'Couple';
+      if(k==='shop'&&f==='who')return (v==='p1'||v==='p2')&&PEOPLE[v]?PEOPLE[v]:'Couple';
       if(k==='shop'&&f==='urgency')return URGL[v]||'Bientôt';
       if((k==='shop'&&f==='done')||(k==='projects'&&f==='main'))return v?'oui':'';
       if(k==='projects'&&f==='steps')return (v||[]).map(function(x){return (x.done?'✓ ':'')+x.t}).join('\n');
@@ -119,10 +121,11 @@
   /* ---- Chargement et écritures ---- */
   var sig='',busy=false,Q=Promise.resolve(),soonT=null,pollT=null;
   function applyLoad(j){
-    var s=JSON.stringify([j.sheets,j.settings,j.events,j.weather,j.calError||null]);
+    var s=JSON.stringify([j.sheets,j.settings,j.events,j.weather,j.calError||null,j.people||null]);
     if(fromCache){fromCache=false;$('banner').innerHTML=''}
     loaded.projects=loaded.routines=loaded.shop=true;
     if(s===sig)return;sig=s;
+    setPeople(j.people);
     Object.keys(SHT).forEach(function(k){var list=[];
       ((j.sheets&&j.sheets[k])||[]).forEach(function(r,i){if(!Array.isArray(r))return;var o=fromRow(k,r,i);if(!o.title||!o.id)return;list.push(o)});
       S[k]=list});
@@ -335,7 +338,7 @@
       '<button class="btn ghost pin" data-act="pmain" data-id="'+id+'">'+(o.main?'📌 Retirer de la quête principale':'📌 Mettre en quête principale')+'</button>'+
       '<div class="prow"><button class="lnk del" data-act="pdel" data-id="'+id+'">Supprimer la quête</button><button class="btn valid" data-act="proj-save" data-id="'+id+'">Valider</button></div></div>';
   }
-  var WHON={victor:'Victor',sarah:'Sarah',couple:'Couple'};
+  function whoLabel(k){return k==='couple'?'Couple':(PEOPLE[k]||(k==='p1'?'Personne 1':k==='p2'?'Personne 2':''))}
   var UW={high:3,med:2,low:1};
   function fitTotal(){var te=$('w-total');if(!te)return;te.style.visibility='';requestAnimationFrame(function(){if(te.scrollWidth>te.clientWidth+1)te.style.visibility='hidden'})}
   window.addEventListener('resize',fitTotal);
@@ -345,7 +348,7 @@
     var tot=S.shop.filter(function(w){return !w.done&&Number(w.budget)>0}).reduce(function(t,w){return t+Number(w.budget)},0);
     var te=$('w-total');if(te){te.textContent=tot?'≈ '+Math.round(tot).toLocaleString('fr-FR')+' €':'';fitTotal()}
     el.innerHTML=list.length?list.map(function(w){
-      var meta=[];if(Number(w.budget)>0)meta.push('<b>'+Math.round(Number(w.budget))+' €</b>');if(WHON[w.who])meta.push(WHON[w.who]);if(w.urgency==='high')meta.push('🔥 Vite');else if(w.urgency==='low')meta.push('🌱 Un jour');
+      var meta=[];if(Number(w.budget)>0)meta.push('<b>'+Math.round(Number(w.budget))+' €</b>');if(whoLabel(w.who))meta.push(esc(whoLabel(w.who)));if(w.urgency==='high')meta.push('🔥 Vite');else if(w.urgency==='low')meta.push('🌱 Un jour');
       return '<button class="wrow'+(w.done?' done':'')+(w.urgency==='high'?' hot':'')+'" data-act="wish-open" data-id="'+esc(w.id)+'"><span class="em" aria-hidden="true">'+esc(w.emoji||'🎁')+'</span><span class="main"><span class="t">'+esc(w.title)+'</span>'+(meta.length?'<span class="sub">'+meta.join(' · ')+'</span>':'')+'</span></button>';
     }).join(''):'<span class="empty" style="padding:0">'+(loaded.shop?'Rien pour le moment, ajoute une envie !':'Chargement…')+'</span>';
   }
@@ -359,7 +362,7 @@
     return '<div class="panel wish">'+
       '<div class="pj-title">'+(isNew?'Nouvelle envie ✨':'Modifier l\'envie')+'</div>'+
       '<div class="lab">Icône et titre</div>'+iconField(wd.emoji||(wd.title?autoEmoji(wd.title):''),'data-wf="title"',wd.title||'','Ex. casque sans fil','data-act="wf-set" data-f="emoji"',WEMO,wd.emoji)+
-      '<div class="wgrid"><div><div class="lab">Pour qui ?</div>'+seg('who',[['victor','Victor'],['sarah','Sarah'],['couple','💑 Couple']],wd.who)+'</div>'+
+      '<div class="wgrid"><div><div class="lab">Pour qui ?</div>'+seg('who',[['p1',esc(whoLabel('p1'))],['p2',esc(whoLabel('p2'))],['couple','💑 Couple']],wd.who)+'</div>'+
       '<div><div class="lab">Urgence</div>'+seg('urgency',[['low','🌱 Un jour'],['med','⏳ Bientôt'],['high','🔥 Vite']],wd.urgency)+'</div></div>'+
       '<div class="wgrid"><div><div class="lab">Budget</div><div class="eur"><input class="in" type="number" min="0" max="1000000" step="1" inputmode="decimal" data-wf="budget" value="'+esc(wd.budget||'')+'" placeholder="0" aria-label="Budget"><span>€</span></div></div>'+
       '<div><div class="lab">Idée de prix</div><a class="btn ghost wamz" id="wf-amz" href="'+esc(amz)+'" target="_blank" rel="noopener noreferrer">🔎 Chercher sur Amazon</a></div></div>'+
@@ -457,13 +460,13 @@
   var cacheT=null,fromCache=false;
   function cacheSave(){
     if(fromCache||!KEY)return;clearTimeout(cacheT);
-    cacheT=setTimeout(function(){lsSet(CK,JSON.stringify({t:Date.now(),S:S,W:W,HID:HID,EVN:EVN,cal:(cal&&cal.status==='ok')?cal.events:null}))},600);
+    cacheT=setTimeout(function(){lsSet(CK,JSON.stringify({t:Date.now(),S:S,P:PEOPLE,W:W,HID:HID,EVN:EVN,cal:(cal&&cal.status==='ok')?cal.events:null}))},600);
   }
   function cacheLoad(){
     try{
       var c=JSON.parse(lsGet(CK)||'null');if(!c||!c.S)return false;
       ['projects','routines','shop'].forEach(function(k){S[k]=Array.isArray(c.S[k])?c.S[k]:[];loaded[k]=true});
-      W=c.W||null;HID=Array.isArray(c.HID)?c.HID:[];EVN=c.EVN||{};
+      setPeople(c.P);W=c.W||null;HID=Array.isArray(c.HID)?c.HID:[];EVN=c.EVN||{};
       if(Array.isArray(c.cal))cal={status:'ok',events:c.cal};
       fromCache=c.t;return true;
     }catch(e){return false}

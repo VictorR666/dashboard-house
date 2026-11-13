@@ -8,7 +8,7 @@ Le dashboard de la maison : quêtes, routines (Kimchi, plantes, maison), wishlis
 - **Lien entre les deux** : le script Google Apps Script `apps-script/Code.gs`, attaché au Sheet. L'app ne parle qu'à lui, avec un code d'accès.
 
 ## Sécurité
-- Aucun identifiant n'est dans ce dépôt : ni ID du Sheet, ni ID d'agenda, ni code d'accès, ni adresse du script.
+- Aucun identifiant n'est dans ce dépôt : ni ID du Sheet, ni ID d'agenda, ni code d'accès, ni adresse du script, ni prénoms.
 - Le script n'a que trois autorisations : **ce Sheet uniquement** (`spreadsheets.currentonly`), **lecture seule de l'agenda** (`calendar.readonly`) et les appels sortants pour la météo.
 - Le script n'accepte qu'une liste fermée d'actions. Les valeurs qui pourraient devenir des formules sont neutralisées.
 - Après 10 codes faux, l'accès est bloqué pendant 15 minutes.
@@ -20,7 +20,8 @@ Le dashboard de la maison : quêtes, routines (Kimchi, plantes, maison), wishlis
 3. Remplace le contenu de `appsscript.json` et de `Code.gs` par ceux du dossier `apps-script/`.
 4. Toujours dans les Paramètres du projet, ajoute les **propriétés du script** :
    - `ACCESS_CODE` : un code long (12 caractères minimum) ;
-   - `CALENDAR_IDS` : les identifiants des agendas, séparés par des virgules.
+   - `CALENDAR_IDS` : les identifiants des agendas, séparés par des virgules ;
+   - `PERSON_1` et `PERSON_2` : les deux prénoms affichés dans la wishlist.
 5. Lance la fonction `verifier` une fois et accepte les autorisations.
 6. **Déployer → Nouveau déploiement → Application Web** : « Exécuter en tant que : moi », « Accès : tout le monde ».
 
