@@ -17,7 +17,7 @@
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="preload" href="fonts/nunito-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="style.css?v=7">
+<link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
 
@@ -40,7 +40,7 @@
     <section class="card s-kimchi minor"><div class="ch"><span class="ic lav"><svg viewBox="0 0 24 24"><circle cx="6.5" cy="10" r="1.8" fill="currentColor"/><circle cx="10.5" cy="6.5" r="1.8" fill="currentColor"/><circle cx="15.5" cy="6.5" r="1.8" fill="currentColor"/><circle cx="19" cy="10" r="1.8" fill="currentColor"/><path d="M12.8 11.5c-3 0-5.2 2.4-4.4 4.8.5 1.5 1.8 2.2 4.4 2.2s3.9-.7 4.4-2.2c.8-2.4-1.4-4.8-4.4-4.8z" fill="currentColor"/></svg></span><h2>Kimchi</h2><button class="mini" data-act="care-add" data-group="Kimchi" aria-label="Ajouter une tâche" title="Ajouter">+</button></div><form class="addform care-add" data-group="Kimchi" hidden><input class="in" required maxlength="80" placeholder="Nouvelle tâche (ex. 🛁 Bain)" aria-label="Nouvelle tâche pour Kimchi"><button class="btn" type="submit">OK</button><button class="btn ghost" type="button" data-act="add-detail" title="Ajouter et compléter les détails">Détails…</button></form><div class="body" id="l-Kimchi"></div></section>
     <section class="card s-plantes minor"><div class="ch"><span class="ic mint"><svg viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14z"/><path d="M5 19L13 11"/></svg></span><h2>Plantes</h2><button class="mini" data-act="care-add" data-group="Plantes" aria-label="Ajouter une plante" title="Ajouter">+</button></div><form class="addform care-add" data-group="Plantes" hidden><input class="in" required maxlength="80" placeholder="Nom de la plante (ex. Ficus)" aria-label="Nouvelle plante"><button class="btn" type="submit">OK</button><button class="btn ghost" type="button" data-act="add-detail" title="Ajouter et compléter les détails">Détails…</button></form><div class="body" id="l-Plantes"></div></section>
     <section class="card s-maison minor"><div class="ch"><span class="ic peach"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg></span><h2>Entretien Maison</h2><button class="mini" data-act="care-add" data-group="Maison" aria-label="Ajouter une tâche" title="Ajouter">+</button></div><form class="addform care-add" data-group="Maison" hidden><input class="in" required maxlength="80" placeholder="Nouvelle tâche (ex. 🛁 Bain)" aria-label="Nouvelle tâche pour l'entretien de la maison"><button class="btn" type="submit">OK</button><button class="btn ghost" type="button" data-act="add-detail" title="Ajouter et compléter les détails">Détails…</button></form><div class="body" id="l-Maison"></div></section>
-    <section class="card s-courses"><div class="ch"><span class="ic mint"><svg viewBox="0 0 24 24"><path d="M4 5h2l2 10h10l2-7H7"/><circle cx="9.5" cy="19" r="1.3"/><circle cx="16.5" cy="19" r="1.3"/></svg></span><h2>Courses</h2><small id="c-count"></small></div><form id="f-course" class="addform" autocomplete="off"><input class="in" id="c-title" required maxlength="80" enterkeyhint="done" placeholder="Ajouter… ex. 2 lait, pain, croquettes" aria-label="Ajouter à la liste de courses"><button class="btn" type="submit">+</button></form><div class="body" id="l-courses"></div></section>
+    <section class="card s-courses"><div class="ch"><span class="ic mint"><svg viewBox="0 0 24 24"><path d="M4 5h2l2 10h10l2-7H7"/><circle cx="9.5" cy="19" r="1.3"/><circle cx="16.5" cy="19" r="1.3"/></svg></span><h2>Courses <small class="h2sub" id="c-count"></small></h2></div><form id="f-course" class="addform" autocomplete="off"><input class="in" id="c-title" required maxlength="80" enterkeyhint="done" placeholder="Ajouter… ex. 2 lait, pain, croquettes" aria-label="Ajouter à la liste de courses"><button class="btn" type="submit">+</button></form><div class="body" id="l-courses"></div></section>
     <section class="card s-wish"><div class="ch"><span class="ic peach"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></svg></span><h2>Wishlist</h2><span class="wtot" id="w-total"></span><button class="mini" data-act="wishq-toggle" aria-label="Ajouter une envie" title="Ajouter">+</button></div><form id="f-wish" class="addform" hidden><input class="in" id="w-title" required maxlength="80" placeholder="Une envie ? ex. casque" aria-label="Nouvelle envie"><button class="btn" type="submit">OK</button><button class="btn ghost" type="button" data-act="add-detail" title="Compléter les détails">Détails…</button></form><div class="body wchips" id="l-wish"></div></section>
   </main>
 </div>
@@ -76,6 +76,6 @@
   </form>
 </div>
 
-<script src="app.js?v=7"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>
