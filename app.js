@@ -326,8 +326,8 @@
   var VIEW=lsGet('maison-view');if(VIEW!=='simple'&&VIEW!=='detail')VIEW=matchMedia('(min-width:900px) and (orientation:landscape)').matches?'detail':'simple';
   function setView(v){VIEW=v==='detail'?'detail':'simple';lsSet('maison-view',VIEW);document.body.setAttribute('data-view',VIEW);
     var tg=$('viewtg');if(tg){var toD=VIEW==='simple',lab=toD?'Passer à la vue détaillée':'Passer à la vue simple';tg.setAttribute('aria-label',lab);tg.title=lab;
-      tg.innerHTML=toD?'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg>'
-        :'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="7" rx="2.5"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg>'}
+      tg.setAttribute('data-to',toD?'detail':'simple');tg.innerHTML=(toD?'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg>'
+        :'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="7" rx="2.5"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg>')+'<span>'+(toD?'Détails':'Simple')+'</span>'}
     renderHub();fitTodo();window.scrollTo(0,0)}
   var agOpen=false;
   function agendaPanel(){var nt=$('trip-next'),cl=$('l-cal');
@@ -336,40 +336,52 @@
   function renderHub(){renderHub2()}
   /* ---- Onglet « Test » : vue simple v2 — une grande carte « Aujourd'hui » (quête, 3 choses, vacances) + un dock de raccourcis ---- */
   function dueList(){var R={r:0,o:1};return S.routines.map(function(r){return {r:r,st:careState(r)}}).filter(function(x){return x.st.c==='r'||x.st.c==='o'}).sort(function(a,b){return R[a.st.c]-R[b.st.c]})}
-  function kimchiSays(due,nt,ts){var h=new Date().getHours(),hi=h<6?'Bonne nuit':h<12?'Bonjour':h<18?'Bon après-midi':'Bonsoir';
-    var t;
-    if(!loaded.routines)t='Je regarde ce qui se passe à la maison…';
-    else if(nt&&ts.k==='soon'&&ts.n<=7&&due.length<=1)t='Plus que '+ts.n+' dodo'+(ts.n>1?'s':'')+' avant '+nt.title+' 🧳';
-    else if(nt&&ts.k==='now')t='Profitez bien de '+nt.title+' 🌴';
-    else if(!due.length)t=h>=20||h<6?'Tout est fait, Kimchi s\'endort 😴':'Tout roule, Kimchi approuve 🐾';
-    else if(due.length===1)t='Une petite chose et c\'est bon !';
-    else t=due.length+' petites choses à faire, rien qui presse.';
+  /* Kimchi réagit au moment, à la météo et au voyage — pas aux choses à faire (elles sont juste en dessous) */
+  function kimchiSays(due,nt,ts){var h=new Date().getHours(),hi=h<6?'Bonne nuit':h<12?'Bonjour':h<18?'Bon après-midi':'Bonsoir',c=W&&W.cond,day=W?W.isDay!==false:h>=8&&h<18,t;
+    if(nt&&ts.k==='now')t='Profitez bien de '+nt.title+' 🌴';
+    else if(nt&&ts.k==='soon'&&ts.n<=7)t=ts.n<=1?'Demain, direction '+nt.title+' ! 🧳':'Plus que '+ts.n+' dodos avant '+nt.title+' 🧳';
+    else if(c==='rain'||c==='storm')t='Il pleut, parfait pour une quête au chaud ☔';
+    else if(c==='snow')t='Il neige ! Kimchi veut absolument sortir ❄️';
+    else if((c==='clear'||c==='partly')&&day&&h>=9&&h<19)t='Beau temps, Kimchi réclame une balade ☀️';
+    else if(h>=21||h<6)t=due.length?'Soirée tranquille, le reste attendra demain 🌙':'Tout est fait, Kimchi s\'endort 😴';
+    else if(h>=18)t='Soirée tranquille à la maison 🛋️';
+    else if(h<12)t='Belle journée à la maison 🐾';
+    else t='Kimchi fait la sieste, profitez-en 🐾';
     return {hi:hi,t:t}}
-  /* Vue simple : carte « Aujourd'hui » (choses à faire, projet en cours, vacances) + raccourcis */
+  /* Vue simple : une carte « Aujourd'hui » (prochainement, à faire, quête principale, vacances) + 6 raccourcis */
   function renderHub2(){var el=$('hub2');if(!el||TAB!=='home'||VIEW!=='simple')return;
-    var due=dueList(),nt=nextTrip(),ts=nt&&tripState(nt),k=kimchiSays(due,nt,ts),h='';
-    var nxt='',now=new Date();if(cal.status==='ok'){var e=cal.events.filter(function(x){return x&&HID.indexOf(x.id)<0}).map(function(x){return {e:x,i:evInfo(x)}}).filter(function(x){return x.i&&x.i.n>=0&&(x.i.n>0||x.i.allDay||x.i.d>now)})[0];
-      if(e)nxt='<button class="hub-next" data-act="hub-go" data-v="agenda">📅 '+esc(EVN[e.e.id]||e.e.summary||'Événement')+' · <b>'+esc(e.i.n===0?"aujourd'hui":e.i.n===1?'demain':fmtDay(iso(e.i.d)))+(e.i.allDay?'':' '+e.i.d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}))+'</b></button>'}
-    h+='<div class="k2-top"><img class="k2" id="k2" src="assets/kimchi-anim.svg" alt=""><div><div class="k2-hi">'+k.hi+' !</div><div class="k2-t">'+esc(k.t)+'</div>'+nxt+'</div></div>';
-    /* 2. Trois choses à faire au maximum */
-    if(due.length){h+='<div class="k2-part"><div class="k2-lab">À faire</div><div class="k2-pills">'+due.slice(0,3).map(function(x){var r=x.r;return '<span class="k2-pill">'+careChk(r)+'<button class="k2-pt" data-act="care-open" data-id="'+esc(r.id)+'">'+(r.emoji?esc(r.emoji)+' ':'')+esc(r.title)+'</button></span>'}).join('')+
-      (due.length>3?'<button class="k2-more" data-act="hub-go" data-v="todo">+'+(due.length-3)+' autre'+(due.length>4?'s':'')+'</button>':'')+'</div></div>'}
-    /* 1. Quête principale : une ligne, la barre, la prochaine étape */
+    var due=dueList(),nt=nextTrip(),ts=nt&&tripState(nt),k=kimchiSays(due,nt,ts),h='',now=new Date();
+    h+='<div class="k2-top"><img class="k2" id="k2" src="assets/kimchi-anim.svg" alt=""><div><div class="k2-hi">'+k.hi+' !</div><div class="k2-t">'+esc(k.t)+'</div></div></div>';
+    /* Prochainement : le prochain événement de l'agenda */
+    var evs=cal.status==='ok'?cal.events.filter(function(x){return x&&HID.indexOf(x.id)<0}).map(function(x){return {e:x,i:evInfo(x)}}).filter(function(x){return x.i&&x.i.n>=0}):[];
+    var e=evs.filter(function(x){return x.i.n>0||x.i.allDay||x.i.d>now})[0];
+    if(e)h+='<div class="k2-part"><div class="k2-lab">Prochainement</div><button class="k2-ev" data-act="hub-go" data-v="agenda"><span class="k2-evd"><b>'+e.i.d.getDate()+'</b>'+esc(e.i.d.toLocaleDateString('fr-FR',{month:'short'}).replace('.',''))+'</span><span class="k2-evm"><span class="k2-evt">'+esc(EVN[e.e.id]||e.e.summary||'Événement')+'</span><span class="k2-evs">'+esc(cap(e.i.n===0?"aujourd'hui":e.i.n===1?'demain':e.i.d.toLocaleDateString('fr-FR',{weekday:'long'})))+(e.i.allDay?'':' · '+e.i.d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}))+'</span></span></button></div>';
+    /* À faire : 3 au maximum */
+    if(due.length)h+='<div class="k2-part"><div class="k2-lab">À faire</div><div class="k2-pills">'+due.slice(0,3).map(function(x){var r=x.r;return '<span class="k2-pill">'+careChk(r)+'<button class="k2-pt" data-act="care-open" data-id="'+esc(r.id)+'">'+(r.emoji?esc(r.emoji)+' ':'')+esc(r.title)+'</button></span>'}).join('')+
+      (due.length>3?'<button class="k2-more" data-act="hub-go" data-v="todo">+'+(due.length-3)+' autre'+(due.length>4?'s':'')+'</button>':'')+'</div></div>';
+    /* Quête principale : toute la checklist */
     var m=S.projects.filter(function(p){return p.main&&p.status!=='done'})[0];
-    if(m){var ss=m.steps||[],dn=ss.filter(function(x){return x.done}).length,nx=-1,id=esc(m.id);ss.some(function(x,i){if(!x.done){nx=i;return true}});
+    if(m){var ss=m.steps||[],dn=ss.filter(function(x){return x.done}).length,id=esc(m.id);
       h+='<div class="k2-part"><div class="k2-lab">📌 Quête principale</div><button class="k2-q" data-act="proj-open" data-id="'+id+'"><span>'+esc((m.emoji?m.emoji+' ':'')+m.title)+'</span>'+(ss.length?'<i>'+dn+'/'+ss.length+'</i>':'')+'</button>'+
-        (ss.length?'<div class="bar k2-bar"><i style="width:'+Math.round(dn/ss.length*100)+'%"></i></div>':'')+
-        (nx>=0?'<div class="k2-step"><button class="chk" data-act="ps" data-id="'+id+'" data-i="'+nx+'" aria-label="Terminer : '+esc(ss[nx].t)+'">'+CHECK+'</button><button class="k2-st" data-act="proj-open" data-id="'+id+'">'+esc(ss[nx].t)+'</button></div>':'')+'</div>'}
-    /* 3. Les prochaines vacances */
+        (ss.length?'<div class="bar k2-bar"><i style="width:'+Math.round(dn/ss.length*100)+'%"></i></div><ul class="tq-steps">'+ss.map(function(x,i){return '<li class="tq-step'+(x.done?' done':'')+'"><button class="chk" data-act="ps" data-id="'+id+'" data-i="'+i+'" aria-label="'+(x.done?'Décocher : ':'Terminer : ')+esc(x.t)+'">'+CHECK+'</button><button class="tq-st" data-act="proj-open" data-id="'+id+'">'+esc(x.t)+'</button></li>'}).join('')+'</ul>'
+          :'<button class="k2-st" data-act="proj-open" data-id="'+id+'">+ Ajoute une première mini-quête</button>')+
+        (ss.length&&dn===ss.length?'<div class="tq-row"><span class="tq-win">Quête accomplie 🎉</span><button class="btn tq-next" data-act="main-finish" data-id="'+id+'">Choisir la suivante</button></div>':'')+'</div>'}
+    /* Les prochaines vacances (compte à rebours compact) */
     if(nt){var da=departAt(nt),cd='';
       if(ts.k==='now')cd='<span class="k2-now">🌴 En vacances · jour '+ts.day+' sur '+ts.tot+'</span>';
       else if(ts.k==='soon'&&ts.n===0)cd='<span class="k2-now">🎉 C\'est aujourd\'hui !</span>';
       else if(da)cd='<span class="flap" role="timer" data-cd="'+da.d.getTime()+'">'+flapInner(da.d-Date.now())+'</span>';
-      h+='<div class="k2-part"><button class="k2-trip" data-act="trip-open" data-id="'+esc(nt.id)+'"><span class="k2-tl">'+esc(tEmo(nt)+' '+nt.title)+(ts.k==='soon'?' dans':'')+'</span>'+cd+'</button></div>'}
-    var nc=S.courses.filter(function(c){return !c.done}).length;
-    var dock=function(v,em,lab,badge){return '<button class="dk" data-act="hub-go" data-v="'+v+'"><span class="dk-ic">'+em+(badge?'<b>'+badge+'</b>':'')+'</span><span class="dk-l">'+lab+'</span></button>'};
+      h+='<div class="k2-part"><button class="k2-trip" data-act="hub-go" data-v="voyage"><span class="k2-tl">'+esc(tEmo(nt)+' '+nt.title)+(ts.k==='soon'?' dans':'')+'</span>'+cd+'</button></div>'}
+    /* Raccourcis : un seul badge (À faire) ; les autres ont juste une petite info */
+    var week=evs.filter(function(x){return x.i.n<=7}).length,nw=S.shop.filter(function(w){return !w.done}).length,nq=S.projects.filter(function(p){return p.status!=='done'}).length;
+    var dock=function(v,em,lab,sub,badge){return '<button class="dk" data-act="hub-go" data-v="'+v+'"><span class="dk-ic">'+em+(badge?'<b>'+badge+'</b>':'')+'</span><span class="dk-l">'+lab+'</span><span class="dk-s">'+sub+'</span></button>'};
     el.innerHTML='<section class="k2-card">'+h+'</section><nav class="k2-dock" aria-label="Raccourcis">'+
-      dock('courses','🛒','Courses',nc||'')+dock('agenda','📅','Agenda','')+dock('todo','🧹','Routines',due.length||'')+dock('voyage','🧳','Voyages',nt&&ts.k==='soon'?'J-'+ts.n:'')+dock('quetes','🗺️','Quêtes','')+dock('wish','🎁','Envies','')+'</nav>'}
+      dock('courses','🛒','Courses','Ma liste','')+
+      dock('agenda','📅','Agenda',week?week+' cette semaine':'Semaine calme','')+
+      dock('todo','🧹','À faire',due.length?'':'Tout est à jour',due.length||'')+
+      dock('voyage','🧳','Voyages',nt?esc(nt.title):'Rien de prévu','')+
+      dock('quetes','🗺️','Quêtes',nq?nq+' en cours':'Une idée ?','')+
+      dock('wish','🎁','Envies',nw?nw+' envie'+(nw>1?'s':''):'Rien pour l\'instant','')+'</nav>'}
   /* Petite fête quand on coche la dernière chose du jour */
   function celebrate(){var k=$('k2');if(k){k.classList.remove('jump');void k.offsetWidth;k.classList.add('jump')}
     if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
@@ -381,7 +393,7 @@
   function hubGo(v){
     if(v==='courses'){cview(true,true)}
     else if(v==='todo'){setTab('maison')}
-    else if(v==='voyage'){var nt=nextTrip();setTab('voyage');if(nt)vview(nt.id,true)}
+    else if(v==='voyage'){setTab('voyage')}
     else if(v==='quetes'){qview(true,true)}
     else if(v==='wish'){setTab('courses');setTimeout(function(){var w=document.querySelector('.s-wish');if(w)w.scrollIntoView({block:'start',behavior:'smooth'})},60)}
     else if(v==='agenda'){agOpen=true;tEdit=null;tplMgr=false;tplEdit=null;bilPop=null;renderSheet()}}

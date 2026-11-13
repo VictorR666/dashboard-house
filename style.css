@@ -933,3 +933,34 @@ body[data-tab="home"][data-view="simple"] .foot{display:none}
   body[data-tab="home"][data-view="simple"] .hub2{padding-bottom:calc(max(10px,env(safe-area-inset-bottom,0px)) + 74px)}
   body[data-tab="home"][data-view="simple"] .wrap{gap:12px}
 }
+/* v53 */
+.foot{display:none!important}
+/* En-tête : bascule de vue lisible + bouton rouge Déconnecter, seulement sur l'accueil */
+.viewtg{width:auto;border-radius:999px;padding:0 12px 0 10px;gap:6px;grid-auto-flow:column;font:inherit;font-size:12px;font-weight:800}
+.viewtg span{color:inherit}
+.logoutb{display:none;flex:none;width:34px;height:34px;border:0;border-radius:50%;background:var(--r-bg);color:#C2413A;padding:0;place-items:center;cursor:pointer;align-self:center}
+.logoutb svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+body[data-tab="home"] .logoutb{display:grid}
+@media (max-width:899px),(orientation:portrait){
+  .head{grid-template-columns:auto auto minmax(0,1fr) auto auto}
+  .head .logoutb{grid-column:5;grid-row:1;width:30px;height:30px}
+  .head .viewtg{height:30px;padding:0 10px 0 8px}
+  .weather .w-lab,.weather .w-main{display:none}
+  .weather{padding:5px 12px 5px 8px}
+}
+/* Vue simple : blocs « Prochainement », checklist de la quête, compte à rebours plus petit, sous-titres des raccourcis */
+.k2-ev{display:flex;align-items:center;gap:10px;border:0;background:var(--n-bg);border-radius:18px;padding:7px 12px 7px 7px;font:inherit;text-align:left;color:var(--ink);cursor:pointer}
+.k2-evd{flex:none;width:42px;border-radius:13px;background:#fff;display:flex;flex-direction:column;align-items:center;line-height:1.05;padding:4px 0;font-size:12px;font-weight:800;color:var(--peach);text-transform:uppercase}
+.k2-evd b{font-family:var(--font-d);font-size:17px;color:var(--ink)}
+.k2-evm{display:flex;flex-direction:column;min-width:0}.k2-evt{font-weight:800;font-size:14px}.k2-evs{font-size:12px;font-weight:700;color:var(--lav)}
+.k2-card .tq-steps .chk{border-color:var(--lav)}
+.k2-trip .fd i{width:20px;height:28px}.k2-trip .fd b{font-size:17px}.k2-trip .fsep{height:28px;gap:6px}.k2-trip .fsep b{width:4px;height:4px}.k2-trip .fg small{font-size:9px}
+.dk{gap:4px}.dk-s{font-size:12px;font-weight:700;color:var(--ink2);max-width:92%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:1em}
+/* Routines : « À faire » mis en avant (bordure dégradée + Kimchi), séparé des autres cartes */
+.ta-k{width:38px;height:auto;margin-left:auto}
+.rsep{display:none}
+body[data-tab="maison"] .grid>.s-todoall{border:2.5px solid transparent;background:linear-gradient(#fff,#fff) padding-box,linear-gradient(135deg,#6F5BDD,#A898FF 50%,#8D7BF0) border-box;box-shadow:0 12px 30px rgba(111,91,221,.16)}
+body[data-tab="maison"] .grid>.rsep{display:flex;align-items:center;gap:12px;grid-column:1/-1;font-size:12px;font-weight:800;color:var(--ink2);margin:6px 4px -4px}
+.rsep::after{content:"";flex:1;height:1.5px;background:rgba(141,123,240,.18)}
+@media (max-width:899px),(orientation:portrait){.head .viewtg{width:auto;justify-self:end}.head{column-gap:8px}}
+@media (max-width:899px),(orientation:portrait){.head .weather{min-width:0;max-width:100%;padding:4px 10px 4px 6px;gap:4px;overflow:hidden}.weather .w-ic{width:30px;height:30px}.weather .w-temp{font-size:22px}}
