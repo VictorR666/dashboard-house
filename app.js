@@ -733,8 +733,7 @@
       '<input class="in vi-title" maxlength="80" data-trip="title" value="'+esc(t.title)+'" aria-label="Destination" placeholder="Destination"></div>'+
       (vEmoOpen?'<div class="emos pop">'+TRIPEMO.map(function(e){return '<button type="button" class="emo'+(t.emoji===e?' on':'')+'" data-act="trip-emo" data-e="'+e+'" aria-label="Icône '+e+'">'+e+'</button>'}).join('')+'</div>':'')+
       dt('🚆 Départ','start',t.start)+dt('🏠 Retour','end',t.end)+
-      '<div class="vbil"><a class="vbillets" href="'+esc(lk)+'" target="_blank" rel="noopener noreferrer">🎟️ Mes billets'+(t.link?'':' SNCF')+' ↗</a><button class="lnk" data-act="bil-edit" aria-expanded="'+vBilEdit+'">✎ lien</button></div>'+
-      (vBilEdit?'<div class="vi-link"><input class="in" type="url" maxlength="500" data-trip="link" value="'+esc(t.link||'')+'" placeholder="Vide = SNCF Connect" aria-label="Lien vers les billets"></div>':'')+'</section>';
+      '</section>';
     var H=kids(t.id,'logement').sort(byStart);
     h+=vSecH('🛏️','Hébergement','logement')+(H.length?H.map(vStay).join(''):'<p class="vempty">Pas encore d\'hébergement.</p>');
     var A=kids(t.id,'activite').sort(byStart);
@@ -742,6 +741,8 @@
     var P=packOf(t.id),pn=P?P.items.length:0,pd=P?P.items.filter(function(x){return x.done}).length:0;
     h+='<button class="vfold" data-act="pack-fold" aria-expanded="'+vPackOpen+'"><span>🧳 Valise</span><i>'+(pn?pd+'/'+pn:'vide')+'</i><b>'+(vPackOpen?'▾':'▸')+'</b></button>'+(vPackOpen?vPack(t):'');
     if(SHOW_PROG)h+='<button class="vfold" data-act="prog-fold" aria-expanded="'+vProgOpen+'"><span>🗓️ Programme jour par jour</span><i></i><b>'+(vProgOpen?'▾':'▸')+'</b></button>'+(vProgOpen?vProg(t):'');
+    h+='<div class="vlink">Lien des billets : <b>'+esc(t.link?safeUrl(t.link).replace(/^https?:\/\/(www\.)?/,'').split('/')[0]:'SNCF Connect')+'</b> · <button class="lnk" data-act="bil-edit" aria-expanded="'+vBilEdit+'">modifier</button></div>'+
+      (vBilEdit?'<div class="vi-link"><input class="in" type="url" maxlength="500" data-trip="link" value="'+esc(t.link||'')+'" placeholder="Vide = SNCF Connect" aria-label="Lien vers les billets"></div>':'');
     h+='<div class="vdel"><button class="lnk del" data-act="trip-del">'+(vDelConfirm?'Oui, supprimer « '+esc(t.title)+' » et tout son contenu':'Supprimer ce voyage')+'</button></div>';
     return h}
   function renderVView(){if(!vOpen)return;var B=$('vv-body');if(!B)return;
@@ -751,6 +752,7 @@
     var st=tripState(t);
     $('vv-title').textContent=(t.emoji||'✈️')+' '+t.title;
     $('vv-sub').textContent=spanTxt(st.sp)+(st.k==='nodate'?'':' · '+tripBadge(st));
+    var vb=$('vv-bil');if(vb)vb.href=safeUrl(t.link)||SNCF_URL;
     B.innerHTML=vMain(t);
   }
   function tripDelete(id){var all=[find('voyages',id)].concat(kids(id)).filter(Boolean);if(!all.length)return;lastMulti=JSON.parse(JSON.stringify(all));

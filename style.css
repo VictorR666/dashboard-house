@@ -646,3 +646,6 @@ body{background-repeat:no-repeat}
 .trow-m small{flex:none;font-size:12px;color:var(--ink2)}
 .tpl-items{max-height:38vh;overflow:auto}
 .vi-dt{grid-template-columns:auto minmax(0,1.2fr) minmax(0,1fr)}.vi-dt span{font-size:11px;min-width:64px}.vi-dt .in{padding:6px}
+.vv-bil{flex:none;font-size:12.5px;padding:6px 12px}
+.vlink{text-align:center;margin-top:18px;font-size:12.5px;font-weight:700;color:var(--ink2)}.vlink .lnk{display:inline;width:auto;font-size:12.5px}
+.vview .vi-link{margin-top:6px}.vdel{margin-top:8px}
