@@ -7,7 +7,8 @@
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex,nofollow">
 <title>Maison</title>
-<meta name="theme-color" content="#8D7BF0">
+<meta name="theme-color" content="#FDFCFF">
+<meta name="color-scheme" content="light only">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Maison">
@@ -34,7 +35,7 @@
 
   <main class="grid">
     <section class="card s-main"><div class="body" id="l-main"></div></section>
-    <section class="card s-proj"><div class="ch"><span class="ic peach"><svg viewBox="0 0 24 24"><path d="M14 4l6 6-3 3-6-6z"/><path d="M12.5 10.5L4 19"/></svg></span><h2>Quêtes secondaires</h2><button class="mini" data-act="add-toggle" aria-label="Ajouter une quête" title="Ajouter">+</button></div><form id="f-add" class="addform" hidden><input class="in" id="a-title" required maxlength="80" placeholder="Une idée ? ex. faire du vin chaud" aria-label="Nouvelle idée"><button class="btn" type="submit">OK</button><button class="btn ghost" type="button" data-act="add-detail" title="Ajouter et compléter les détails">Détails…</button></form><div class="body tg" id="l-todo"></div></section>
+    <section class="card s-proj"><div class="ch"><span class="ic peach"><svg viewBox="0 0 24 24"><path d="M14 4l6 6-3 3-6-6z"/><path d="M12.5 10.5L4 19"/></svg></span><h2><button class="h2btn" type="button" data-act="qview-open" title="Voir toutes les quêtes">Quêtes secondaires <span aria-hidden="true">›</span></button></h2><button class="mini" data-act="add-toggle" aria-label="Ajouter une quête" title="Ajouter">+</button></div><form id="f-add" class="addform" hidden><input class="in" id="a-title" required maxlength="80" placeholder="Une idée ? ex. faire du vin chaud" aria-label="Nouvelle idée"><button class="btn" type="submit">OK</button><button class="btn ghost" type="button" data-act="add-detail" title="Ajouter et compléter les détails">Détails…</button></form><div class="body tg" id="l-todo"></div></section>
     <section class="card s-cal"><div class="ch"><span class="ic lav"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="14" rx="3"/><path d="M4 11h16M8 3v4M16 3v4"/></svg></span><h2>À venir</h2><a class="mini ico" href="https://calendar.google.com/calendar/u/0/r/week" target="_blank" rel="noopener noreferrer" aria-label="Ouvrir Google Agenda" title="Google Agenda"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></a></div><div class="body" id="l-cal"></div><div class="seg calr" id="cal-r" hidden></div></section>
     <section class="card s-kimchi minor"><div class="ch"><span class="ic lav"><svg viewBox="0 0 24 24"><circle cx="6.5" cy="10" r="1.8" fill="currentColor"/><circle cx="10.5" cy="6.5" r="1.8" fill="currentColor"/><circle cx="15.5" cy="6.5" r="1.8" fill="currentColor"/><circle cx="19" cy="10" r="1.8" fill="currentColor"/><path d="M12.8 11.5c-3 0-5.2 2.4-4.4 4.8.5 1.5 1.8 2.2 4.4 2.2s3.9-.7 4.4-2.2c.8-2.4-1.4-4.8-4.4-4.8z" fill="currentColor"/></svg></span><h2>Kimchi</h2><button class="mini" data-act="care-add" data-group="Kimchi" aria-label="Ajouter une tâche" title="Ajouter">+</button></div><form class="addform care-add" data-group="Kimchi" hidden><input class="in" required maxlength="80" placeholder="Nouvelle tâche (ex. 🛁 Bain)" aria-label="Nouvelle tâche pour Kimchi"><button class="btn" type="submit">OK</button><button class="btn ghost" type="button" data-act="add-detail" title="Ajouter et compléter les détails">Détails…</button></form><div class="body" id="l-Kimchi"></div></section>
     <section class="card s-plantes minor"><div class="ch"><span class="ic mint"><svg viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14z"/><path d="M5 19L13 11"/></svg></span><h2>Plantes</h2><button class="mini" data-act="care-add" data-group="Plantes" aria-label="Ajouter une plante" title="Ajouter">+</button></div><form class="addform care-add" data-group="Plantes" hidden><input class="in" required maxlength="80" placeholder="Nom de la plante (ex. Ficus)" aria-label="Nouvelle plante"><button class="btn" type="submit">OK</button><button class="btn ghost" type="button" data-act="add-detail" title="Ajouter et compléter les détails">Détails…</button></form><div class="body" id="l-Plantes"></div></section>
@@ -43,6 +44,17 @@
   </main>
 </div>
 <div class="foot"><button class="lnk" type="button" data-act="logout">Déconnecter cet appareil</button></div>
+<section id="qview" class="qview" hidden aria-label="Toutes les quêtes">
+  <div class="qv-in">
+    <header class="qv-head">
+      <button class="qv-back" type="button" data-act="qview-close" aria-label="Retour au dashboard">‹</button>
+      <div class="qv-tt"><h2>Quêtes</h2><small id="qv-count"></small></div>
+      <button class="mini" type="button" data-act="qadd-toggle" aria-label="Ajouter une quête" title="Ajouter">+ Nouvelle</button>
+    </header>
+    <form id="f-qadd" class="addform" hidden><input class="in" id="q-title" required maxlength="80" placeholder="Une idée ? ex. 🍷 faire du vin chaud" aria-label="Nouvelle quête"><button class="btn" type="submit">Ajouter</button></form>
+    <div id="qv-list" class="qv-list"></div>
+  </div>
+</section>
 <div id="sheet" class="sheet" hidden></div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 

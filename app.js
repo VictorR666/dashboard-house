@@ -342,6 +342,43 @@
       '<button class="btn ghost pin" data-act="pmain" data-id="'+id+'">'+(o.main?'📌 Retirer de la quête principale':'📌 Mettre en quête principale')+'</button>'+
       '<div class="prow"><button class="lnk del" data-act="pdel" data-id="'+id+'">Supprimer la quête</button><button class="btn valid" data-act="proj-save" data-id="'+id+'">Valider</button></div></div>';
   }
+
+  /* Page dédiée aux quêtes (plein écran) */
+  var qOpen=false,qShowDone=false;
+  function qview(open,push){
+    qOpen=open;var el=$('qview');el.hidden=!open;document.documentElement.classList.toggle('q-open',open);
+    if(push){try{if(open)history.pushState({q:1},'','#quetes');else if(history.state&&history.state.q)history.back();else history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+    if(open){renderQView();el.scrollTop=0;var b=el.querySelector('.qv-back');if(b)b.focus({preventScroll:true})}
+  }
+  window.addEventListener('popstate',function(){var want=location.hash==='#quetes';if(want!==qOpen)qview(want,false)});
+  function qCard(o){
+    var ss=o.steps||[],done=ss.filter(function(x){return x.done}).length,pc=ss.length?Math.round(done/ss.length*100):0,id=esc(o.id);
+    var fin=o.status==='done'||(ss.length&&done===ss.length),p=PRIO[o.prio]?o.prio:'med',st=o.status||'todo';
+    var us=String(o.notes||'').match(/https?:\/\/[^\s<>"']+/g)||[];
+    var note=String(o.notes||'').replace(/https?:\/\/[^\s<>"']+/g,'').trim();
+    return '<article class="qcard'+(fin?' done':'')+(o.main?' main':'')+'">'+
+      (o.main?'<div class="qc-main">📌 Quête principale</div>':'')+
+      '<div class="qc-h"><span class="em" aria-hidden="true">'+esc(o.emoji||'✨')+'</span><button class="qc-t" data-act="proj-open" data-id="'+id+'">'+esc(o.title)+'</button>'+
+      '<select class="pr '+p+'" data-prio="'+id+'" aria-label="Urgence">'+['high','med','low'].map(function(k){return '<option value="'+k+'"'+(k===p?' selected':'')+'>'+PRIO[k]+'</option>'}).join('')+'</select></div>'+
+      '<div class="seg status">'+[['todo','À faire'],['doing','En cours'],['done','Terminé']].map(function(x){return '<button type="button" class="'+(st===x[0]?'on ':'')+x[0]+'" data-act="pset" data-id="'+id+'" data-f="status" data-v="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div>'+
+      (ss.length?'<div class="qc-prog"><div class="bar"><i style="width:'+pc+'%"></i></div><span>'+done+'/'+ss.length+'</span></div>':'')+
+      (ss.length?'<ul class="steps">'+ss.map(function(x,i){return '<li class="step'+(x.done?' done':'')+'"><button class="chk" data-act="ps" data-id="'+id+'" data-i="'+i+'" aria-label="Mini-quête : '+esc(x.t)+'">'+CHECK+'</button><span>'+esc(x.t)+'</span><button class="sx" data-act="sd" data-id="'+id+'" data-i="'+i+'" aria-label="Supprimer : '+esc(x.t)+'" title="Supprimer">×</button></li>'}).join('')+'</ul>':'')+
+      '<form class="stepform" data-form="step" data-id="'+id+'"><input class="in" maxlength="120" data-stepinput required placeholder="Nouvelle mini-quête" aria-label="Nouvelle mini-quête pour '+esc(o.title)+'"><button class="btn" type="submit">+</button></form>'+
+      (note?'<p class="qc-note">'+esc(note)+'</p>':'')+
+      (us.length?'<div class="nlinks">'+us.map(function(u){return '<a class="btn ghost" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">↗ '+esc(u.replace(/^https?:\/\/(www\.)?/,'').split('/')[0])+'</a>'}).join('')+'</div>':'')+
+      '<div class="qc-f"><button class="lnk" data-act="pmain" data-id="'+id+'">'+(o.main?'📌 Retirer de la principale':'📌 Mettre en principale')+'</button><button class="lnk" data-act="proj-open" data-id="'+id+'">Modifier…</button></div></article>';
+  }
+  function renderQView(){
+    if(!qOpen)return;var L=$('qv-list');if(!L)return;
+    var ae=document.activeElement;if(ae&&L.contains(ae)&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA')&&ae.value)return;
+    if(ae&&ae.matches&&ae.matches('#qv-list select.pr'))return;
+    var isFin=function(o){var ss=o.steps||[];return o.status==='done'||(ss.length&&ss.every(function(x){return x.done}))};
+    var srt=function(a,b){if(!!a.main!==!!b.main)return a.main?-1:1;var sa=a.status==='doing'?0:1,sb=b.status==='doing'?0:1;if(sa!==sb)return sa-sb;var q=(PW[b.prio]||2)-(PW[a.prio]||2);if(q)return q;return (a.createdAt||0)-(b.createdAt||0)};
+    var act=S.projects.filter(function(o){return !isFin(o)}).sort(srt),fin=S.projects.filter(isFin).sort(srt);
+    $('qv-count').textContent=act.length?act.length+' en cours ou à faire':'';
+    L.innerHTML=(act.length?act.map(qCard).join(''):'<p class="empty">'+(loaded.projects?'Aucune quête en cours. Ajoute-en une !':'Chargement…')+'</p>')+
+      (fin.length?'<button type="button" class="lnk donetog" data-act="qdone-tog" aria-expanded="'+qShowDone+'">'+(qShowDone?'▾':'▸')+' Terminées ('+fin.length+')</button>'+(qShowDone?fin.map(qCard).join(''):''):'');
+  }
   function whoLabel(k){return k==='couple'?'Couple':(PEOPLE[k]||(k==='p1'?'Personne 1':k==='p2'?'Personne 2':''))}
   var UW={high:3,med:2,low:1};
   function fitTotal(){var te=$('w-total');if(!te)return;te.style.visibility='';requestAnimationFrame(function(){if(te.scrollWidth>te.clientWidth+1)te.style.visibility='hidden'})}
@@ -479,7 +516,7 @@
     var b=$('banner');if(!b)return;
     if(fromCache){var d=new Date(fromCache);b.innerHTML='<div class="note">Dernières données · '+esc(d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}))+'</div>'}
   }
-  function render(){renderCare();renderTodo();renderMain();renderShop();renderSheet(true);cacheSave()}
+  function render(){renderCare();renderTodo();renderMain();renderShop();renderQView();renderSheet(true);cacheSave()}
 
   function clock(){var n=new Date();$('hello').textContent=n.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});$('today').textContent=n.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}
   clock();setInterval(clock,15000);
@@ -527,6 +564,10 @@
     else if(a==='wf-save'){wishSave()}
     else if(a==='wf-got'){upd('shop',wishOpen,{done:!wd.done});wishOpen=null;renderSheet()}
     else if(a==='wf-del'){var wid=wishOpen;wishOpen=null;renderSheet();delUndo('shop',wid,'Envie supprimée')}
+    else if(a==='qview-open'){qview(true,true)}
+    else if(a==='qview-close'){qview(false,true)}
+    else if(a==='qdone-tog'){qShowDone=!qShowDone;renderQView()}
+    else if(a==='qadd-toggle'){var qf=$('f-qadd');qf.hidden=!qf.hidden;if(!qf.hidden)$('q-title').focus()}
     else if(a==='add-toggle'){var fa=$('f-add');fa.hidden=!fa.hidden;if(!fa.hidden)$('a-title').focus()}
     else if(a==='sd'){it=find('projects',id);if(it){var i2=Number(b.getAttribute('data-i'));var st2=steps(it);st2.splice(i2,1);upd('projects',id,{steps:st2})}}
     else if(a==='cal-go'){var sy=$('sync');if(sy){sy.classList.add('spin');setTimeout(function(){sy.classList.remove('spin')},1500)}load()}
@@ -547,6 +588,10 @@
       if(!sp.title&&!sp.emoji)return;
       addDoc('routines',newCare(f.getAttribute('data-group'),sp));
       ci.value='';f.hidden=true;return;
+    }
+    if(f.id==='f-qadd'){
+      var qt=$('q-title'),sq0=splitEmoji(qt.value);if(!sq0.title&&!sq0.emoji)return;
+      addDoc('projects',newProj(sq0));qt.value='';f.hidden=true;return;
     }
     if(f.id==='f-add'){
       var ti=$('a-title'),sp0=splitEmoji(ti.value);if(!sp0.title&&!sp0.emoji)return;
@@ -590,6 +635,7 @@
   document.addEventListener('keydown',function(e){
     var t=e.target;
     if(e.key==='Escape'&&(openId||projId||wishOpen||evEdit)){evEdit=null;wishOpen=null;projId=null;openId=null;calFor=null;confirmDel=null;renderSheet();return}
+    if(e.key==='Escape'&&qOpen){qview(false,true);return}
     if((e.key==='Enter'||e.key===' ')&&t&&t.matches&&t.matches('[data-act="care-open"],[data-act="proj-open"],[data-act="ev-edit"]')){e.preventDefault();t.click()}
     else if(e.key==='Enter'&&t&&t.getAttribute&&t.getAttribute('data-field')==='name'){t.blur()}
   });
@@ -597,6 +643,7 @@
   window.addEventListener('online',function(){var b=$('banner');if(b&&!fromCache)b.innerHTML='';load()});
 
   render();renderCal();
+  if(location.hash==='#quetes')qview(true,false);
   if(!API||!KEY){showLogin('')}
   else{
     if(cacheLoad()){renderWeather();renderCal();render();cacheNote()}

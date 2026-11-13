@@ -6,7 +6,7 @@
 @font-face{font-family:'Nunito';font-style:normal;font-weight:800;font-display:swap;src:url(fonts/nunito-latin-800-normal.woff2) format('woff2')}
 @font-face{font-family:'Nunito';font-style:normal;font-weight:900;font-display:swap;src:url(fonts/nunito-latin-900-normal.woff2) format('woff2')}
 
-:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{color-scheme:only light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 img{max-width:100%}
 [hidden]:not([hidden=until-found i]){display:none!important}
@@ -20,7 +20,7 @@ img{max-width:100%}
   --r-bg:#FFDDD8; --r-ink:#9E2F29; --r-dot:#FF6F61;
   --n-bg:#F5F2FF; --n-dot:#B9AEF5;
   --font-d:'Fredoka','Nunito',system-ui,sans-serif; --font-b:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;
-  color-scheme:light;
+  color-scheme:only light;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -345,3 +345,40 @@ body:has(#sheet:not([hidden])) .sync{display:none!important;visibility:hidden}
 .foot{position:relative;z-index:1;text-align:center;margin-top:10px}
 .foot .lnk{width:auto;display:inline;color:var(--ink2);font-size:12px;opacity:.7}
 @media (min-width:900px) and (orientation:landscape){.foot{position:fixed;left:0;right:0;bottom:8px;margin:0}}
+
+/* Bouton titre « Quêtes secondaires » */
+.h2btn{border:0;background:none;padding:0;font:inherit;color:inherit;display:inline-flex;align-items:center;gap:4px;text-align:left}
+.h2btn span{color:var(--lav);font-size:1.15em;line-height:1;transition:transform .15s}
+.h2btn:hover span{transform:translateX(2px)}
+
+/* Page plein écran des quêtes */
+html.q-open,html.q-open body{overflow:hidden!important}
+.qview{position:fixed;inset:0;z-index:35;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  background-color:var(--bg);background-image:radial-gradient(560px 400px at 0% 0%,#EEE9FF 0,transparent 70%),radial-gradient(560px 420px at 100% 100%,#FFE9DD 0,transparent 70%);
+  padding:max(18px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(28px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.qv-in{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.qv-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:12px;padding:8px 0;background:linear-gradient(var(--bg) 70%,transparent)}
+.qv-back{flex:none;width:42px;height:42px;border:0;border-radius:50%;background:#fff;color:var(--lav);font-size:28px;line-height:1;padding:0 0 3px;box-shadow:0 4px 14px rgba(141,123,240,.18)}
+.qv-tt{flex:1;min-width:0;display:flex;flex-direction:column}
+.qv-tt h2{font-size:28px;line-height:1.1}
+.qv-tt small{font-size:12.5px;font-weight:800;color:var(--ink2)}
+.qv-head .mini{font-size:13px;padding:7px 14px}
+.qv-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(360px,100%),1fr));gap:14px;align-items:start}
+.qv-list .empty,.qv-list .donetog{grid-column:1/-1}
+.qcard{background:rgba(255,255,255,.92);border-radius:26px;padding:16px;display:flex;flex-direction:column;gap:10px;box-shadow:0 0 0 1.5px rgba(141,123,240,.10),0 10px 26px rgba(141,123,240,.12)}
+.qcard.main{box-shadow:0 0 0 2px var(--lav),0 10px 26px rgba(141,123,240,.2)}
+.qcard.done{opacity:.6}
+.qc-main{font-size:12px;font-weight:900;color:var(--lav)}
+.qc-h{display:flex;align-items:center;gap:10px}
+.qc-h .em{font-size:26px;width:30px}
+.qc-t{flex:1;min-width:0;border:0;background:none;padding:0;text-align:left;font:inherit;font-size:17px;font-weight:900;color:var(--ink);overflow-wrap:anywhere}
+.qcard.done .qc-t{text-decoration:line-through;color:var(--ink2)}
+.qcard .seg button{font-size:12.5px;padding:6px 4px}
+.qc-prog{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:900;color:var(--ink2)}
+.qc-prog .bar{flex:1;margin:0;background:var(--n-bg);height:8px}
+.qcard .steps{gap:6px}
+.qcard .step{font-size:14px}
+.qcard .stepform .in{border-radius:12px}
+.qc-note{margin:0;font-size:13.5px;font-weight:700;color:var(--ink2);white-space:pre-wrap;overflow-wrap:anywhere;background:var(--n-bg);border-radius:14px;padding:8px 12px}
+.qc-f{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:1.5px solid rgba(141,123,240,.12);padding-top:8px}
+.qc-f .lnk{font-size:13px}
