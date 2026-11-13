@@ -18,7 +18,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-round-32.png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="preload" href="fonts/nunito-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="style.css?v=50">
+<link rel="stylesheet" href="style.css?v=51">
 </head>
 <body>
 
@@ -46,15 +46,13 @@
     <section class="card s-wish"><div class="ch"><span class="ic peach"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></svg></span><h2>Wishlist</h2><span class="wtot" id="w-total"></span><button class="mini" data-act="wishq-toggle" aria-label="Ajouter une envie" title="Ajouter">+</button></div><form id="f-wish" class="addform" hidden><input class="in" id="w-title" required maxlength="80" placeholder="Une envie ?" aria-label="Nouvelle envie"><button class="btn" type="submit">OK</button><button class="btn ghost" type="button" data-act="add-detail" title="Compléter les détails" aria-label="Compléter les détails"><svg class="ico-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></button></form><div class="body wchips" id="l-wish"></div></section>
     <section class="card s-voyage"><div class="ch"><span class="ic peach"><svg viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="2.5"/><path d="M9 8V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V8M9 12v4M15 12v4"/></svg></span><h2>Voyages</h2><button class="mini" data-act="trip-new" aria-label="Nouveau voyage" title="Nouveau voyage">+ Nouveau</button></div><div class="body" id="l-voyages"></div></section>
   </main>
-  <div id="hub2" class="hub2" aria-label="Vue simple, version 2 (test)"></div>
-  <div id="hub" class="hub" aria-label="Accueil en raccourcis (test)"></div>
+  <div id="hub2" class="hub2" aria-label="Vue simple"></div>
 </div>
 <nav class="tabbar" aria-label="Sections">
   <button type="button" data-act="tab" data-tab="home" aria-label="Accueil"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg><span>Accueil</span></button>
   <button type="button" data-act="tab" data-tab="maison" aria-label="Routines"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.5-4.6L4 8M4 3.5V8h4.5"/><path d="M4 13a8 8 0 0 0 14.5 4.6L20 16m0 4.5V16h-4.5"/><path d="M9 12l2 2 4-4"/></svg><span>Routines</span></button>
   <button type="button" data-act="tab" data-tab="courses" aria-label="Courses et wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h2l2 10h10l2-7H7"/><circle cx="9.5" cy="19" r="1.3"/><circle cx="16.5" cy="19" r="1.3"/></svg><span>Courses</span></button>
   <button type="button" data-act="tab" data-tab="voyage" aria-label="Voyages"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2.5"/><path d="M9 8V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V8M9 12v4M15 12v4"/></svg><span>Voyages</span></button>
-  <button type="button" data-act="tab" data-tab="test" aria-label="Test de la nouvelle vue simple"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6M10 3v6L5 18a2 2 0 0 0 1.8 3h10.4A2 2 0 0 0 19 18l-5-9V3"/><path d="M7.5 14h9"/></svg><span>Test</span></button>
 </nav>
 <div class="foot"><button class="lnk" type="button" data-act="logout">Déconnecter cet appareil</button></div>
 <section id="qview" class="qview" hidden aria-label="Toutes les quêtes">
@@ -104,6 +102,6 @@
   </form>
 </div>
 
-<script src="app.js?v=50"></script>
+<script src="app.js?v=51"></script>
 </body>
 </html>

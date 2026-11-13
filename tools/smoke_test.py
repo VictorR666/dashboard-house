@@ -93,7 +93,7 @@ def main():
                 assert page.get_attribute('body', 'data-view') == ('simple' if name == 'mobile' else 'detail')
                 page.screenshot(path=f'{OUT}/{name}-accueil-simple.png') if name == 'mobile' else None
                 if name == 'mobile':
-                    assert page.locator('.hub-t').count() == 6, 'tuiles de la vue simple'
+                    assert page.locator('.k2-dock .dk').count() == 6, 'raccourcis de la vue simple'
                     page.click('[data-act=hub-go][data-v=agenda]'); page.wait_for_timeout(300)
                     assert 'Vétérinaire' in page.inner_text('.sheet-card'); page.click('.sheet-x'); page.wait_for_timeout(200)
                     page.click('#viewtg'); page.wait_for_timeout(300)
