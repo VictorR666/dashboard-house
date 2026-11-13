@@ -311,8 +311,8 @@
   function plantTile(r){
     var st=careState(r),lab={g:'Ça va, merci !',o:"J'ai un peu soif…",r:"J'ai soooif !",n:'À renseigner'}[st.c],
       d=r.lastDone?st.txt:'';
-    return '<div class="ptile '+st.c+'" role="button" tabindex="0" aria-haspopup="dialog" data-act="care-open" data-id="'+esc(r.id)+'">'+plantArt(r)+
-      '<div class="pt"><span class="pn">'+careChk(r)+esc(r.title)+'</span><span class="ps">'+lab+'</span><span class="pd">'+esc(d||'')+'</span></div></div>';
+    return '<div class="ptile '+st.c+'" role="button" tabindex="0" aria-haspopup="dialog" data-act="care-open" data-id="'+esc(r.id)+'">'+plantArt(r)+careChk(r)+
+      '<div class="pt"><span class="pn">'+esc(r.title)+'</span><span class="ps">'+lab+'</span><span class="pd">'+esc(d||'')+'</span></div></div>';
   }
   function renderCare(){
     GROUPS.forEach(function(g){
