@@ -116,11 +116,11 @@ def main():
                 page.click('.tabbar [data-tab=home]'); page.wait_for_timeout(300)
                 if name == 'mobile':
                     before0 = state['projects'][0][4]
-                    page.click('#l-main .mq-step .circ >> nth=0'); page.wait_for_timeout(800)
+                    page.click('#l-main .tq .chk'); page.wait_for_timeout(800)
                     assert state['projects'][0][4] != before0, 'rond de la quête principale'
                     page.click('[data-act=undo-upd]'); page.wait_for_timeout(800)
                     assert state['projects'][0][4] == before0
-                    page.click('#l-main .mq-t >> nth=0'); page.wait_for_timeout(300)
+                    page.click('#l-main .tq-t'); page.wait_for_timeout(300)
                     assert page.is_visible('.sheet-card .pj'), 'le texte doit ouvrir la quête'
                     page.click('.sheet-x'); page.wait_for_timeout(200)
                 page.click('.h2btn'); page.wait_for_timeout(400)

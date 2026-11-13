@@ -320,37 +320,6 @@
       $('l-'+g).innerHTML=list.length?list.map(g==='Plantes'?plantTile:careRow).join(''):empty('routines','Rien ici pour le moment.');
     });
   }
-  /* ---- Onglet « Test » : maquette de la nouvelle page d'accueil (Aujourd'hui / À venir / Courses), sans toucher à l'actuelle ---- */
-  function renderTest(){var el=$('ttest');if(!el||TAB!=='test')return;
-    var ae=document.activeElement;if(ae&&el.contains(ae)&&ae.tagName==='INPUT'&&ae.value)return;
-    var h='';
-    /* Aujourd'hui : quête principale (prochaine étape) + routines dues + activité à prévoir */
-    var m=S.projects.filter(function(p){return p.main&&p.status!=='done'})[0],today='';
-    if(m){var ss=m.steps||[],nx=-1;ss.some(function(x,i){if(!x.done){nx=i;return true}});var dn=ss.filter(function(x){return x.done}).length;
-      today+='<div class="tq"><div class="tq-k">📌 Quête principale'+(ss.length?' · '+dn+'/'+ss.length:'')+'</div>'+
-        (nx>=0?'<div class="tq-row"><button class="chk" data-act="ps" data-id="'+esc(m.id)+'" data-i="'+nx+'" aria-label="Terminer : '+esc(ss[nx].t)+'">'+CHECK+'</button><button class="tq-t" data-act="proj-open" data-id="'+esc(m.id)+'"><b>'+esc((m.emoji?m.emoji+' ':'')+m.title)+'</b><span>→ '+esc(ss[nx].t)+'</span></button></div>'
-          :'<button class="tq-t" data-act="proj-open" data-id="'+esc(m.id)+'"><b>'+esc((m.emoji?m.emoji+' ':'')+m.title)+'</b><span>'+(ss.length?'Toutes les étapes sont faites 🎉':'Ajoute une première étape')+'</span></button>')+'</div>'}
-    var R={r:0,o:1},due=S.routines.map(function(r){return {r:r,st:careState(r)}}).filter(function(x){return x.st.c==='r'||x.st.c==='o'}).sort(function(a,b){return R[a.st.c]-R[b.st.c]});
-    today+='<div class="tsec">À faire'+(due.length?' <i>'+due.length+'</i>':'')+'</div>'+(due.length?due.map(function(x){var r=x.r;return '<div class="tarow '+x.st.c+'">'+careChk(r)+'<div class="main" role="button" tabindex="0" data-act="care-open" data-id="'+esc(r.id)+'"><span class="t">'+(r.emoji?esc(r.emoji)+' ':'')+esc(r.title)+'</span><span class="sub">'+esc((r.group||'Maison')+' · '+x.st.txt)+'</span></div></div>'}).join(''):'<p class="tempty">Tout est à jour ✨</p>');
-    var nt=nextTrip(),acts=nt?kids(nt.id,'activite').filter(function(k){return !k.done}).sort(byStart):[];
-    if(nt){today+='<div class="tsec">À prévoir pour '+esc(tEmo(nt)+' '+nt.title)+'</div>'+(acts.length?acts.slice(0,2).map(function(k){return '<div class="tarow t-act"><button class="chk" data-act="v-done" data-id="'+esc(k.id)+'" aria-label="Fait : '+esc(k.title)+'">'+CHECK+'</button><div class="main" role="button" tabindex="0" data-act="trip-open" data-id="'+esc(nt.id)+'"><span class="t">'+esc(k.title)+'</span><span class="sub">'+(k.start?esc(cap(fmtDay(dPart(k.start)))):'Pas encore de date')+'</span></div></div>'}).join(''):'<p class="tempty">Rien à prévoir pour l\'instant.</p>')}
-    h+='<section class="tbox tday"><div class="ch"><span class="ic lav"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg></span><h2>Aujourd\'hui</h2></div>'+today+'</section>';
-    /* À venir : voyage + événements des 7 prochains jours */
-    var up='';if(nt)up+='<button class="tripnext t-trip '+tripState(nt).k+'" data-act="trip-open" data-id="'+esc(nt.id)+'">'+tripRowInner(nt)+'</button>';
-    if(cal.status==='ok'){var ev=cal.events.filter(function(e){return e&&HID.indexOf(e.id)<0}).map(function(e){return {e:e,i:evInfo(e)}}).filter(function(x){return x.i&&x.i.n>=0&&x.i.n<=7}).slice(0,6);
-      up+=ev.length?ev.map(function(x){var i=x.i,d=i.d,day=i.n<=0?"Aujourd'hui":i.n===1?'Demain':cap(d.toLocaleDateString('fr-FR',{weekday:'long'}));
-        return '<div class="row evrow"><div class="date-badge"><b>'+d.getDate()+'</b><span>'+esc(d.toLocaleDateString('fr-FR',{month:'short'}).replace('.',''))+'</span></div><div class="main"><span class="t">'+esc(EVN[x.e.id]||x.e.summary||'Sans titre')+'</span><span class="sub"><strong>'+esc(day)+'</strong> · '+esc(i.allDay?'Toute la journée':d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}))+'</span></div></div>'}).join(''):'<p class="tempty">Rien cette semaine.</p>'}
-    else up+='<p class="tempty">Chargement de l\'agenda…</p>';
-    h+='<div class="tcol"><section class="tbox"><div class="ch"><span class="ic lav"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="14" rx="3"/><path d="M4 11h16M8 3v4M16 3v4"/></svg></span><h2>À venir</h2></div>'+up+'</section>';
-    /* Courses */
-    var todo=S.courses.filter(function(c){return !c.done}).sort(function(a,b){return (a.createdAt||0)-(b.createdAt||0)});
-    h+='<section class="tbox"><div class="ch"><span class="ic lav"><svg viewBox="0 0 24 24"><path d="M4 5h2l2 10h10l2-7H7"/><circle cx="9.5" cy="19" r="1.3"/><circle cx="16.5" cy="19" r="1.3"/></svg></span><h2>Courses</h2></div>'+
-      '<form id="f-course3" class="addform" autocomplete="off"><input class="in" required maxlength="80" enterkeyhint="done" placeholder="Ajouter… ex. 2 lait" aria-label="Ajouter à la liste de courses"><button class="btn" type="submit">OK</button></form>'+
-      (todo.length?'<div class="tchips2">'+todo.map(function(c){return '<button class="tcc" data-act="c-toggle" data-id="'+esc(c.id)+'" aria-label="Dans le panier : '+esc(c.title)+'"><span class="circ">'+CHECK+'</span>'+esc(c.title)+(c.qty?' <i>'+esc(c.qty)+'</i>':'')+'</button>'}).join('')+'</div>':'<p class="tempty">La liste est vide.</p>')+'</section></div>';
-    /* Bandeau bas */
-    var nq=S.projects.filter(function(p){return !p.main&&p.status!=='done'}).length,wt=S.shop.filter(function(w){return !w.done&&Number(w.budget)>0}).reduce(function(a,w){return a+Number(w.budget)},0),nw=S.shop.filter(function(w){return !w.done}).length;
-    h+='<nav class="tstrip"><button data-act="qview-open">🔧 Quêtes secondaires <i>'+nq+'</i></button><button data-act="tab" data-tab="courses">🎁 Wishlist <i>'+nw+(wt?' · ≈ '+Math.round(wt)+' €':'')+'</i></button><button data-act="tab" data-tab="maison">🔁 Routines</button></nav>';
-    el.innerHTML=h}
   /* Routines : checklist globale de tout ce qui est en retard (rouge) ou bientôt dû (orange) */
   function renderTodoAll(){var el=$('l-todoall');if(!el)return;
     var R={r:0,o:1},GL={Kimchi:'Kimchi',Plantes:'Plantes',Maison:'Maison'};
@@ -531,10 +500,10 @@
   function unclearCart(){if(!lastClear)return;var l=lastClear;lastClear=null;hideToast();l.forEach(function(o){if(!find('courses',o.id)){S.courses.push(o);shWrite('courses',o)}});render()}
 
   /* ---- Onglets (Accueil / Maison / Courses) ---- */
-  var TAB=lsGet('maison-tab')||'home';if(['home','maison','courses','voyage','test'].indexOf(TAB)<0)TAB='home';
+  var TAB=lsGet('maison-tab')||'home';if(['home','maison','courses','voyage'].indexOf(TAB)<0)TAB='home';
   function setTab(t){TAB=t;lsSet('maison-tab',t);document.body.setAttribute('data-tab',t);
     [].forEach.call(document.querySelectorAll('.tabbar button'),function(b){var on=b.getAttribute('data-tab')===t;b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false')});
-    window.scrollTo(0,0);fitTodo();if(t==='test')renderTest();if((t==='courses'||t==='voyage')&&Date.now()-lastLoad>15000)load()}
+    window.scrollTo(0,0);fitTodo();if((t==='courses'||t==='voyage')&&Date.now()-lastLoad>15000)load()}
   function whoLabel(k){return k==='couple'?'Couple':(PEOPLE[k]||(k==='p1'?'Personne 1':k==='p2'?'Personne 2':''))}
   var UW={high:3,med:2,low:1};
   function fitTotal(){var te=$('w-total');if(!te)return;te.style.visibility='';requestAnimationFrame(function(){if(te.scrollWidth>te.clientWidth+1)te.style.visibility='hidden'})}
@@ -636,9 +605,6 @@
     if(!k)return '';var h=hPart(k.start);return vEmoji(k)+' '+k.title+' · '+relDay(dPart(k.start))+(h?' '+h:'')}
 
   /* Accueil : compte à rebours du prochain voyage (ou « Jour 2 sur 5 » pendant le voyage) */
-  function tripRowInner(t){var st=tripState(t),big=st.k==='now'?'Jour '+st.day+' sur '+st.tot:st.n===1?'Départ demain !':'Départ dans '+st.n+' jours';
-    var sub=st.k==='now'?(nextEv(t)||(hPart(t.end)?'Retour '+relDay(dPart(t.end))+' à '+hPart(t.end):big)):('Départ '+relDay(dPart(t.start))+(hPart(t.start)?' · '+hPart(t.start):''));
-    return (st.k==='soon'?'<span class="tn-n"><b>J-'+st.n+'</b></span>':'<span class="tn-em" aria-hidden="true">'+esc(tEmo(t))+'</span>')+'<span class="tn-main"><span class="tn-t">'+esc(tEmo(t)+' '+t.title)+'</span><span class="tn-s">'+esc(sub)+'</span></span>'}
   function renderTripNext(){var el=$('trip-next');if(!el)return;var t=nextTrip();
     if(!t){el.hidden=true;el.innerHTML='';return}
     var st=tripState(t),big=st.k==='now'?'Jour '+st.day+' sur '+st.tot:st.n===1?'Départ demain !':'Départ dans '+st.n+' jours';
@@ -959,23 +925,22 @@
     el.hidden=false;
   }
 
+  /* Bloc « Aujourd'hui » de l'accueil : la quête principale (prochaine étape) + les routines à faire */
   function renderMain(){
     var el=$('l-main');if(!el)return;
-    var m=S.projects.filter(function(p){return p.main&&p.status!=='done'})[0];
-    var masc='';
-    if(!m){el.innerHTML=masc+'<div class="mq-empty"><div>📌</div>Pas de quête principale<span>Ouvre une quête secondaire et épingle-la ici.</span></div>';return}
-    var ss=m.steps||[],todo=[];ss.forEach(function(x,i){if(!x.done)todo.push(i)});
-    var done=ss.length-todo.length,id=esc(m.id);
-    var head='<div class="mq-top"><div><div class="mq-lab">📌 Quête principale</div><button class="mq-title" data-act="proj-open" data-id="'+id+'">'+(m.emoji?esc(m.emoji)+' ':'')+esc(m.title)+'</button></div></div>'+masc;
-    if(!ss.length){el.innerHTML=head+'<div class="mq-step"><span class="circ" aria-hidden="true"></span><button class="mq-t" data-act="proj-open" data-id="'+id+'">Ajoute tes premières mini-quêtes</button></div>';return}
-    if(!todo.length){el.innerHTML=head+'<div class="mq-bar">'+ss.map(function(){return '<i class="on"></i>'}).join('')+'</div><div class="mq-win"><b>🎉</b>Quête accomplie !<button class="btn" data-act="main-finish" data-id="'+id+'">Choisir la suivante</button></div>';return}
-    var bar='<div class="mq-bar">'+ss.map(function(x){return '<i'+(x.done?' class="on"':'')+'></i>'}).join('')+'</div>';
-    var chips='<div class="mq-chips"><span>'+done+'/'+ss.length+'</span><span>'+todo.length+' restante'+(todo.length>1?'s':'')+'</span></div>';
-    var rows=todo.slice(0,2).map(function(i,k){
-      return '<div class="mq-step'+(k?' small':'')+'"><button class="circ" data-act="ps" data-id="'+id+'" data-i="'+i+'" aria-label="Terminer : '+esc(ss[i].t)+'"></button><button class="mq-t" data-act="proj-open" data-id="'+id+'">'+esc(ss[i].t)+'</button></div>';
-    }).join('');
-    el.innerHTML=head+bar+chips+rows;
+    var ae=document.activeElement;if(ae&&el.contains(ae)&&ae.tagName==='INPUT'&&ae.value)return;
+    var m=S.projects.filter(function(p){return p.main&&p.status!=='done'})[0],h='';
+    if(m){var ss=m.steps||[],nx=-1,id=esc(m.id),nm=esc((m.emoji?m.emoji+' ':'')+m.title);ss.some(function(x,i){if(!x.done){nx=i;return true}});var dn=ss.filter(function(x){return x.done}).length;
+      h+='<div class="tq"><div class="tq-k">📌 Quête principale'+(ss.length?' · '+dn+'/'+ss.length:'')+'</div>'+
+        (nx>=0?'<div class="tq-row"><button class="chk" data-act="ps" data-id="'+id+'" data-i="'+nx+'" aria-label="Terminer : '+esc(ss[nx].t)+'">'+CHECK+'</button><button class="tq-t" data-act="proj-open" data-id="'+id+'"><b>'+nm+'</b><span>→ '+esc(ss[nx].t)+'</span></button></div>'
+          :ss.length?'<div class="tq-row"><button class="tq-t" data-act="proj-open" data-id="'+id+'"><b>'+nm+'</b><span>Toutes les étapes sont faites 🎉</span></button><button class="btn tq-next" data-act="main-finish" data-id="'+id+'">Choisir la suivante</button></div>'
+          :'<button class="tq-t" data-act="proj-open" data-id="'+id+'"><b>'+nm+'</b><span>Ajoute une première étape</span></button>')+'</div>'}
+    else h+='<button class="tq tq-none" data-act="qview-open"><span class="tq-k">📌 Pas de quête principale</span><span class="tq-t"><span>Ouvre les quêtes et épingles-en une</span></span></button>';
+    var R={r:0,o:1},due=S.routines.map(function(r){return {r:r,st:careState(r)}}).filter(function(x){return x.st.c==='r'||x.st.c==='o'}).sort(function(a,b){return R[a.st.c]-R[b.st.c]});
+    h+='<div class="tsec">À faire'+(due.length?' <i>'+due.length+'</i>':'')+'</div>'+(due.length?due.map(function(x){var r=x.r;return '<div class="tarow '+x.st.c+'">'+careChk(r)+'<div class="main" role="button" tabindex="0" data-act="care-open" data-id="'+esc(r.id)+'"><span class="t">'+(r.emoji?esc(r.emoji)+' ':'')+esc(r.title)+'</span><span class="sub">'+esc((r.group||'Maison')+' · '+x.st.txt)+'</span></div></div>'}).join(''):'<p class="tempty">'+(loaded.routines?'Tout est à jour ✨':'Chargement…')+'</p>');
+    el.innerHTML=h;
   }
+
 
   /* Mémoire locale : dernières données connues, affichées si le réseau manque */
   var cacheT=null,fromCache=false;
@@ -999,7 +964,7 @@
     var b=$('banner');if(!b)return;
     if(fromCache){var d=new Date(fromCache);b.innerHTML='<div class="note">Dernières données · '+esc(d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}))+'</div>'}
   }
-  function render(){renderCare();renderTodoAll();renderTest();renderTodo();renderMain();renderShop();renderCourses();renderQView();renderTrips();renderTripNext();renderVView();renderSheet(true);cacheSave()}
+  function render(){renderCare();renderTodoAll();renderTodo();renderMain();renderShop();renderCourses();renderQView();renderTrips();renderTripNext();renderVView();renderSheet(true);cacheSave()}
 
   function clock(){var n=new Date();$('hello').textContent=n.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});$('today').textContent=n.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}
   clock();setInterval(clock,15000);
@@ -1095,7 +1060,7 @@
       addDoc('routines',newCare(f.getAttribute('data-group'),sp));
       ci.value='';f.hidden=true;return;
     }
-    if(f.id==='f-course'||f.id==='f-course2'||f.id==='f-course3'){
+    if(f.id==='f-course'||f.id==='f-course2'){
       var ci2=f.querySelector('input'),pc=parseCourse(ci2.value);if(!pc.title)return;
       var dup=S.courses.filter(function(c){return nrm(c.title)===nrm(pc.title)})[0];
       if(dup){upd('courses',dup.id,{done:false,qty:pc.qty||dup.qty})}else addDoc('courses',pc);
