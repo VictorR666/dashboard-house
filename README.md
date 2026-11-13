@@ -252,7 +252,7 @@ Vérifie toujours le rendu sur téléphone (390 × 844) et sur ordinateur (1440 
 2. Ajoute la valeur dans la liste acceptée par `setTab()`.
 3. Ajoute les règles CSS `body[data-tab="xxx"]` qui disent quelles cartes afficher.
 
-**Courses** : l'affichage est volontairement simple (ni icône ni catégorie). Le rayon et l'icône sont tout de même devinés et enregistrés dans le Sheet (tableau `RAY` dans `app.js`) : il suffit de modifier `renderCourses()` pour les réafficher un jour.
+**Courses** : liste simple, sans catégorie. La colonne « rayon » du Sheet n'est plus remplie (le classement automatique par rayon a été retiré le 13/11).
 
 ## 12. Dépannage
 

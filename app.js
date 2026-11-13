@@ -111,7 +111,7 @@
       var g=nrm(o.group);o.group=g.indexOf('plant')===0?'Plantes':g.indexOf('kim')===0||g.indexOf('chien')===0?'Kimchi':'Maison'}
     if(k==='shop'){o.budget=o.budget?(Number(String(o.budget).replace(/[^\d.,]/g,'').replace(',','.'))||''):'';
       var w=nrm(o.who);o.who=(PEOPLE.p1&&w===nrm(PEOPLE.p1))?'p1':(PEOPLE.p2&&w===nrm(PEOPLE.p2))?'p2':'couple';o.urgency=URG[nrm(o.urgency)]||'med';o.done=yes(o.done)}
-    if(k==='courses'){o.done=yes(o.done);o.rayon=rayonOf(o.rayon,o.title);if(!o.emoji)o.emoji=RAYK[o.rayon].e}
+    if(k==='courses'){o.done=yes(o.done)}
     if(k==='voyages'){o.type=vType(o.type)||(o.trip?'activite':'voyage');o.start=nDT(o.start);o.end=nDT(o.end);o.done=yes(o.done);
       if(o.price!=null&&o.price!=='')o.price=Number(String(o.price).replace(',','.'))||'';
       if(o.type==='valise')o.items=String(o.notes||'').split(/\n/).map(function(x){return x.trim()}).filter(Boolean).map(function(x){return {t:x.replace(DONE_RE,''),done:DONE_RE.test(x)}})}
@@ -125,7 +125,6 @@
       if(k==='shop'&&f==='who')return (v==='p1'||v==='p2')&&PEOPLE[v]?PEOPLE[v]:'Couple';
       if(k==='shop'&&f==='urgency')return URGL[v]||'Bientôt';
       if((k==='shop'&&f==='done')||(k==='projects'&&f==='main')||(k==='courses'&&f==='done'))return v?'oui':'';
-      if(k==='courses'&&f==='rayon')return (RAYK[v]||RAYK.autre).l;
       if(k==='voyages'&&f==='type')return VT[v]||'Activité';
       if(k==='voyages'&&f==='done')return v?'oui':'';
       if(k==='voyages'&&f==='notes'&&o.type==='valise')return (o.items||[]).map(function(x){return (x.done?'✓ ':'')+x.t}).join('\n');
@@ -459,32 +458,13 @@
       (fin.length?'<button type="button" class="lnk donetog" data-act="qdone-tog" aria-expanded="'+qShowDone+'">'+(qShowDone?'▾':'▸')+' Terminées ('+fin.length+')</button>'+(qShowDone?fin.map(qCard).join(''):''):'');
   }
 
-  /* ---- Courses : classement automatique par rayon ---- */
-  var RAY=[
-    {k:'fruits',l:'Fruits et légumes',e:'🥕',re:/pomme|poire|banane|orange|citron|fraise|raisin|kiwi|avocat|tomate|salade|carotte|courgette|aubergine|poivron|oignon|ail\b|echalote|pomme de terre|patate|champignon|epinard|brocoli|chou|concombre|poireau|herbe|persil|basilic|coriandre|menthe|fruit|legume|mangue|ananas|melon|pasteque|radis|betterave|haricot vert|celeri/},
-    {k:'frais',l:'Frais',e:'🧀',re:/lait|yaourt|yogourt|fromage|beurre|creme|oeuf|œuf|jambon|lardon|saucisse|knack|chorizo|houmous|tofu|skyr|mozzarella|parmesan|feta|comte|emmental|chevre|pate a tarte|pate feuilletee|pate brisee|kimchi\b/},
-    {k:'viande',l:'Viande et poisson',e:'🥩',re:/poulet|boeuf|bœuf|steak|viande|porc|veau|agneau|dinde|canard|hache|saumon|thon frais|poisson|cabillaud|crevette|moule|filet/},
-    {k:'boulangerie',l:'Boulangerie',e:'🥖',re:/pain|baguette|brioche|croissant|viennoiserie|tortilla|wrap|pita|burger bun|biscotte/},
-    {k:'epicerie',l:'Épicerie',e:'🥫',re:/pate|pates|riz|semoule|quinoa|lentille|pois chiche|haricot|conserve|thon|sardine|farine|sucre|sel\b|poivre|huile|vinaigre|moutarde|ketchup|mayo|sauce|epice|cafe|the\b|tisane|cereale|muesli|flocon|biscuit|gateau|chocolat|confiture|miel|nutella|chips|apero|olive|bouillon|levure|soupe|noix|amande|cacahuete/},
-    {k:'boissons',l:'Boissons',e:'🧃',re:/eau\b|eau gazeuse|jus|soda|coca|limonade|sirop|vin\b|biere|bière|cidre|champagne|lait vegetal|lait d'avoine|kombucha/},
-    {k:'surgeles',l:'Surgelés',e:'🧊',re:/surgele|glace|congele|frite|pizza surgelee|petits pois surgeles/},
-    {k:'hygiene',l:'Hygiène',e:'🧴',re:/savon|gel douche|shampo|apres-shampo|dentifrice|brosse a dent|deo|deodorant|coton|rasoir|mousse a raser|creme hydratante|protection|tampon|serviette hygienique|papier toilette|pq\b|mouchoir|lingette/},
-    {k:'entretien',l:'Entretien',e:'🧽',re:/lessive|adoucissant|eponge|liquide vaisselle|pastille|tablette lave|sac poubelle|sopalin|essuie-tout|javel|nettoyant|vinaigre blanc|produit|alu|film|papier cuisson|ampoule|pile/},
-    {k:'animaux',l:'Animaux',e:'🐕',re:/croquette|patee|friandise|os a macher|litiere|kimchi/},
-    {k:'autre',l:'Autre',e:'🛒',re:/$^/}
-  ];
-  var RAYK={};RAY.forEach(function(r){RAYK[r.k]=r});
-  function rayonOf(label,title){
-    var n=nrm(label);if(n){for(var i=0;i<RAY.length;i++)if(nrm(RAY[i].l)===n||RAY[i].k===n)return RAY[i].k}
-    var t=nrm(title);for(var j=0;j<RAY.length;j++)if(RAY[j].re.test(t))return RAY[j].k;
-    return 'autre';
-  }
+  /* ---- Courses ---- */
   function parseCourse(v){ /* « 2 lait », « lait x2 », « 🥛 lait 1L » */
     var sp=splitEmoji(v),t=sp.title,q='',m;
     if((m=t.match(/^(\d+[.,]?\d*\s?(?:kg|g|l|cl|ml|x)?)\s+(.+)$/i))){q=m[1];t=m[2]}
     else if((m=t.match(/^(.+?)\s+x\s?(\d+)$/i))){t=m[1];q=m[2]}
-    t=t.trim().slice(0,60);var r=rayonOf('',t);
-    return {title:t,qty:q.slice(0,12),rayon:r,emoji:sp.emoji||RAYK[r].e,done:false};
+    t=t.trim().slice(0,60);
+    return {title:t,qty:q.slice(0,12),emoji:sp.emoji||'',done:false};
   }
   function renderCourses(){
     var el=$('l-courses');if(!el)return;
@@ -534,7 +514,7 @@
     var tot=S.shop.filter(function(w){return !w.done&&Number(w.budget)>0}).reduce(function(t,w){return t+Number(w.budget)},0);
     var te=$('w-total');if(te){te.textContent=tot?'≈ '+Math.round(tot).toLocaleString('fr-FR')+' €':'';fitTotal()}
     el.innerHTML=list.length?list.map(function(w){
-      var meta=[];if(Number(w.budget)>0)meta.push('<b>'+Math.round(Number(w.budget))+' €</b>');if(whoLabel(w.who))meta.push(esc(whoLabel(w.who)));if(w.urgency==='high')meta.push('🔥 Vite');else if(w.urgency==='low')meta.push('🌱 Un jour');
+      var meta=[];if(Number(w.budget)>0)meta.push('<b>'+Math.round(Number(w.budget))+' €</b>');var wl=w.who==='couple'?'Couple':PEOPLE[w.who];if(wl)meta.push(esc(wl));if(w.urgency==='high')meta.push('🔥 Vite');else if(w.urgency==='low')meta.push('🌱 Un jour');
       return '<button class="wrow'+(w.done?' done':'')+(w.urgency==='high'?' hot':'')+'" data-act="wish-open" data-id="'+esc(w.id)+'"><span class="em" aria-hidden="true">'+esc(w.emoji||'🎁')+'</span><span class="main"><span class="t">'+esc(w.title)+'</span>'+(meta.length?'<span class="sub">'+meta.join(' · ')+'</span>':'')+'</span></button>';
     }).join(''):'<span class="empty" style="padding:0">'+(loaded.shop?'Rien pour le moment, ajoute une envie !':'Chargement…')+'</span>';
   }

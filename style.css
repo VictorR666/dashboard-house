@@ -729,3 +729,6 @@ body[data-tab="maison"] .grid>.s-todoall{display:flex;grid-column:1/-1}
 .mq-top{padding-right:0}
 /* Plus de bouton Synchroniser : la synchro est automatique */
 .sync{display:none!important}
+/* v29 : onglet Courses — le champ d'ajout est toujours visible, sans « + » */
+body[data-tab="courses"] #f-course{display:flex!important}
+body[data-tab="courses"] .s-courses [data-act="course-toggle"]{display:none}

@@ -107,8 +107,7 @@ def main():
                     assert page.is_visible('.sheet-card .bigdone'); page.click('.sheet-x'); page.wait_for_timeout(200)
                 page.click('.tabbar [data-tab=courses]'); page.wait_for_timeout(300)
                 if name == 'mobile':
-                    page.click('[data-act=course-toggle] >> visible=true')
-                    page.wait_for_timeout(150); assert page.inner_text('[data-act=course-toggle] >> visible=true').strip() == '−', 'le + ne devient pas −'
+                    assert page.is_visible('#c-title'), 'le champ d\'ajout doit être visible dans l\'onglet Courses'
                     for item in ['2 lait', 'pain', 'tomates x3']:
                         page.fill('#c-title', item); page.keyboard.press('Enter'); page.wait_for_timeout(150)
                     page.wait_for_timeout(800)
