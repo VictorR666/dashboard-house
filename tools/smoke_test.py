@@ -134,12 +134,12 @@ def main():
                 page.click('.h2btn'); page.wait_for_timeout(400)
                 if name == 'mobile':
                     before = state['projects'][0][4]
-                    page.click('#qv-list .qcard >> nth=0 >> .chk >> nth=1'); page.wait_for_timeout(700)
+                    page.click('#qt-list .qcard >> nth=0 >> .chk >> nth=1'); page.wait_for_timeout(700)
                     assert state['projects'][0][4] != before, 'étape non cochée'
                     page.click('[data-act=undo-upd]'); page.wait_for_timeout(700)
                     assert state['projects'][0][4] == before, 'annulation ratée'
                 page.screenshot(path=f'{OUT}/{name}-quetes.png')
-                page.click('[data-act=qview-close]'); page.wait_for_timeout(300)
+                assert page.is_visible('.qhero'), 'onglet Quêtes'; page.click('.tabbar [data-tab=home]'); page.wait_for_timeout(300)
                 # ---- Voyages ----
                 assert page.is_visible('#trip-next'), 'pas de compte à rebours sur l\'accueil'
                 page.screenshot(path=f'{OUT}/{name}-accueil-voyage.png')

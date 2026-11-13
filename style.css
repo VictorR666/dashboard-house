@@ -964,3 +964,27 @@ body[data-tab="maison"] .grid>.rsep{display:flex;align-items:center;gap:12px;gri
 .rsep::after{content:"";flex:1;height:1.5px;background:rgba(141,123,240,.18)}
 @media (max-width:899px),(orientation:portrait){.head .viewtg{width:auto;justify-self:end}.head{column-gap:8px}}
 @media (max-width:899px),(orientation:portrait){.head .weather{min-width:0;max-width:100%;padding:4px 10px 4px 6px;gap:4px;overflow:hidden}.weather .w-ic{width:30px;height:30px}.weather .w-temp{font-size:22px}}
+/* v56 : onglet Quêtes */
+.qtab{display:none}
+body[data-tab="quetes"] .grid,body[data-tab="quetes"] .head{display:none}
+body[data-tab="quetes"]{overflow:auto;display:block}
+body[data-tab="quetes"] .wrap{justify-content:flex-start}
+body[data-tab="quetes"] .qtab{display:flex;flex-direction:column;gap:14px;max-width:860px;width:100%;margin:0 auto;padding-bottom:100px}
+.qt-head{display:flex;align-items:center;gap:12px;padding:4px 2px}
+.qt-head h2{font-size:28px;flex:1}
+.qt-head .mini{font-size:12px;padding:7px 14px}
+.qtab>.addform{margin:0}
+.qt-list{display:flex;flex-direction:column;gap:14px}
+.qhero{display:flex;flex-direction:column;gap:8px}
+.qhero-h{display:flex;align-items:flex-end;justify-content:space-between;padding:0 6px;margin-bottom:-22px;position:relative;z-index:1}
+.qhero-h span{font-size:12px;font-weight:800;color:var(--lav);padding-bottom:30px}
+.qhero-h img{width:64px;height:auto}
+.qhero .qcard{border:2.5px solid transparent;background:linear-gradient(#fff,#fff) padding-box,linear-gradient(135deg,#6F5BDD,#A898FF 50%,#8D7BF0) border-box;box-shadow:0 12px 30px rgba(111,91,221,.16);padding-top:20px}
+.qhero .qc-main{display:none}
+.qhero.empty p{margin:0;background:#fff;border-radius:24px;padding:22px 18px 18px;font-size:14px;font-weight:700;color:var(--ink2);box-shadow:0 0 0 1.5px rgba(141,123,240,.12)}
+.qt-sec{font-size:12px;font-weight:800;color:var(--ink2);margin:8px 4px 0;display:flex;align-items:center;gap:10px}
+.qt-sec i{font-style:normal;color:var(--lav)}
+.qt-sec::after{content:"";flex:1;height:1.5px;background:rgba(141,123,240,.18)}
+.qtab .donetog{margin:4px}
+/* l'ancienne page plein écran : en-tête sans rectangle visible */
+.qv-head{background:none;-webkit-backdrop-filter:none;backdrop-filter:none}

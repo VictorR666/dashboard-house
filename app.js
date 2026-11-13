@@ -394,7 +394,7 @@
     if(v==='courses'){cview(true,true)}
     else if(v==='todo'){setTab('maison')}
     else if(v==='voyage'){setTab('voyage')}
-    else if(v==='quetes'){qview(true,true)}
+    else if(v==='quetes'){setTab('quetes')}
     else if(v==='wish'){setTab('courses');setTimeout(function(){var w=document.querySelector('.s-wish');if(w)w.scrollIntoView({block:'start',behavior:'smooth'})},60)}
     else if(v==='agenda'){agOpen=true;tEdit=null;tplMgr=false;tplEdit=null;bilPop=null;renderSheet()}}
   /* Routines : checklist globale de tout ce qui est en retard (rouge) ou bientôt dû (orange) */
@@ -523,6 +523,21 @@
       (us.length?'<div class="nlinks">'+us.map(function(u){return '<a class="btn ghost" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">↗ '+esc(u.replace(/^https?:\/\/(www\.)?/,'').split('/')[0])+'</a>'}).join('')+'</div>':'')+
       '<div class="qc-f"><button class="lnk" data-act="proj-open" data-id="'+id+'">Modifier…</button></div></article>';
   }
+  /* Onglet Quêtes : la quête principale mise en avant (avec Kimchi), puis les quêtes secondaires */
+  var qtDone=false;
+  function renderQTab(){var L=$('qt-list');if(!L||TAB!=='quetes')return;
+    var ae=document.activeElement;if(ae&&$('qtab').contains(ae)&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA')&&ae.value)return;
+    if(ae&&ae.matches&&ae.matches('#qtab select.pr'))return;
+    var isFin=function(o){var ss=o.steps||[];return o.status==='done'||(ss.length&&ss.every(function(x){return x.done}))};
+    var srt=function(a,b){var sa=a.status==='doing'?0:1,sb=b.status==='doing'?0:1;if(sa!==sb)return sa-sb;var q=(PW[b.prio]||2)-(PW[a.prio]||2);if(q)return q;return (a.createdAt||0)-(b.createdAt||0)};
+    var m=S.projects.filter(function(o){return o.main&&!isFin(o)})[0];
+    var act=S.projects.filter(function(o){return !isFin(o)&&o!==m}).sort(srt),fin=S.projects.filter(isFin).sort(srt);
+    var hero=m?'<div class="qhero"><div class="qhero-h"><span>📌 Quête principale</span><img src="assets/kimchi-anim.svg" alt=""></div>'+qCard(m)+'</div>'
+      :'<div class="qhero empty"><div class="qhero-h"><span>📌 Quête principale</span><img src="assets/kimchi.svg" alt=""></div><p>Pas encore de quête principale. Touche 📌 sur une quête pour la mettre en avant.</p></div>';
+    L.innerHTML=(loaded.projects?hero:'<p class="empty">Chargement…</p>')+
+      '<div class="qt-sec">Quêtes secondaires'+(act.length?' <i>'+act.length+'</i>':'')+'</div>'+
+      (act.length?'<div class="qv-list">'+act.map(qCard).join('')+'</div>':'<p class="empty">Aucune autre quête. Une idée ? Ajoute-la avec « + Nouvelle ».</p>')+
+      (fin.length?'<button type="button" class="lnk donetog" data-act="qt-done" aria-expanded="'+qtDone+'">'+(qtDone?'▾':'▸')+' Terminées ('+fin.length+')</button>'+(qtDone?'<div class="qv-list">'+fin.map(qCard).join('')+'</div>':''):'')}
   function renderQView(){
     if(!qOpen)return;var L=$('qv-list');if(!L)return;
     var ae=document.activeElement;if(ae&&L.contains(ae)&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA')&&ae.value)return;
@@ -577,10 +592,10 @@
   function unclearCart(){if(!lastClear)return;var l=lastClear;lastClear=null;hideToast();l.forEach(function(o){if(!find('courses',o.id)){S.courses.push(o);shWrite('courses',o)}});render()}
 
   /* ---- Onglets (Accueil / Maison / Courses) ---- */
-  var TAB=lsGet('maison-tab')||'home';if(TAB==='test')TAB='home';if(['home','maison','courses','voyage'].indexOf(TAB)<0)TAB='home';
+  var TAB=lsGet('maison-tab')||'home';if(TAB==='test')TAB='home';if(['home','maison','courses','voyage','quetes'].indexOf(TAB)<0)TAB='home';
   function setTab(t){TAB=t;lsSet('maison-tab',t);document.body.setAttribute('data-tab',t);
     [].forEach.call(document.querySelectorAll('.tabbar button'),function(b){var on=b.getAttribute('data-tab')===t;b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false')});
-    window.scrollTo(0,0);fitTodo();if(t==='home')renderHub();if((t==='courses'||t==='voyage')&&Date.now()-lastLoad>15000)load()}
+    window.scrollTo(0,0);fitTodo();if(t==='home')renderHub();if(t==='quetes')renderQTab();if((t==='courses'||t==='voyage')&&Date.now()-lastLoad>15000)load()}
   function whoLabel(k){return k==='couple'?'Couple':(PEOPLE[k]||(k==='p1'?'Personne 1':k==='p2'?'Personne 2':''))}
   var UW={high:3,med:2,low:1};
   function fitTotal(){var te=$('w-total');if(!te)return;te.style.visibility='';requestAnimationFrame(function(){if(te.scrollWidth>te.clientWidth+1)te.style.visibility='hidden'})}
@@ -1043,7 +1058,7 @@
     var b=$('banner');if(!b)return;
     if(fromCache){var d=new Date(fromCache);b.innerHTML='<div class="note">Dernières données · '+esc(d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}))+'</div>'}
   }
-  function render(){renderCare();renderTodoAll();renderHub();renderTodo();renderMain();renderShop();renderCourses();renderQView();renderTrips();renderTripNext();renderVView();renderSheet(true);cacheSave()}
+  function render(){renderCare();renderTodoAll();renderHub();renderQTab();renderTodo();renderMain();renderShop();renderCourses();renderQView();renderTrips();renderTripNext();renderVView();renderSheet(true);cacheSave()}
 
   function clock(){var n=new Date();$('hello').textContent=n.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});$('today').textContent=n.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}
   clock();setInterval(clock,15000);
@@ -1109,7 +1124,9 @@
     else if(a==='c-unclear'){unclearCart()}
     else if(a==='cview-open'){cview(true,true)}
     else if(a==='cview-close'){cview(false,true)}
-    else if(a==='qview-open'){qview(true,true)}
+    else if(a==='qview-open'){setTab('quetes')}
+    else if(a==='qt-done'){qtDone=!qtDone;renderQTab()}
+    else if(a==='qadd3-toggle'){var q3=$('f-qadd3');q3.hidden=!q3.hidden;if(!q3.hidden)$('q-title3').focus()}
     else if(a==='qview-close'){qview(false,true)}
     else if(a==='qdone-tog'){qShowDone=!qShowDone;renderQView()}
     else if(a==='qadd-toggle'){var qf=$('f-qadd');qf.hidden=!qf.hidden;if(!qf.hidden)$('q-title').focus()}
@@ -1128,10 +1145,10 @@
 
   /* Les boutons + deviennent − quand leur formulaire est ouvert */
   function syncPlus(){
-    var pairs=[['[data-act="add-toggle"]','#f-add'],['[data-act="wishq-toggle"]','#f-wish'],['[data-act="course-toggle"]','#f-course'],['[data-act="qadd-toggle"]','#f-qadd']];
+    var pairs=[['[data-act="qadd3-toggle"]','#f-qadd3'],['[data-act="add-toggle"]','#f-add'],['[data-act="wishq-toggle"]','#f-wish'],['[data-act="course-toggle"]','#f-course'],['[data-act="qadd-toggle"]','#f-qadd']];
     GROUPS.forEach(function(g){pairs.push(['[data-act="care-add"][data-group="'+g+'"]','form.care-add[data-group="'+g+'"]'])});
     pairs.forEach(function(p){var b=document.querySelector(p[0]),f=document.querySelector(p[1]);if(!b||!f)return;var open=!f.hidden;
-      b.setAttribute('aria-expanded',open);b.textContent=p[0].indexOf('qadd')>=0?(open?'− Fermer':'+ Nouvelle'):(open?'−':'+')});
+      b.setAttribute('aria-expanded',open);b.textContent=p[0].indexOf('qadd')>=0||p[0].indexOf('qadd3')>=0?(open?'− Fermer':'+ Nouvelle'):(open?'−':'+')});
   }
   document.addEventListener('click',function(){setTimeout(syncPlus,0)});
   document.addEventListener('submit',function(){setTimeout(syncPlus,0)});
@@ -1157,6 +1174,7 @@
       pi.value='';setPack(pt.id,cur.concat([{t:pv,done:false}]));
       var pi2=document.querySelector('#vv-body [data-packinput]');if(pi2)pi2.focus();return;
     }
+    if(f.id==='f-qadd3'){var q3t=$('q-title3'),q3s=splitEmoji(q3t.value);if(!q3s.title&&!q3s.emoji)return;addDoc('projects',newProj(q3s));q3t.value='';f.hidden=true;return}
     if(f.id==='f-qadd'){
       var qt=$('q-title'),sq0=splitEmoji(qt.value);if(!sq0.title&&!sq0.emoji)return;
       addDoc('projects',newProj(sq0));qt.value='';f.hidden=true;return;
@@ -1219,7 +1237,7 @@
 
   setTab(TAB);setView(VIEW);
   render();renderCal();
-  if(location.hash==='#quetes')qview(true,false);
+  if(location.hash==='#quetes'){try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}setTab('quetes')}
   if(location.hash==='#courses')cview(true,false);
   if(location.hash==='#voyage'){var lv=lsGet('maison-trip');if(lv){setTab('voyage');vview(lv,false)}else{try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}}
   if(!API||!KEY){showLogin('')}
