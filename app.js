@@ -607,11 +607,12 @@
   /* Accueil : compte à rebours du prochain voyage (ou « Jour 2 sur 5 » pendant le voyage) */
   function renderTripNext(){var el=$('trip-next');if(!el)return;var t=nextTrip();
     if(!t){el.hidden=true;el.innerHTML='';return}
-    var st=tripState(t),nx=st.k==='now'?(nextEv(t)||(hPart(t.end)?'🏠 Retour '+relDay(dPart(t.end))+' à '+hPart(t.end):'')):(st.n<=3&&hPart(t.start)?'🚆 Départ '+relDay(dPart(t.start))+' à '+hPart(t.start):'');
-    var big=st.k==='now'?'Jour '+st.day+' sur '+st.tot:st.n===1?'Départ demain !':'Départ dans '+st.n+' jours';
+    var st=tripState(t),big=st.k==='now'?'Jour '+st.day+' sur '+st.tot:st.n===1?'Départ demain !':'Départ dans '+st.n+' jours';
+    /* Même gabarit qu'un événement « À venir » : pastille à gauche, titre, une ligne de détail */
+    var sub=st.k==='now'?(nextEv(t)||(hPart(t.end)?'Retour '+relDay(dPart(t.end))+' à '+hPart(t.end):big)):('Départ '+relDay(dPart(t.start))+(hPart(t.start)?' · '+hPart(t.start):''));
     el.className='tripnext '+st.k;el.setAttribute('data-id',t.id);el.setAttribute('aria-label','Voyage '+t.title+' : '+big);
-    el.innerHTML=(st.k==='soon'?'<span class="tn-n"><b>'+st.n+'</b>'+(st.n>1?'jours':'jour')+'</span>':'<span class="tn-em" aria-hidden="true">'+esc(tEmo(t))+'</span>')+
-      '<span class="tn-main"><span class="tn-t">'+esc((st.k==='soon'?tEmo(t)+' ':'')+t.title)+'</span><span class="tn-s">'+esc(big)+'</span>'+(nx?'<span class="tn-x">'+esc(nx)+'</span>':'')+'</span>';
+    el.innerHTML=(st.k==='soon'?'<span class="tn-n"><b>'+st.n+'</b><span>'+(st.n>1?'jours':'jour')+'</span></span>':'<span class="tn-em" aria-hidden="true">'+esc(tEmo(t))+'</span>')+
+      '<span class="tn-main"><span class="tn-t">'+esc(tEmo(t)+' '+t.title)+'</span><span class="tn-s">'+esc(sub)+'</span></span>';
     el.hidden=false}
 
   /* Onglet Voyages : la liste des voyages */
