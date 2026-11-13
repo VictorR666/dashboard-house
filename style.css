@@ -1000,10 +1000,7 @@ body[data-tab="voyage"] .grid>.s-voyage::before{display:none}
 /* ---- v58 : onglet Test — accueil « scène » ---- */
 .k2-hi{font-size:17px;line-height:1.25}
 .hub3{display:none}
-body[data-tab="test"] .grid,body[data-tab="test"] .ptitle,body[data-tab="test"] .viewtg,body[data-tab="test"] .mascot{display:none}
-body[data-tab="test"]{overflow:auto;display:block}
-body[data-tab="test"] .wrap{justify-content:flex-start}
-body[data-tab="test"] .hub3{display:flex;flex-direction:column;gap:12px;max-width:560px;width:100%;margin:0 auto;padding-bottom:100px}
+body[data-tab="home"][data-view="simple"] .hub3{display:flex;flex-direction:column;gap:12px;max-width:560px;width:100%;margin:0 auto;padding-bottom:100px}
 .sc-head{text-align:center;padding:4px 8px 0}
 .sc-head h2{font-size:24px;line-height:1.15}
 .sc-head p{margin:6px 0 0;font-size:14px;font-weight:700;color:var(--ink2)}
@@ -1035,7 +1032,7 @@ body[data-tab="test"] .hub3{display:flex;flex-direction:column;gap:12px;max-widt
 .sc-dk{display:flex;flex-direction:column;align-items:center;gap:6px;border:0;border-radius:20px;background:#fff;padding:12px 6px;font:inherit;font-size:14px;font-weight:800;color:var(--ink);cursor:pointer;box-shadow:0 0 0 1.5px rgba(141,123,240,.10)}
 .sc-dk span{font-size:24px}
 /* v59 : Test — carte météo avec Kimchi et le texte ; « En ce moment » */
-body[data-tab="test"] .weather{display:none!important}
+body[data-tab="home"][data-view="simple"] .weather{display:none!important}
 .scene{position:relative;min-height:236px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
 .scene.rain,.scene.grey{background:linear-gradient(180deg,#D7E0F0 0%,#EAEFF8 75%,#F4F6FB 100%)}
 .scene.snow{background:linear-gradient(180deg,#E3E9F5 0%,#F2F5FB 100%)}
@@ -1061,3 +1058,26 @@ body[data-tab="test"] .weather{display:none!important}
 .sc-trip .fd i{width:24px;height:34px}.sc-trip .fd b{font-size:21px}.sc-trip .fsep{height:34px}
 .sc-ev{display:flex;align-items:center;gap:12px;width:100%;border:0;border-radius:22px;background:#fff;padding:10px 14px 10px 10px;font:inherit;text-align:left;color:var(--ink);cursor:pointer;box-shadow:0 0 0 1.5px rgba(141,123,240,.10),0 8px 20px rgba(141,123,240,.08)}
 .sc-ev .k2-evd{background:var(--n-bg);width:46px}
+/* v60 : la vue simple = la scène météo ; l'ancienne carte (hub2) n'est plus affichée */
+.hub2{display:none!important}
+body[data-tab="home"][data-view="simple"] .hub3{padding-bottom:calc(max(10px,env(safe-area-inset-bottom,0px)) + 76px)}
+body[data-tab="home"][data-view="simple"]{padding-bottom:0}
+body[data-tab="home"][data-view="simple"] .sc-txt h2{font-size:19px}
+/* Onglet Agenda : seulement la carte « À venir », avec un titre de page */
+body[data-tab="agenda"] .grid>.card:not(.s-cal){display:none}
+body[data-tab="agenda"] .head{display:none}
+body[data-tab="agenda"] .ptitle{display:flex}
+body[data-tab="agenda"]{overflow:auto;display:block}
+body[data-tab="agenda"] .wrap{justify-content:flex-start;max-width:1180px}
+body[data-tab="agenda"] .grid{display:block;padding-bottom:100px;max-width:760px;margin:0 auto;width:100%}
+body[data-tab="agenda"] .grid>.s-cal{height:auto;overflow:visible}
+body[data-tab="agenda"] .s-cal>.ch{display:none}
+body[data-tab="agenda"] .s-cal .body{overflow:visible}
+.tabbar button{min-width:0;padding:5px 8px 4px}
+/* v60 : la bascule de vue est en bas de page, plus dans l'en-tête */
+.viewtg,body[data-tab="home"] .viewtg{display:none!important}
+.viewbot{display:block;align-self:center;margin:18px auto 0;border:0;background:none;padding:8px 12px;font:inherit;font-size:12px;font-weight:800;color:var(--ink2);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.viewbot-d{display:none}
+body[data-tab="home"][data-view="detail"] .viewbot-d{display:block}
+@media (max-width:899px),(orientation:portrait){body[data-tab="home"][data-view="detail"] .viewbot-d{margin-bottom:20px}}
+@media (min-width:900px) and (orientation:landscape){body[data-tab="home"][data-view="detail"] .viewbot-d{position:fixed;left:16px;bottom:12px;margin:0}}

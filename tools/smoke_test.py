@@ -93,10 +93,12 @@ def main():
                 assert page.get_attribute('body', 'data-view') == ('simple' if name == 'mobile' else 'detail')
                 page.screenshot(path=f'{OUT}/{name}-accueil-simple.png') if name == 'mobile' else None
                 if name == 'mobile':
-                    assert page.locator('.k2-dock .dk').count() == 6, 'raccourcis de la vue simple'
-                    page.click('[data-act=hub-go][data-v=agenda]'); page.wait_for_timeout(300)
-                    assert 'Vétérinaire' in page.inner_text('.sheet-card'); page.click('.sheet-x'); page.wait_for_timeout(200)
-                    page.click('#viewtg'); page.wait_for_timeout(300)
+                    assert page.is_visible('.scene') and page.is_visible('.sc-trip'), 'vue simple (scène météo)'
+                    page.click('.sc-ev'); page.wait_for_timeout(300)
+                    assert page.get_attribute('body', 'data-tab') == 'agenda' and 'Vétérinaire' in page.inner_text('#l-cal'), 'onglet Agenda'
+                    page.screenshot(path=f'{OUT}/{name}-agenda.png')
+                    page.click('.tabbar [data-tab=home]'); page.wait_for_timeout(300)
+                    page.click('.viewbot >> visible=true'); page.wait_for_timeout(300)
                 page.screenshot(path=f'{OUT}/{name}-accueil.png')
                 page.click('.tabbar [data-tab=maison]'); page.wait_for_timeout(300)
                 page.screenshot(path=f'{OUT}/{name}-routines.png', full_page=True)
