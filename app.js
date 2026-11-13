@@ -281,13 +281,14 @@
   }
   function renderSheet(soft){
     var sh=$('sheet');if(!sh)return;
-    if(soft&&(wishOpen||evEdit||tEdit||tplMgr||tplEdit||bilPop))return;
+    if(soft&&(wishOpen||evEdit||tEdit||tplMgr||tplEdit||bilPop||agOpen))return;
     var ae=document.activeElement,refocus=false;
     if(ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA')&&sh.contains(ae)){
       if(soft&&ae.value)return;
       refocus=ae.hasAttribute('data-stepinput');
     }
     if(evEdit){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card" role="dialog" aria-modal="true" aria-label="Renommer"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">×</button><div class="panel"><div class="pj-title">Renommer l\'événement</div><div class="lab">Nom affiché</div><input class="in" maxlength="80" data-evn value="'+esc(evEdit.v)+'" aria-label="Nom affiché"><div class="hint">Nom d\'origine : '+esc(evEdit.orig)+'<br>Le changement ne modifie que le dashboard, pas Google Agenda.</div><div class="prow"><button class="lnk" data-act="ev-reset">Nom d\'origine</button><button class="btn valid" data-act="ev-save">Valider</button></div></div></div>';sh.hidden=false;var ei=sh.querySelector('[data-evn]');if(ei){ei.focus();ei.select()}return}
+    if(agOpen&&!evEdit){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card wide" role="dialog" aria-modal="true" aria-label="Agenda"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">×</button>'+agendaPanel()+'</div>';sh.hidden=false;return}
     if(bilPop){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card" role="dialog" aria-modal="true" aria-label="Billets"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">×</button>'+bilPanel()+'</div>';sh.hidden=false;return}
     if(tplMgr||tplEdit){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card wide" role="dialog" aria-modal="true" aria-label="Listes types"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">×</button>'+tplPanel()+'</div>';sh.hidden=false;return}
     if(tEdit){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card wide" role="dialog" aria-modal="true" aria-label="'+esc(VT[tEdit.type]||'Voyage')+'"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">×</button>'+tPanel()+'</div>';sh.hidden=false;return}
@@ -328,7 +329,16 @@
     if(late.length===1)return {t:'Une petite chose',s:esc((late[0].r.emoji?late[0].r.emoji+' ':'')+late[0].r.title)+' attend depuis un moment.'};
     if(late.length)return {t:late.length+' petites choses',s:'Rien de grave, ça se fait en deux minutes.'};
     return {t:'Presque tout est à jour',s:due.length+' truc'+(due.length>1?'s':'')+' à faire bientôt, sans urgence.'}}
-  function renderHub(){var el=$('hub');if(!el||TAB!=='test')return;
+  /* Vue simple (raccourcis) ou détaillée (toutes les cartes) : choix gardé sur chaque appareil */
+  var VIEW=lsGet('maison-view');if(VIEW!=='simple'&&VIEW!=='detail')VIEW=matchMedia('(min-width:900px) and (orientation:landscape)').matches?'detail':'simple';
+  function setView(v){VIEW=v==='detail'?'detail':'simple';lsSet('maison-view',VIEW);document.body.setAttribute('data-view',VIEW);
+    [].forEach.call(document.querySelectorAll('[data-act="view-set"]'),function(b){var on=b.getAttribute('data-v')===VIEW;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
+    renderHub();fitTodo();window.scrollTo(0,0)}
+  var agOpen=false;
+  function agendaPanel(){var nt=$('trip-next'),cl=$('l-cal');
+    return '<div class="panel ag"><div class="pj-title">📅 Agenda</div>'+(nt&&!nt.hidden?nt.outerHTML.replace(' id="trip-next"',''):'')+'<div class="ag-list">'+(cl?cl.innerHTML:'')+'</div>'+
+      '<div class="prow"><button class="lnk" data-act="ag-detail">Voir la vue détaillée</button><a class="btn ghost" href="https://calendar.google.com/calendar/u/0/r/week" target="_blank" rel="noopener noreferrer" data-close>Google Agenda ↗</a></div></div>'}
+  function renderHub(){var el=$('hub');if(!el||TAB!=='home'||VIEW!=='simple')return;
     var md=hubMood(),now=new Date();
     /* La prochaine chose qui arrive : un événement aujourd'hui/demain, sinon le prochain voyage */
     var nxt='';if(cal.status==='ok'){var e=cal.events.filter(function(x){return x&&HID.indexOf(x.id)<0}).map(function(x){return {e:x,i:evInfo(x)}}).filter(function(x){return x.i&&x.i.n>=0&&(x.i.n>0||x.i.allDay||x.i.d>now)})[0];
@@ -357,7 +367,7 @@
     else if(v==='voyage'){var nt=nextTrip();setTab('voyage');if(nt)vview(nt.id,true)}
     else if(v==='quetes'){qview(true,true)}
     else if(v==='wish'){setTab('courses');setTimeout(function(){var w=document.querySelector('.s-wish');if(w)w.scrollIntoView({block:'start',behavior:'smooth'})},60)}
-    else if(v==='agenda'){setTab('home');setTimeout(function(){var c=document.querySelector('.s-cal');if(c)c.scrollIntoView({block:'start',behavior:'smooth'})},60)}}
+    else if(v==='agenda'){agOpen=true;tEdit=null;tplMgr=false;tplEdit=null;bilPop=null;renderSheet()}}
   /* Routines : checklist globale de tout ce qui est en retard (rouge) ou bientôt dû (orange) */
   function renderTodoAll(){var el=$('l-todoall');if(!el)return;
     var R={r:0,o:1},GL={Kimchi:'Kimchi',Plantes:'Plantes',Maison:'Maison'};
@@ -538,10 +548,10 @@
   function unclearCart(){if(!lastClear)return;var l=lastClear;lastClear=null;hideToast();l.forEach(function(o){if(!find('courses',o.id)){S.courses.push(o);shWrite('courses',o)}});render()}
 
   /* ---- Onglets (Accueil / Maison / Courses) ---- */
-  var TAB=lsGet('maison-tab')||'home';if(['home','maison','courses','voyage','test'].indexOf(TAB)<0)TAB='home';
+  var TAB=lsGet('maison-tab')||'home';if(TAB==='test')TAB='home';if(['home','maison','courses','voyage'].indexOf(TAB)<0)TAB='home';
   function setTab(t){TAB=t;lsSet('maison-tab',t);document.body.setAttribute('data-tab',t);
     [].forEach.call(document.querySelectorAll('.tabbar button'),function(b){var on=b.getAttribute('data-tab')===t;b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false')});
-    window.scrollTo(0,0);fitTodo();if(t==='test')renderHub();if((t==='courses'||t==='voyage')&&Date.now()-lastLoad>15000)load()}
+    window.scrollTo(0,0);fitTodo();if(t==='home')renderHub();if((t==='courses'||t==='voyage')&&Date.now()-lastLoad>15000)load()}
   function whoLabel(k){return k==='couple'?'Couple':(PEOPLE[k]||(k==='p1'?'Personne 1':k==='p2'?'Personne 2':''))}
   var UW={high:3,med:2,low:1};
   function fitTotal(){var te=$('w-total');if(!te)return;te.style.visibility='';requestAnimationFrame(function(){if(te.scrollWidth>te.clientWidth+1)te.style.visibility='hidden'})}
@@ -1030,10 +1040,12 @@
       if(pv&&pq){upd('projects',id,{steps:steps(pq).concat([{t:pv,done:false}])})}
       projId=null;confirmDel=null;renderSheet()}
     else if(vClick(a,b,id)){}
-    else if(a==='sheet-close'){iconOpen=false;tEdit=null;tplMgr=false;tplEdit=null;bilPop=null;evEdit=null;wishOpen=null;projId=null;openId=null;calFor=null;confirmDel=null;renderSheet()}
+    else if(a==='sheet-close'){iconOpen=false;tEdit=null;tplMgr=false;tplEdit=null;bilPop=null;if(evEdit){evEdit=null;renderSheet();return}agOpen=false;evEdit=null;wishOpen=null;projId=null;openId=null;calFor=null;confirmDel=null;renderSheet()}
     else if(a==='care-add'){var cf=document.querySelector('form.care-add[data-group="'+b.getAttribute('data-group')+'"]');if(cf){cf.hidden=!cf.hidden;if(!cf.hidden)cf.querySelector('input').focus()}}
     else if(a==='care-chk'){careToggle(id)}
     else if(a==='hub-go'){hubGo(b.getAttribute('data-v'))}
+    else if(a==='view-set'){setView(b.getAttribute('data-v'))}
+    else if(a==='ag-detail'){agOpen=false;renderSheet();setView('detail');setTimeout(function(){var c=document.querySelector('.s-cal');if(c)c.scrollIntoView({block:'start'})},60)}
     else if(a==='ta-done'){var pv2=snap('routines',id,['lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText']);setDate(id,iso(new Date()));offerUndo('routines',id,pv2,'Marqué comme fait ✓')}
     else if(a==='done-today'){var pv=snap('routines',id,['lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText']);openId=null;calFor=null;setDate(id,iso(new Date()));renderSheet();offerUndo('routines',id,pv,'Marqué comme fait ✓')}
     else if(a==='undo'){openId=null;calFor=null;undoDate(id);renderSheet()}
@@ -1164,7 +1176,7 @@
   document.addEventListener('visibilitychange',function(){if(!document.hidden){tick();load()}});
   document.addEventListener('keydown',function(e){
     var t=e.target;
-    if(e.key==='Escape'&&(openId||projId||wishOpen||evEdit||tEdit||tplMgr||tplEdit||bilPop)){tEdit=null;tplMgr=false;tplEdit=null;bilPop=null;evEdit=null;wishOpen=null;projId=null;openId=null;calFor=null;confirmDel=null;renderSheet();return}
+    if(e.key==='Escape'&&(openId||projId||wishOpen||evEdit||tEdit||tplMgr||tplEdit||bilPop||agOpen)){tEdit=null;tplMgr=false;tplEdit=null;bilPop=null;agOpen=false;evEdit=null;wishOpen=null;projId=null;openId=null;calFor=null;confirmDel=null;renderSheet();return}
     if(e.key==='Escape'&&qOpen){qview(false,true);return}
     if(e.key==='Escape'&&cOpen){cview(false,true);return}
     if(e.key==='Escape'&&vOpen){vview(null,true);return}
@@ -1174,7 +1186,7 @@
   window.addEventListener('offline',syncNote);
   window.addEventListener('online',function(){retryMs=3000;syncNote();flush();load()});
 
-  setTab(TAB);
+  setTab(TAB);setView(VIEW);
   render();renderCal();
   if(location.hash==='#quetes')qview(true,false);
   if(location.hash==='#courses')cview(true,false);

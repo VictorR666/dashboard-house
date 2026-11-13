@@ -817,11 +817,11 @@ body[data-tab="courses"] .s-courses [data-act="course-toggle"]{display:none}
 .qc-f{justify-content:flex-end}
 /* ---- Onglet Test : accueil en raccourcis ---- */
 .hub{display:none}
-body[data-tab="test"] .grid{display:none}
-body[data-tab="test"] .hub{display:flex;flex-direction:column;gap:16px;padding-bottom:96px}
-body[data-tab="test"]{overflow:auto;display:block}
-body[data-tab="test"] .wrap{justify-content:flex-start}
-body[data-tab="test"] .mascot{display:none}
+body[data-tab="home"][data-view="simple"] .grid{display:none}
+body[data-tab="home"][data-view="simple"] .hub{display:flex;flex-direction:column;gap:16px;padding-bottom:96px}
+body[data-tab="home"][data-view="simple"]{overflow:auto;display:block}
+body[data-tab="home"][data-view="simple"] .wrap{justify-content:flex-start}
+body[data-tab="home"][data-view="simple"] .mascot{display:none}
 .hub-hero{display:flex;align-items:center;gap:14px;border-radius:28px;padding:16px 18px;border:2.5px solid transparent;
   background:linear-gradient(#fff,#fff) padding-box,linear-gradient(135deg,#6F5BDD,#A898FF 50%,#8D7BF0) border-box;box-shadow:0 12px 30px rgba(111,91,221,.16)}
 .hub-k{flex:none;width:88px;height:auto}
@@ -838,3 +838,14 @@ body[data-tab="test"] .mascot{display:none}
 .hub-s{font-size:12px;font-weight:700;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 .hub-t.hot .hub-s{color:var(--o-ink)}
 @media (min-width:900px) and (orientation:landscape){.hub-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.hub{max-width:860px;margin:0 auto;width:100%}}
+/* v44 : bascule Vue simple / Vue détaillée, seulement sur l'accueil */
+.viewsw{display:none;align-self:flex-end;width:auto;flex:none;padding:3px}
+body[data-tab="home"] .viewsw{display:flex}
+.viewsw button{flex:none;padding:5px 12px;font-size:12px}
+.panel.ag .ag-list{display:flex;flex-direction:column;gap:7px;max-height:60vh;overflow:auto}
+.panel.ag .tripnext{width:100%;max-width:none;margin:0;flex-wrap:wrap;row-gap:10px;border-radius:20px;padding:8px 12px 8px 8px;box-shadow:0 0 0 1.5px rgba(141,123,240,.12)}
+.panel.ag .tn-n,.panel.ag .tn-em{width:46px;height:46px}
+.panel.ag .tn-n b{font-family:var(--font-d);font-weight:600;font-size:14px;color:var(--lav)}
+.panel.ag .tn-t{font-size:14px;font-weight:800}.panel.ag .tn-s{font-size:12px;font-weight:700;color:var(--lav)}
+.panel.ag .prow{justify-content:space-between}.panel.ag .prow a{text-decoration:none}
+@media (max-width:899px),(orientation:portrait){.viewsw{align-self:stretch}.viewsw button{flex:1}}
