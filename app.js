@@ -277,6 +277,16 @@
   function delDoc(key,id){S[key]=S[key].filter(function(x){return x.id!==id});render();return shDel(key,id)}
   var lastDel=null,toastT=null;
   function hideToast(){clearTimeout(toastT);var el=$('toast');if(el){el.hidden=true;el.innerHTML=''}}
+  /* Modification annulable : bouton « Annuler » quelques secondes */
+  var lastUpd=null;
+  function snap(key,id,fields){var it=find(key,id);if(!it)return null;var o={};fields.forEach(function(k){o[k]=it[k]===undefined?null:JSON.parse(JSON.stringify(it[k]))});return o}
+  function offerUndo(key,id,prev,label){
+    if(!prev)return;lastUpd={key:key,id:id,prev:prev};var el=$('toast');if(!el)return;
+    el.innerHTML='<span>'+esc(label)+'</span><button type="button" data-act="undo-upd">Annuler</button>';el.hidden=false;
+    clearTimeout(toastT);toastT=setTimeout(function(){lastUpd=null;hideToast()},6000);
+  }
+  function updUndo(key,id,data,label){var prev=snap(key,id,Object.keys(data));upd(key,id,data);offerUndo(key,id,prev,label)}
+  function undoUpd(){if(!lastUpd)return;var u=lastUpd;lastUpd=null;hideToast();upd(u.key,u.id,u.prev)}
   function delUndo(key,id,label){
     var it=find(key,id);if(!it)return;
     lastDel={key:key,item:JSON.parse(JSON.stringify(it))};delDoc(key,id);
@@ -585,15 +595,16 @@
     if(e.target.closest&&e.target.closest('select.pr'))return;
     var b=e.target.closest('[data-act]');if(!b)return;
     var a=b.getAttribute('data-act'),id=b.getAttribute('data-id'),it;
-    if(a==='pset'){var f=b.getAttribute('data-f'),v=b.getAttribute('data-v');if((f==='prio'&&PRIO[v])||(f==='status'&&NEXT[v])){var o2={};o2[f]=v;upd('projects',id,o2)}}
-    else if(a==='ps'){it=find('projects',id);if(it){var st=steps(it);var i=Number(b.getAttribute('data-i'));if(st[i]){st[i].done=!st[i].done;upd('projects',id,{steps:st})}}}
+    if(a==='pset'){var f=b.getAttribute('data-f'),v=b.getAttribute('data-v');if((f==='prio'&&PRIO[v])||(f==='status'&&NEXT[v])){var o2={};o2[f]=v;if(f==='status'&&v==='done')updUndo('projects',id,o2,'Quête terminée');else upd('projects',id,o2)}}
+    else if(a==='ps'){it=find('projects',id);if(it){var st=steps(it);var i=Number(b.getAttribute('data-i'));if(st[i]){st[i].done=!st[i].done;updUndo('projects',id,{steps:st},st[i].done?'Mini-quête validée ✓':'Mini-quête décochée')}}}
     else if(a==='proj-open'){iconOpen=false;projId=id;openId=null;confirmDel=null;renderSheet()}
     else if(a==='pmain'){it=find('projects',id);if(it){if(it.main){upd('projects',id,{main:false})}else{S.projects.forEach(function(q){if(q.main&&q.id!==id)upd('projects',q.id,{main:false})});upd('projects',id,{main:true})}projId=null;renderSheet()}}
-    else if(a==='main-finish'){upd('projects',id,{main:false,status:'done'})}
+    else if(a==='main-finish'){updUndo('projects',id,{main:false,status:'done'},'Quête accomplie 🎉')}
     else if(a==='ppick'){iconOpen=false;upd('projects',id,{emoji:b.getAttribute('data-e'),autoIcon:false});renderSheet()}
     else if(a==='icon-toggle'){iconOpen=!iconOpen;renderSheet()}
     else if(a==='pdel'){projId=null;confirmDel=null;renderSheet();delUndo('projects',id,'Quête supprimée')}
     else if(a==='undo-del'){restoreDel()}
+    else if(a==='undo-upd'){undoUpd()}
     else if(a==='pick-emoji'){iconOpen=false;upd('routines',id,{emoji:b.getAttribute('data-e'),autoIcon:false});renderSheet()}
     else if(a==='care-open'){iconOpen=false;projId=null;openId=id;calFor=null;confirmDel=null;renderSheet()}
     else if(a==='proj-save'){var si2=document.querySelector('.sheet-card [data-stepinput]'),pv=si2&&si2.value.trim().slice(0,120),pq=find('projects',id);
@@ -601,7 +612,7 @@
       projId=null;confirmDel=null;renderSheet()}
     else if(a==='sheet-close'){iconOpen=false;evEdit=null;wishOpen=null;projId=null;openId=null;calFor=null;confirmDel=null;renderSheet()}
     else if(a==='care-add'){var cf=document.querySelector('form.care-add[data-group="'+b.getAttribute('data-group')+'"]');if(cf){cf.hidden=!cf.hidden;if(!cf.hidden)cf.querySelector('input').focus()}}
-    else if(a==='done-today'){openId=null;calFor=null;setDate(id,iso(new Date()));renderSheet()}
+    else if(a==='done-today'){var pv=snap('routines',id,['lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText']);openId=null;calFor=null;setDate(id,iso(new Date()));renderSheet();offerUndo('routines',id,pv,'Marqué comme fait ✓')}
     else if(a==='undo'){openId=null;calFor=null;undoDate(id);renderSheet()}
     else if(a==='del'){var rg=(find('routines',id)||{}).group;openId=null;calFor=null;confirmDel=null;renderSheet();delUndo('routines',id,rg==='Plantes'?'Plante supprimée':rg==='Kimchi'?'Tâche de Kimchi supprimée':'Tâche maison supprimée')}
     else if(a==='wishq-toggle'){var fw=$('f-wish');fw.hidden=!fw.hidden;if(!fw.hidden)$('w-title').focus()}
@@ -625,7 +636,7 @@
     else if(a==='wf-got'){upd('shop',wishOpen,{done:!wd.done});wishOpen=null;renderSheet()}
     else if(a==='wf-del'){var wid=wishOpen;wishOpen=null;renderSheet();delUndo('shop',wid,'Envie supprimée')}
     else if(a==='tab'){setTab(b.getAttribute('data-tab'))}
-    else if(a==='c-toggle'){it=find('courses',id);if(it)upd('courses',id,{done:!it.done})}
+    else if(a==='c-toggle'){it=find('courses',id);if(it)updUndo('courses',id,{done:!it.done},it.done?'Remis dans la liste':'Dans le panier ✓')}
     else if(a==='c-del'){delUndo('courses',id,'Article supprimé')}
     else if(a==='c-clear'){clearCart()}
     else if(a==='c-unclear'){unclearCart()}
