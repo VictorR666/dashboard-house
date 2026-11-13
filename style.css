@@ -685,3 +685,6 @@ body[data-tab="maison"] .grid>.s-todoall{display:flex;grid-column:1/-1}
 .tarow.o .sub{color:var(--o-ink)}.tarow.r .sub{color:var(--r-ink)}
 #l-todoall{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:8px}
 #l-todoall .empty{grid-column:1/-1}
+.ico-undo{width:1.05em;height:1.05em;flex:none;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.15em;margin-right:4px}
+.plinks .lnk,.prow .lnk{display:inline-flex;align-items:center}
+.evx .ico-undo{margin:0;width:13px;height:13px}

@@ -10,6 +10,7 @@
   var NEXT={todo:'doing',doing:'done',done:'todo'};
   var loaded={};
   var cal={status:'loading',events:[]};
+  var UNDO='<svg class="ico-undo" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>';
   var CHECK='<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   function $(id){return document.getElementById(id)}
@@ -264,7 +265,7 @@
     return '<div class="panel" data-id="'+esc(r.id)+'">'+
       '<div class="ph">'+(r.emoji?'<span class="phem">'+esc(r.emoji)+'</span>':'')+'<div><div class="phn">'+esc(r.title)+'</div><div class="pstate">'+esc(st.txt)+'</div></div></div>'+
       '<button class="bigdone" data-act="done-today" data-id="'+esc(r.id)+'">✓ FAIT</button>'+
-      '<div class="plinks"><button class="lnk" data-act="cal-toggle" data-id="'+esc(r.id)+'">📅 Fait une autre date</button>'+(r.hasPrev?'<button class="lnk" data-act="undo" data-id="'+esc(r.id)+'">↶ Annuler</button>':'')+'</div>'+
+      '<div class="plinks"><button class="lnk" data-act="cal-toggle" data-id="'+esc(r.id)+'">📅 Fait une autre date</button>'+(r.hasPrev?'<button class="lnk" data-act="undo" data-id="'+esc(r.id)+'">'+UNDO+'Annuler</button>':'')+'</div>'+
       (calFor===r.id?calHtml(r):'')+
       '<hr class="sep">'+
       '<div class="lab">Rappel</div>'+
@@ -549,7 +550,7 @@
       '<div><div class="lab">Idée de prix</div><a class="btn ghost wamz" id="wf-amz" href="'+esc(amz)+'" target="_blank" rel="noopener noreferrer">🔎 Chercher sur Amazon</a></div></div>'+
       '<div class="lab">Lien</div><div class="lrow"><input class="in" maxlength="500" data-wf="link" value="'+esc(wd.link||'')+'" placeholder="https://…" aria-label="Lien">'+(lk?'<a class="btn ghost" href="'+esc(lk)+'" target="_blank" rel="noopener noreferrer">Ouvrir ↗</a>':'')+'</div>'+
       '<div class="lab">Note</div><input class="in" maxlength="200" data-wf="note" value="'+esc(wd.note||'')+'" placeholder="Taille, couleur, magasin…" aria-label="Note">'+
-      '<div class="prow">'+(isNew?'':'<button class="lnk del" data-act="wf-del">Supprimer</button><button class="lnk" data-act="wf-got">'+(wd.done?'↺ Pas encore':'✓ Obtenu')+'</button>')+'<button class="btn valid" data-act="wf-save">'+(isNew?'Ajouter':'Valider')+'</button></div></div>';
+      '<div class="prow">'+(isNew?'':'<button class="lnk del" data-act="wf-del">Supprimer</button><button class="lnk" data-act="wf-got">'+(wd.done?UNDO+'Pas encore':'✓ Obtenu')+'</button>')+'<button class="btn valid" data-act="wf-save">'+(isNew?'Ajouter':'Valider')+'</button></div></div>';
   }
   function wishSave(){
     var sp=splitEmoji(wd.title||'');var title=sp.title||'';if(!title){var ti=document.querySelector('[data-wf="title"]');if(ti)ti.focus();return}
@@ -688,7 +689,7 @@
     var srt=items.map(function(x,i){return {x:x,i:i}}).sort(function(a,b){return (a.x.done?1:0)-(b.x.done?1:0)||a.i-b.i});
     return '<div class="vpack"><div class="qc-prog"><div class="bar"><i style="width:'+pc+'%"></i></div><span>'+done+'/'+items.length+(done===items.length?' · prête ! 🎉':'')+'</span></div>'+form+
       '<ul class="steps">'+srt.map(function(o){var x=o.x,i=o.i;return '<li class="step'+(x.done?' done':'')+'"><button class="chk" data-act="pack-tog" data-i="'+i+'" aria-label="'+(x.done?'Ressortir : ':'Dans la valise : ')+esc(x.t)+'">'+CHECK+'</button><span>'+esc(x.t)+'</span><button class="sx" data-act="pack-del" data-i="'+i+'" aria-label="Retirer : '+esc(x.t)+'" title="Retirer">×</button></li>'}).join('')+'</ul>'+
-      '<div class="prow">'+(done?'<button class="lnk" data-act="pack-reset">↺ Tout décocher</button>':'')+'<button class="lnk" data-act="tpl-from-pack">💾 Enregistrer comme liste type</button></div>'+chips+'</div>'}
+      '<div class="prow">'+(done?'<button class="lnk" data-act="pack-reset">'+UNDO+'Tout décocher</button>':'')+'<button class="lnk" data-act="tpl-from-pack">💾 Enregistrer comme liste type</button></div>'+chips+'</div>'}
   function vProg(t){var sp=tripSpan(t),K=kids(t.id).filter(function(k){return k.type!=='valise'}),ds=[sp.s,sp.e];
     K.forEach(function(k){if(k.start)ds.push(dPart(k.start));if(k.end)ds.push(dPart(k.end))});
     ds=ds.filter(Boolean).sort();
@@ -912,7 +913,7 @@
     else{el.innerHTML='<p class="empty">L\'agenda ne répond pas pour le moment.<br><button class="btn" data-act="cal-go">Réessayer</button></p>'}
   }
   var calRange=lsGet('maison-cal-range')||'week',HID=[],showHid=false,EVN={},evEdit=null;
-  function hideBtn(id,on){return '<button class="evx" data-act="ev-hide" data-id="'+esc(id)+'" aria-label="'+(on?'Réafficher':'Masquer')+'" title="'+(on?'Réafficher':'Masquer')+'">'+(on?'↺':'×')+'</button>'}
+  function hideBtn(id,on){return '<button class="evx" data-act="ev-hide" data-id="'+esc(id)+'" aria-label="'+(on?'Réafficher':'Masquer')+'" title="'+(on?'Réafficher':'Masquer')+'">'+(on?UNDO:'×')+'</button>'}
   function evSave(reset){if(!evEdit)return;var v=String(evEdit.v||'').trim().slice(0,80);if(reset||!v||v===evEdit.orig)delete EVN[evEdit.id];else EVN[evEdit.id]=v;saveSetting('eventNames',EVN);evEdit=null;renderSheet();renderCal()}
   function setHid(list){HID=list;saveSetting('hiddenEvents',list);renderCal()}
 
