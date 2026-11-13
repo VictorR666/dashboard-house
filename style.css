@@ -781,3 +781,22 @@ body[data-tab="courses"] .s-courses [data-act="course-toggle"]{display:none}
 .grid>.s-main{border:2.5px solid transparent;background:linear-gradient(#fff,#fff) padding-box,linear-gradient(135deg,#6F5BDD 0%,#A898FF 50%,#8D7BF0 100%) border-box;box-shadow:0 12px 30px rgba(111,91,221,.18)}
 /* v38 : séparateur entre la semaine en cours et les événements suivants dans « À venir » */
 .s-cal .body>.sec-label{border-top:1.5px solid rgba(141,123,240,.16);padding-top:14px;margin:10px 4px 2px}
+/* v40 : compte à rebours des prochaines vacances dans l'en-tête */
+.hdr-cd{display:flex;flex-direction:column;align-items:center;gap:6px;margin-left:auto;border:0;background:rgba(255,255,255,.88);border-radius:22px;padding:8px 14px 10px;font:inherit;color:var(--ink);cursor:pointer;box-shadow:0 0 0 1.5px rgba(141,123,240,.10),0 8px 20px rgba(141,123,240,.10)}
+.hdr-cd:not([hidden])~.weather{margin-left:0}
+.hc-k{font-size:12px;font-weight:800;color:var(--ink2);white-space:nowrap}.hc-k b{color:var(--ink)}
+.hdr-cd .fd i{width:22px;height:30px;border-radius:6px}.hdr-cd .fd b{font-size:19px}
+.hdr-cd .fsep{height:30px;gap:6px}.hdr-cd .fsep b{width:4px;height:4px}
+.hdr-cd .fg{gap:2px}.hdr-cd .fg small{font-size:9px}
+@media (max-width:899px),(orientation:portrait){
+  .hdr-cd{grid-column:1/-1;grid-row:2;margin:0;width:100%;flex-direction:row;justify-content:space-between;padding:10px 14px}
+  .hc-k{white-space:normal;font-size:12px;line-height:1.25;max-width:110px}
+  .hdr-cd .fd i{width:20px;height:28px}.hdr-cd .fd b{font-size:17px}.hdr-cd .fsep{height:28px}
+}
+.hc-k{text-align:left}
+/* v40 : sur téléphone, le bas de l'écran (derrière la barre d'onglets et la zone du geste) est blanc comme le haut */
+@media (max-width:899px),(orientation:portrait){
+  html::before{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(env(safe-area-inset-bottom,0px) + 86px);z-index:29;pointer-events:none;
+    background:linear-gradient(to bottom,rgba(253,252,255,0),var(--bg) 45%,var(--bg))}
+  body{background-image:radial-gradient(560px 400px at 0% 0%,#EEE9FF 0,transparent 70%)}
+}
