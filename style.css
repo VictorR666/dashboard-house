@@ -732,17 +732,13 @@ body[data-tab="maison"] .grid>.s-todoall{display:flex;grid-column:1/-1}
 /* v29 : onglet Courses — le champ d'ajout est toujours visible, sans « + » */
 body[data-tab="courses"] #f-course{display:flex!important}
 body[data-tab="courses"] .s-courses [data-act="course-toggle"]{display:none}
-/* v30 : le voyage dans « À venir » a exactement le gabarit d'un événement */
-.s-cal .tripnext{background:var(--n-bg);box-shadow:none;border-radius:20px;padding:8px 10px 8px 12px;gap:10px;margin:0 0 7px;align-items:center}
-.s-cal .tripnext.now{background:var(--g-bg)}
-.s-cal .tn-n,.s-cal .tn-em{width:46px;height:auto;min-height:0;border-radius:15px;background:#fff;padding:4px 0;line-height:1.05}
-.s-cal .tn-n b{font-family:var(--font-d);font-size:17px;color:var(--ink)}
-.s-cal .tn-n span{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.02em;color:var(--peach)}
-.s-cal .tn-em{font-size:22px;padding:6px 0}
+/* v32 : le voyage dans « À venir » garde son style (carte blanche, pastille ronde) ; seuls les textes sont alignés sur ceux des événements */
 .s-cal .tn-t{font-size:14px;font-weight:800}
 .s-cal .tn-s{font-size:12px;font-weight:700;color:var(--lav)}
 .s-cal .tripnext.now .tn-s{color:var(--g-ink)}
-@media (max-width:899px),(orientation:portrait){.s-cal .tripnext{padding:11px 14px;margin:0 0 10px}}
+.s-cal .tn-n b{font-family:var(--font-d);font-weight:600;font-size:14px;color:var(--lav);white-space:nowrap}
+.s-cal .tn-n,.s-cal .tn-em{width:46px;height:46px}
+.s-cal .tripnext{align-items:center}
 /* v31 : plantes — le rond à part à gauche, les textes alignés à gauche ensemble */
 .ptile{display:flex;align-items:center}
 .ptile .pn{display:block}
