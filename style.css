@@ -435,3 +435,24 @@ body[data-tab="courses"] .s-courses{grid-column:span 2}
 .mini{min-height:24px;min-width:28px}
 .ico-arrow{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;display:block}
 .s-courses .addform .in{padding:6px 12px;font-size:13.5px}
+
+/* Courses en plein écran (mode magasin) */
+.cview .qv-in{max-width:640px}
+.cv-add{margin:0}
+.cv-add .in{font-size:16px;padding:12px 16px}
+.cv-add .btn{min-height:44px;min-width:56px;font-size:15px}
+.cv-list{display:flex;flex-direction:column;gap:8px}
+.cview .cchk{padding:14px 16px;border-radius:18px;background:#fff;box-shadow:0 0 0 1.5px rgba(141,123,240,.10),0 6px 16px rgba(141,123,240,.08)}
+.cview .crow.done .cchk{background:transparent;box-shadow:none}
+.cview .cchk .circ{width:28px;height:28px;border-width:2.5px}
+.cview .cchk .circ svg{width:15px;height:15px}
+.cview .ct{font-size:17px}
+.cview .cq{font-size:13.5px;padding:3px 11px}
+.cview .sx{width:34px;height:34px;font-size:20px}
+.cview .cart-h{margin-top:14px}
+.cview .empty{padding:30px 0}
+.cv-net{flex:none;font-size:12px;font-weight:800;border-radius:999px;padding:5px 11px;background:var(--o-bg);color:var(--o-ink)}
+/* Évite le zoom automatique de l'iPhone sur les champs */
+@media (max-width:899px),(orientation:portrait){.in{font-size:16px}}
+/* Bouton « ✓ FAIT » : visible mais plus discret */
+.bigdone{padding:11px 14px;font-size:16px;letter-spacing:.03em;border-radius:16px;box-shadow:0 4px 12px rgba(53,185,124,.25)}

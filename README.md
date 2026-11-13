@@ -61,7 +61,8 @@ Pourquoi ce montage :
   - mise à jour toutes les 15 s quand l'onglet est ouvert, 60 s sinon.
 - **Wishlist** : budget, pour qui, urgence, lien, recherche Amazon.
 - **Annulation** : après chaque validation (mini-quête, quête terminée, routine « fait », article mis au panier) ou suppression, un bouton « Annuler » reste affiché 6 secondes.
-- **Fonctionnement hors ligne en lecture** : les dernières données et l'app sont gardées sur l'appareil.
+- **Courses en plein écran** (`#courses`, clic sur le titre « Courses › ») : grandes cases pour le magasin, écran gardé allumé (Wake Lock) quand le navigateur le permet.
+- **Hors ligne** : l'app et les dernières données restent sur l'appareil. Chaque modification va d'abord dans une **file d'attente locale** (`localStorage`, clé `maison-outbox`), puis part vers le script dès que le réseau répond, avec de nouveaux essais espacés progressivement. Un petit bandeau indique les modifs en attente. Rien n'est perdu si l'app est fermée hors ligne.
 
 ## 3. Architecture
 
@@ -81,7 +82,7 @@ Pourquoi ce montage :
   - soit par un lien d'installation `…/#setup=<adresse encodée>` (la partie après `#` n'est jamais envoyée à un serveur) ;
   - soit en la collant dans l'écran de connexion.
 - Le **code d'accès** est vérifié à chaque requête par le script.
-- **Écritures « optimistes »** : l'app met d'abord l'interface à jour, puis envoie la ligne au script. Les envois passent par une file d'attente (une requête à la fois, un nouvel essai en cas d'échec), suivie d'un rechargement complet.
+- **Écritures « optimistes » et hors ligne** : l'app met d'abord l'interface à jour, puis ajoute l'opération (`put`, `del` ou `setting`) à une file d'attente gardée sur l'appareil (`OB`, fonctions `enqueue()` et `flush()`). Plusieurs modifications d'une même ligne sont regroupées en une seule. La file est envoyée une opération à la fois, dans l'ordre. En cas d'échec réseau, elle réessaie après 3 s, puis 6 s, 12 s… jusqu'à 60 s, et reprend dès que le téléphone retrouve le réseau. À chaque chargement, les opérations pas encore envoyées sont réappliquées par-dessus les données du serveur (`overlayOutbox()`), pour que l'interface ne « revienne pas en arrière ». En cas de conflit, c'est la dernière écriture qui gagne, ligne par ligne.
 
 ## 4. Arborescence
 

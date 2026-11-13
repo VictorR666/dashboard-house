@@ -17,7 +17,7 @@
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="preload" href="fonts/nunito-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="style.css?v=13">
 </head>
 <body>
 
@@ -37,7 +37,7 @@
     <section class="card s-main"><div class="body" id="l-main"></div></section>
     <section class="card s-proj"><div class="ch"><span class="ic peach"><svg viewBox="0 0 24 24"><path d="M14 4l6 6-3 3-6-6z"/><path d="M12.5 10.5L4 19"/></svg></span><h2><button class="h2btn" type="button" data-act="qview-open" title="Voir toutes les quêtes">Quêtes secondaires<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></h2><button class="mini" data-act="add-toggle" aria-label="Ajouter une quête" title="Ajouter">+</button></div><form id="f-add" class="addform" hidden><input class="in" id="a-title" required maxlength="80" placeholder="Une idée ? ex. faire du vin chaud" aria-label="Nouvelle idée"><button class="btn" type="submit">OK</button><button class="btn ghost" type="button" data-act="add-detail" title="Ajouter et compléter les détails" aria-label="Ajouter et compléter les détails"><svg class="ico-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></button></form><div class="body tg" id="l-todo"></div></section>
     <section class="card s-cal"><div class="ch"><span class="ic lav"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="14" rx="3"/><path d="M4 11h16M8 3v4M16 3v4"/></svg></span><h2>À venir</h2><a class="mini ico" href="https://calendar.google.com/calendar/u/0/r/week" target="_blank" rel="noopener noreferrer" aria-label="Ouvrir Google Agenda" title="Google Agenda"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></a></div><div class="body" id="l-cal"></div><div class="seg calr" id="cal-r" hidden></div></section>
-    <section class="card s-courses"><div class="ch"><span class="ic mint"><svg viewBox="0 0 24 24"><path d="M4 5h2l2 10h10l2-7H7"/><circle cx="9.5" cy="19" r="1.3"/><circle cx="16.5" cy="19" r="1.3"/></svg></span><h2>Courses <small class="h2sub" id="c-count"></small></h2><button class="mini" data-act="course-toggle" aria-label="Ajouter un article" title="Ajouter">+</button></div><form id="f-course" class="addform" autocomplete="off" hidden><input class="in" id="c-title" required maxlength="80" enterkeyhint="done" placeholder="Ajouter… ex. 2 lait" aria-label="Ajouter à la liste de courses"><button class="btn" type="submit">OK</button></form><div class="body" id="l-courses"></div></section>
+    <section class="card s-courses"><div class="ch"><span class="ic mint"><svg viewBox="0 0 24 24"><path d="M4 5h2l2 10h10l2-7H7"/><circle cx="9.5" cy="19" r="1.3"/><circle cx="16.5" cy="19" r="1.3"/></svg></span><h2><button class="h2btn" type="button" data-act="cview-open" title="Ouvrir la liste en plein écran">Courses<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button> <small class="h2sub" id="c-count"></small></h2><button class="mini" data-act="course-toggle" aria-label="Ajouter un article" title="Ajouter">+</button></div><form id="f-course" class="addform" autocomplete="off" hidden><input class="in" id="c-title" required maxlength="80" enterkeyhint="done" placeholder="Ajouter… ex. 2 lait" aria-label="Ajouter à la liste de courses"><button class="btn" type="submit">OK</button></form><div class="body" id="l-courses"></div></section>
     <section class="card s-kimchi minor"><div class="ch"><span class="ic lav"><svg viewBox="0 0 24 24"><circle cx="6.5" cy="10" r="1.8" fill="currentColor"/><circle cx="10.5" cy="6.5" r="1.8" fill="currentColor"/><circle cx="15.5" cy="6.5" r="1.8" fill="currentColor"/><circle cx="19" cy="10" r="1.8" fill="currentColor"/><path d="M12.8 11.5c-3 0-5.2 2.4-4.4 4.8.5 1.5 1.8 2.2 4.4 2.2s3.9-.7 4.4-2.2c.8-2.4-1.4-4.8-4.4-4.8z" fill="currentColor"/></svg></span><h2>Kimchi</h2><button class="mini" data-act="care-add" data-group="Kimchi" aria-label="Ajouter une tâche" title="Ajouter">+</button></div><form class="addform care-add" data-group="Kimchi" hidden><input class="in" required maxlength="80" placeholder="Nouvelle tâche (ex. 🛁 Bain)" aria-label="Nouvelle tâche pour Kimchi"><button class="btn" type="submit">OK</button><button class="btn ghost" type="button" data-act="add-detail" title="Ajouter et compléter les détails" aria-label="Ajouter et compléter les détails"><svg class="ico-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></button></form><div class="body" id="l-Kimchi"></div></section>
     <section class="card s-plantes minor"><div class="ch"><span class="ic mint"><svg viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14z"/><path d="M5 19L13 11"/></svg></span><h2>Plantes</h2><button class="mini" data-act="care-add" data-group="Plantes" aria-label="Ajouter une plante" title="Ajouter">+</button></div><form class="addform care-add" data-group="Plantes" hidden><input class="in" required maxlength="80" placeholder="Nom de la plante (ex. Ficus)" aria-label="Nouvelle plante"><button class="btn" type="submit">OK</button><button class="btn ghost" type="button" data-act="add-detail" title="Ajouter et compléter les détails" aria-label="Ajouter et compléter les détails"><svg class="ico-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></button></form><div class="body" id="l-Plantes"></div></section>
     <section class="card s-maison minor"><div class="ch"><span class="ic peach"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg></span><h2>Entretien Maison</h2><button class="mini" data-act="care-add" data-group="Maison" aria-label="Ajouter une tâche" title="Ajouter">+</button></div><form class="addform care-add" data-group="Maison" hidden><input class="in" required maxlength="80" placeholder="Nouvelle tâche (ex. 🛁 Bain)" aria-label="Nouvelle tâche pour l'entretien de la maison"><button class="btn" type="submit">OK</button><button class="btn ghost" type="button" data-act="add-detail" title="Ajouter et compléter les détails" aria-label="Ajouter et compléter les détails"><svg class="ico-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></button></form><div class="body" id="l-Maison"></div></section>
@@ -61,6 +61,17 @@
     <div id="qv-list" class="qv-list"></div>
   </div>
 </section>
+<section id="cview" class="qview cview" hidden aria-label="Liste de courses">
+  <div class="qv-in">
+    <header class="qv-head">
+      <button class="qv-back" type="button" data-act="cview-close" aria-label="Retour au dashboard">‹</button>
+      <div class="qv-tt"><h2>Courses</h2><small id="cv-count"></small></div>
+      <span id="cv-net" class="cv-net" hidden></span>
+    </header>
+    <form id="f-course2" class="addform cv-add" autocomplete="off"><input class="in" id="c-title2" required maxlength="80" enterkeyhint="done" placeholder="Ajouter… ex. 2 lait" aria-label="Ajouter à la liste de courses"><button class="btn" type="submit">OK</button></form>
+    <div id="cv-list" class="cv-list"></div>
+  </div>
+</section>
 <div id="sheet" class="sheet" hidden></div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
@@ -76,6 +87,6 @@
   </form>
 </div>
 
-<script src="app.js?v=11"></script>
+<script src="app.js?v=13"></script>
 </body>
 </html>
