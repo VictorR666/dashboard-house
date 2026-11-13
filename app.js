@@ -374,7 +374,7 @@
       h+='<div class="k2-part"><button class="k2-trip" data-act="hub-go" data-v="voyage"><span class="k2-tl">'+esc(tEmo(nt)+' '+nt.title)+(ts.k==='soon'?' dans':'')+'</span>'+cd+'</button></div>'}
     /* Raccourcis : un seul badge (À faire) ; les autres ont juste une petite info */
     var week=evs.filter(function(x){return x.i.n<=7}).length,nw=S.shop.filter(function(w){return !w.done}).length,nq=S.projects.filter(function(p){return p.status!=='done'}).length;
-    var dock=function(v,em,lab,sub,badge){return '<button class="dk" data-act="hub-go" data-v="'+v+'"><span class="dk-ic">'+em+(badge?'<b>'+badge+'</b>':'')+'</span><span class="dk-l">'+lab+'</span><span class="dk-s">'+sub+'</span></button>'};
+    var dock=function(v,em,lab,sub,badge){return '<button class="dk" data-act="hub-go" data-v="'+v+'"><span class="dk-ic">'+em+(badge?'<b>'+badge+'</b>':'')+'</span><span class="dk-l">'+lab+'</span></button>'};
     el.innerHTML='<section class="k2-card">'+h+'</section><nav class="k2-dock" aria-label="Raccourcis">'+
       dock('courses','🛒','Courses','Ma liste','')+
       dock('agenda','📅','Agenda',week?week+' cette semaine':'Semaine calme','')+
