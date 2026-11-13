@@ -728,13 +728,13 @@
     return '<article class="vcard"><div class="vc-top"><div class="vc-h" role="button" tabindex="0" data-act="v-item" data-id="'+esc(k.id)+'" aria-label="Modifier : '+esc(k.title)+'"><span class="em" aria-hidden="true">🛏️</span><div class="main"><span class="t">'+esc(k.title)+'</span>'+(k.place?'<span class="sub">'+esc(k.place)+'</span>':'')+(k.notes?'<span class="vmeta">'+esc(k.notes)+'</span>':'')+'</div></div>'+btn+'</div></article>'}
   function vAct(k){var id=esc(k.id);
     return '<article class="vcard vact'+(k.done?' done':'')+'"><div class="vc-top"><button class="chk" data-act="v-done" data-id="'+id+'" aria-label="'+(k.done?'Pas encore fait : ':'Fait : ')+esc(k.title)+'">'+CHECK+'</button><div class="vc-h" role="button" tabindex="0" data-act="v-item" data-id="'+id+'" aria-label="Modifier : '+esc(k.title)+'">'+
-      '<span class="em" aria-hidden="true">'+esc(k.emoji||'📍')+'</span><div class="main"><span class="t">'+esc(k.title)+'</span>'+(k.start?'<span class="sub">'+esc(cap(fmtDay(dPart(k.start))))+'</span>':'')+(k.notes?'<span class="vmeta">'+esc(k.notes)+'</span>':'')+'</div></div></div></article>'}
+      '<div class="main"><span class="t">'+esc(k.title)+'</span>'+(k.start?'<span class="sub">'+esc(cap(fmtDay(dPart(k.start))))+'</span>':'')+(k.notes?'<span class="vmeta">'+esc(k.notes)+'</span>':'')+'</div></div></div></article>'}
   function vMain(t){var h='';
     var dt=function(lab,p,v){return '<div class="vi-dt"><span>'+lab+'</span><input class="in" type="date" data-trip="'+p+'D" value="'+esc(dPart(v))+'" aria-label="'+lab+' : jour"><input class="in" type="time" data-trip="'+p+'T" value="'+esc(hPart(v))+'" aria-label="'+lab+' : heure"></div>'};
     h+='<section class="vinfo"><div class="vi-row"><button type="button" class="ibtn'+(vEmoOpen?' open':'')+'" data-act="trip-emo-tog" aria-label="Changer l\'icône">'+esc(tEmo(t))+'</button>'+
       '<input class="in vi-title" maxlength="80" data-trip="title" value="'+esc(t.title)+'" aria-label="Destination" placeholder="Destination"></div>'+
       (vEmoOpen?'<div class="emos pop">'+TRIPEMO.map(function(e){return '<button type="button" class="emo'+(t.emoji===e?' on':'')+'" data-act="trip-emo" data-e="'+e+'" aria-label="Icône '+e+'">'+e+'</button>'}).join('')+'</div>':'')+
-      dt('🚆 Départ','start',t.start)+dt('🏠 Retour','end',t.end)+(vNew===t.id?'<button class="btn valid vi-ok" data-act="trip-ok">Valider</button>':'')+
+      dt('🚆 Départ','start',t.start)+dt('🏠 Retour','end',t.end)+
       '</section>';
     var H=kids(t.id,'logement').sort(byStart);
     h+=vSecH('🛏️','Hébergement','logement')+(H.length?H.map(vStay).join(''):'<p class="vempty">Pas encore d\'hébergement.</p>');
@@ -743,7 +743,7 @@
     var P=packOf(t.id),pn=P?P.items.length:0,pd=P?P.items.filter(function(x){return x.done}).length:0;
     h+='<button class="vfold" data-act="pack-fold" aria-expanded="'+vPackOpen+'"><span>🧳 Valise</span><i>'+(pn?pd+'/'+pn:'vide')+'</i><b>'+(vPackOpen?'▾':'▸')+'</b></button>'+(vPackOpen?vPack(t):'');
     if(SHOW_PROG)h+='<button class="vfold" data-act="prog-fold" aria-expanded="'+vProgOpen+'"><span>🗓️ Programme jour par jour</span><i></i><b>'+(vProgOpen?'▾':'▸')+'</b></button>'+(vProgOpen?vProg(t):'');
-    h+='<div class="vdel"><button class="lnk del" data-act="trip-del">'+(vDelConfirm?'Oui, supprimer « '+esc(t.title)+' » et tout son contenu':'Supprimer ce voyage')+'</button></div>';
+    h+='<div class="vdel"><button class="lnk del" data-act="trip-del">'+(vDelConfirm?'Oui, supprimer « '+esc(t.title)+' » et tout son contenu':'Supprimer ce voyage')+'</button>'+(vNew===t.id?'<button class="btn valid vi-ok" data-act="trip-ok">Valider</button>':'')+'</div>';
     return h}
   function renderVView(){if(!vOpen)return;var B=$('vv-body');if(!B)return;
     var ae=document.activeElement,t=find('voyages',vOpen);
@@ -782,7 +782,7 @@
     var notes=function(lab,ph){return '<div class="lab">'+lab+'</div><textarea class="in notes" maxlength="1000" data-tf="notes" rows="2" placeholder="'+esc(ph)+'" aria-label="'+esc(lab)+'">'+esc(d.notes||'')+'</textarea>'};
     var h='<div class="panel tform"><div class="pj-title">'+(ty==='logement'?(isNew?'Nouvel hébergement':'Hébergement'):(isNew?'Nouvelle activité':'Activité'))+'</div>';
     if(ty==='logement')h+=inp('title','Nom','Ex. Airbnb Alfama')+inp('place','Adresse','Ex. Rua da Rosa 12, Lisbonne',200)+notes('Infos utiles (facultatif)','Code de la porte, contact…');
-    else h+='<div class="lab">Activité</div>'+iconField(d.emoji||'📍','data-tf="title"',d.title||'','Ex. Musée des azulejos','data-act="tf-set" data-f="emoji"',AEMO,d.emoji)+
+    else h+=inp('title','Activité','Ex. Musée des azulejos')+
       '<div><div class="lab">Jour (facultatif)</div><input class="in" type="date" data-tf="sD" value="'+esc(d.sD||'')+'" aria-label="Jour de l\'activité"></div>'+notes('Note (facultatif)','Horaires, à réserver avant…');
     h+='<div class="prow">'+(isNew?'':'<button class="lnk del" data-act="tf-del">Supprimer</button>')+'<button class="btn valid" data-act="tf-save">'+(isNew?'Ajouter':'Valider')+'</button></div></div>';
     return h}
@@ -791,7 +791,7 @@
     var clip=function(v,n){return String(v==null?'':v).trim().slice(0,n)};
     var data={title:title,notes:clip(d.notes,1000)};
     if(e.type==='logement')data.place=clip(d.place,200);
-    else{data.emoji=sp.emoji||d.emoji||'📍';data.start=nDate(d.sD)||''}
+    else{data.title=(sp.emoji?sp.emoji+' ':'')+title;data.start=nDate(d.sD)||''}
     tEdit=null;
     if(e.id==='new'){data.type=e.type;data.trip=d.trip;data.done=false;addDoc('voyages',data)}else upd('voyages',e.id,data);
     renderSheet()}

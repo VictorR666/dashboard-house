@@ -658,3 +658,19 @@ body{background-repeat:no-repeat}
 .bil-row{justify-content:flex-end;gap:10px}.bil-row a.btn{text-decoration:none}
 .panel.bil .in{width:100%}
 .vi-ok{width:100%;padding:12px 16px;font-size:15px;border-radius:16px;margin-top:2px}
+/* v22 : voyages en tons doux et clairs (plus de dégradés orange) */
+.vinfo,.thero,.tripnext,.s-cal .tripnext{background:#fff;box-shadow:0 0 0 1.5px rgba(141,123,240,.12),0 8px 22px rgba(141,123,240,.08)}
+.thero.now,.tripnext.now,.ttile.now{background:linear-gradient(150deg,#FFFFFF,#F1FBF6)}
+.ttile,.ttile.soon{background:#fff;box-shadow:0 0 0 1.5px rgba(141,123,240,.12)}
+.ttile.past{background:var(--n-bg)}
+.tt-em,.tn-n,.tn-em,.vinfo .ibtn{background:var(--lav-soft)}
+.tt-b,.tn-n,.tn-n b{color:var(--lav)}.tt-b{background:var(--lav-soft)}
+.th-k,.tn-s,.vi-dt span,.vcd-sub,.fg small{color:var(--ink2)}
+.vi-title,.vi-dt .in,.vi-link .in{background:var(--n-bg)}
+.fd i{background:var(--n-bg);box-shadow:inset 0 0 0 1px rgba(141,123,240,.12)}
+.fd i::after{background:rgba(141,123,240,.16)}
+.fd b{color:var(--lav)}
+.fsep b{background:#CFC6FA}
+.vdel{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
+.vdel .vi-ok{width:auto;flex:none;padding:10px 22px;margin:0}
+.vact .main{padding-left:2px}
