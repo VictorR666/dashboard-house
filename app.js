@@ -320,6 +320,44 @@
       $('l-'+g).innerHTML=list.length?list.map(g==='Plantes'?plantTile:careRow).join(''):empty('routines','Rien ici pour le moment.');
     });
   }
+  /* ---- Onglet « Test » : accueil en raccourcis (une phrase + des tuiles qui ouvrent chaque espace) ---- */
+  function hubMood(){var due=S.routines.map(function(r){return {r:r,c:careState(r).c}}).filter(function(x){return x.c==='r'||x.c==='o'});
+    var late=due.filter(function(x){return x.c==='r'});
+    if(!loaded.routines)return {t:'Coucou !',s:'Je regarde ce qui se passe à la maison…'};
+    if(!due.length)return {t:'Tout roule 🐾',s:'Rien ne presse aujourd\'hui. Kimchi approuve.'};
+    if(late.length===1)return {t:'Une petite chose',s:esc((late[0].r.emoji?late[0].r.emoji+' ':'')+late[0].r.title)+' attend depuis un moment.'};
+    if(late.length)return {t:late.length+' petites choses',s:'Rien de grave, ça se fait en deux minutes.'};
+    return {t:'Presque tout est à jour',s:due.length+' truc'+(due.length>1?'s':'')+' à faire bientôt, sans urgence.'}}
+  function renderHub(){var el=$('hub');if(!el||TAB!=='test')return;
+    var md=hubMood(),now=new Date();
+    /* La prochaine chose qui arrive : un événement aujourd'hui/demain, sinon le prochain voyage */
+    var nxt='';if(cal.status==='ok'){var e=cal.events.filter(function(x){return x&&HID.indexOf(x.id)<0}).map(function(x){return {e:x,i:evInfo(x)}}).filter(function(x){return x.i&&x.i.n>=0&&(x.i.n>0||x.i.allDay||x.i.d>now)})[0];
+      if(e&&e.i.n<=1)nxt='<button class="hub-next" data-act="hub-go" data-v="agenda">📅 '+esc(EVN[e.e.id]||e.e.summary||'Événement')+' · <b>'+(e.i.n===0?"aujourd'hui":'demain')+(e.i.allDay?'':' '+e.i.d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}))+'</b></button>'}
+    var nt=nextTrip(),ts=nt&&tripState(nt);
+    if(!nxt&&nt)nxt='<button class="hub-next" data-act="trip-open" data-id="'+esc(nt.id)+'">'+esc(tEmo(nt))+' '+esc(nt.title)+' · <b>'+(ts.k==='now'?'en cours':'J-'+ts.n)+'</b></button>';
+    var due=S.routines.filter(function(r){var c=careState(r).c;return c==='r'||c==='o'}).length;
+    var nc=S.courses.filter(function(c){return !c.done}).length;
+    var m=S.projects.filter(function(p){return p.main&&p.status!=='done'})[0],mss=m?(m.steps||[]):[],mdn=mss.filter(function(x){return x.done}).length;
+    var ev=cal.status==='ok'?cal.events.filter(function(x){return x&&HID.indexOf(x.id)<0}).map(function(x){return {e:x,i:evInfo(x)}}).filter(function(x){return x.i&&x.i.n>=0&&x.i.n<=7}).length:0;
+    var nw=S.shop.filter(function(w){return !w.done}).length;
+    var tile=function(v,em,lab,sub,hot){return '<button class="hub-t'+(hot?' hot':'')+'" data-act="hub-go" data-v="'+v+'"><span class="hub-em" aria-hidden="true">'+em+'</span><span class="hub-l">'+lab+'</span><span class="hub-s">'+sub+'</span></button>'};
+    el.innerHTML='<section class="hub-hero"><img class="hub-k" src="assets/kimchi-anim.svg" alt=""><div><h2>'+md.t+'</h2><p>'+md.s+'</p>'+nxt+'</div></section>'+
+      '<div class="hub-grid">'+
+      tile('courses','🛒','Courses',nc?nc+' article'+(nc>1?'s':''):'Liste vide')+
+      tile('todo','🧹','À faire',due?due+' chose'+(due>1?'s':''):'Tout est à jour ✨',due>0)+
+      tile('agenda','📅','Agenda',ev?ev+' cette semaine':'Semaine calme')+
+      tile('voyage',nt?esc(tEmo(nt)):'🧳','Voyages',nt?esc(nt.title)+' · '+(ts.k==='now'?'en cours':'J-'+ts.n):'Rien de prévu')+
+      tile('quetes','🗺️','Quêtes',m?esc(m.title)+(mss.length?' · '+mdn+'/'+mss.length:''):'Une idée ?')+
+      tile('wish','🎁','Envies',nw?nw+' envie'+(nw>1?'s':''):'Rien pour l\'instant')+
+      '</div>'}
+  /* Raccourcis : chaque tuile ouvre directement l'espace voulu */
+  function hubGo(v){
+    if(v==='courses'){cview(true,true)}
+    else if(v==='todo'){setTab('maison')}
+    else if(v==='voyage'){var nt=nextTrip();setTab('voyage');if(nt)vview(nt.id,true)}
+    else if(v==='quetes'){qview(true,true)}
+    else if(v==='wish'){setTab('courses');setTimeout(function(){var w=document.querySelector('.s-wish');if(w)w.scrollIntoView({block:'start',behavior:'smooth'})},60)}
+    else if(v==='agenda'){setTab('home');setTimeout(function(){var c=document.querySelector('.s-cal');if(c)c.scrollIntoView({block:'start',behavior:'smooth'})},60)}}
   /* Routines : checklist globale de tout ce qui est en retard (rouge) ou bientôt dû (orange) */
   function renderTodoAll(){var el=$('l-todoall');if(!el)return;
     var R={r:0,o:1},GL={Kimchi:'Kimchi',Plantes:'Plantes',Maison:'Maison'};
@@ -500,10 +538,10 @@
   function unclearCart(){if(!lastClear)return;var l=lastClear;lastClear=null;hideToast();l.forEach(function(o){if(!find('courses',o.id)){S.courses.push(o);shWrite('courses',o)}});render()}
 
   /* ---- Onglets (Accueil / Maison / Courses) ---- */
-  var TAB=lsGet('maison-tab')||'home';if(['home','maison','courses','voyage'].indexOf(TAB)<0)TAB='home';
+  var TAB=lsGet('maison-tab')||'home';if(['home','maison','courses','voyage','test'].indexOf(TAB)<0)TAB='home';
   function setTab(t){TAB=t;lsSet('maison-tab',t);document.body.setAttribute('data-tab',t);
     [].forEach.call(document.querySelectorAll('.tabbar button'),function(b){var on=b.getAttribute('data-tab')===t;b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false')});
-    window.scrollTo(0,0);fitTodo();if((t==='courses'||t==='voyage')&&Date.now()-lastLoad>15000)load()}
+    window.scrollTo(0,0);fitTodo();if(t==='test')renderHub();if((t==='courses'||t==='voyage')&&Date.now()-lastLoad>15000)load()}
   function whoLabel(k){return k==='couple'?'Couple':(PEOPLE[k]||(k==='p1'?'Personne 1':k==='p2'?'Personne 2':''))}
   var UW={high:3,med:2,low:1};
   function fitTotal(){var te=$('w-total');if(!te)return;te.style.visibility='';requestAnimationFrame(function(){if(te.scrollWidth>te.clientWidth+1)te.style.visibility='hidden'})}
@@ -965,7 +1003,7 @@
     var b=$('banner');if(!b)return;
     if(fromCache){var d=new Date(fromCache);b.innerHTML='<div class="note">Dernières données · '+esc(d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}))+'</div>'}
   }
-  function render(){renderCare();renderTodoAll();renderTodo();renderMain();renderShop();renderCourses();renderQView();renderTrips();renderTripNext();renderVView();renderSheet(true);cacheSave()}
+  function render(){renderCare();renderTodoAll();renderHub();renderTodo();renderMain();renderShop();renderCourses();renderQView();renderTrips();renderTripNext();renderVView();renderSheet(true);cacheSave()}
 
   function clock(){var n=new Date();$('hello').textContent=n.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});$('today').textContent=n.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}
   clock();setInterval(clock,15000);
@@ -995,6 +1033,7 @@
     else if(a==='sheet-close'){iconOpen=false;tEdit=null;tplMgr=false;tplEdit=null;bilPop=null;evEdit=null;wishOpen=null;projId=null;openId=null;calFor=null;confirmDel=null;renderSheet()}
     else if(a==='care-add'){var cf=document.querySelector('form.care-add[data-group="'+b.getAttribute('data-group')+'"]');if(cf){cf.hidden=!cf.hidden;if(!cf.hidden)cf.querySelector('input').focus()}}
     else if(a==='care-chk'){careToggle(id)}
+    else if(a==='hub-go'){hubGo(b.getAttribute('data-v'))}
     else if(a==='ta-done'){var pv2=snap('routines',id,['lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText']);setDate(id,iso(new Date()));offerUndo('routines',id,pv2,'Marqué comme fait ✓')}
     else if(a==='done-today'){var pv=snap('routines',id,['lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText']);openId=null;calFor=null;setDate(id,iso(new Date()));renderSheet();offerUndo('routines',id,pv,'Marqué comme fait ✓')}
     else if(a==='undo'){openId=null;calFor=null;undoDate(id);renderSheet()}

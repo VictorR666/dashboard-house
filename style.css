@@ -815,3 +815,26 @@ body[data-tab="courses"] .s-courses [data-act="course-toggle"]{display:none}
 .qc-pin:hover{opacity:.8;background:var(--n-bg)}
 .qc-pin.on{filter:none;opacity:1;background:var(--lav-soft)}
 .qc-f{justify-content:flex-end}
+/* ---- Onglet Test : accueil en raccourcis ---- */
+.hub{display:none}
+body[data-tab="test"] .grid{display:none}
+body[data-tab="test"] .hub{display:flex;flex-direction:column;gap:16px;padding-bottom:96px}
+body[data-tab="test"]{overflow:auto;display:block}
+body[data-tab="test"] .wrap{justify-content:flex-start}
+body[data-tab="test"] .mascot{display:none}
+.hub-hero{display:flex;align-items:center;gap:14px;border-radius:28px;padding:16px 18px;border:2.5px solid transparent;
+  background:linear-gradient(#fff,#fff) padding-box,linear-gradient(135deg,#6F5BDD,#A898FF 50%,#8D7BF0) border-box;box-shadow:0 12px 30px rgba(111,91,221,.16)}
+.hub-k{flex:none;width:88px;height:auto}
+.hub-hero h2{font-size:22px;line-height:1.15}
+.hub-hero p{margin:4px 0 0;font-size:14px;font-weight:700;color:var(--ink2)}
+.hub-next{margin-top:10px;border:0;border-radius:999px;background:var(--lav-soft);color:var(--ink);font:inherit;font-size:12px;font-weight:800;padding:6px 12px;text-align:left}
+.hub-next b{color:var(--lav)}
+.hub-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.hub-t{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:112px;border:0;border-radius:24px;background:rgba(255,255,255,.94);padding:14px 16px;font:inherit;text-align:left;color:var(--ink);cursor:pointer;
+  box-shadow:0 0 0 1.5px rgba(141,123,240,.10),0 8px 20px rgba(141,123,240,.08);transition:transform .12s}
+.hub-t:active{transform:scale(.97)}
+.hub-em{font-size:30px;line-height:1;margin-bottom:auto}
+.hub-l{font-family:var(--font-d);font-weight:600;font-size:17px;margin-top:10px}
+.hub-s{font-size:12px;font-weight:700;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.hub-t.hot .hub-s{color:var(--o-ink)}
+@media (min-width:900px) and (orientation:landscape){.hub-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.hub{max-width:860px;margin:0 auto;width:100%}}
