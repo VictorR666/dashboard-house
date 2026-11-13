@@ -565,3 +565,44 @@ body[data-tab="voyage"] .grid>.s-voyage{display:flex;grid-column:1/-1}
 .vseg{flex-wrap:wrap;border-radius:18px}.vseg button{flex:1 1 auto;white-space:nowrap;font-size:12.5px;padding:6px 8px}
 .tform input[type=date].in,.tform input[type=time].in{width:100%}
 .tform .in{width:100%}
+/* Voyage : page unique (v15) */
+.vinfo{background:linear-gradient(150deg,#FFF3EC,#FFE3D3);border-radius:24px;padding:14px;display:flex;flex-direction:column;gap:10px;box-shadow:0 0 0 1.5px rgba(255,158,115,.2),0 8px 20px rgba(255,158,115,.14)}
+.vi-row{display:flex;gap:8px;align-items:center}
+.vi-title{font-family:var(--font-d);font-size:20px!important;font-weight:600;background:rgba(255,255,255,.8);border-radius:14px}
+.vinfo .ibtn{background:#fff}
+.vinfo .emos.pop{background:rgba(255,255,255,.7)}
+.vi-dates{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.vi-dates label{display:flex;flex-direction:column;gap:3px;min-width:0}
+.vi-dates span{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--o-ink)}
+.vi-dates .in{width:100%;background:rgba(255,255,255,.8);border-radius:12px;-webkit-appearance:none;appearance:none;min-height:38px}
+.vi-cd{text-align:center}
+.vcd{display:flex;justify-content:center;gap:8px}
+.vcd span{display:flex;flex-direction:column;align-items:center;min-width:64px;background:#fff;border-radius:16px;padding:6px 10px;font-size:11px;font-weight:900;color:var(--o-ink);text-transform:uppercase}
+.vcd b{font-family:var(--font-d);font-weight:600;font-size:28px;line-height:1.05;color:#D9652F;font-variant-numeric:tabular-nums}
+.vcd-sub{display:block;margin-top:6px;font-size:13px;font-weight:800;color:var(--o-ink)}
+.vcd-now{display:block;font-weight:900;color:var(--g-ink);font-size:15px}
+.vcd-past{display:block;font-weight:800;color:var(--ink2);font-size:13px}
+.vsec-h{display:flex;align-items:center;gap:8px;margin:10px 4px 0}
+.vsec-h h3{margin:0;font-family:var(--font-d);font-weight:600;font-size:17px}
+.vempty{margin:0;font-size:13px;font-weight:700;color:var(--ink2);padding:0 6px}
+.vleg{background:#fff;border-radius:22px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;box-shadow:0 0 0 1.5px rgba(141,123,240,.12),0 8px 20px rgba(141,123,240,.10)}
+.lg-main{cursor:pointer;display:flex;flex-direction:column;gap:4px;border-radius:14px}
+.lg-k{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.lg-k span{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--lav)}
+.lg-k b{font-size:14px;font-weight:900}
+.lg-times{display:flex;align-items:center;gap:10px}
+.lg-times b{font-family:var(--font-d);font-weight:600;font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums}
+.lg-times i{flex:1;height:2px;background:repeating-linear-gradient(90deg,var(--lav) 0 6px,transparent 6px 11px);border-radius:2px;position:relative}
+.lg-times i::after{content:"✈";position:absolute;left:50%;top:50%;transform:translate(-50%,-55%);font-style:normal;font-size:14px;color:var(--lav);background:#fff;padding:0 4px}
+.lg-t{font-weight:800;font-size:14.5px;overflow-wrap:anywhere}
+.vfold{display:flex;align-items:center;gap:10px;width:100%;border:0;border-radius:18px;background:#fff;padding:13px 16px;font:inherit;text-align:left;color:var(--ink);margin-top:10px;box-shadow:0 0 0 1.5px rgba(141,123,240,.12)}
+.vfold span{flex:1;font-family:var(--font-d);font-weight:600;font-size:17px}
+.vfold i{font-style:normal;font-size:13px;font-weight:900;color:var(--ink2)}
+.vfold b{color:var(--lav)}
+.vdel{text-align:center;margin-top:18px}.vdel .lnk{width:auto;color:#D9483D;font-size:13px}
+.vadd{font-size:15px}
+/* Compte à rebours en haut de la liste des voyages */
+.thero{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;border:0;border-radius:24px;padding:16px;margin-bottom:14px;font:inherit;color:var(--ink);cursor:pointer;background:linear-gradient(150deg,#FFF3EC,#FFE0CF);box-shadow:0 0 0 1.5px rgba(255,158,115,.2),0 8px 20px rgba(255,158,115,.14)}
+.thero.now{background:linear-gradient(150deg,#E9FAF1,#CDF1DE)}
+.th-k{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:var(--o-ink)}
+.th-t{font-family:var(--font-d);font-weight:600;font-size:22px;margin-bottom:6px}
