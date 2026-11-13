@@ -1133,3 +1133,14 @@ body[data-tab="agenda"] .agtab{display:flex;flex-direction:column;gap:14px;max-w
 .crow.cdrag{position:relative;z-index:5;transition:none;border-radius:16px;background:#fff;box-shadow:0 10px 26px rgba(91,72,180,.22),0 0 0 1.5px rgba(141,123,240,.35);scale:1.02}
 .cdragging .crow:not(.cdrag){transition:transform .15s}
 .cdragging{touch-action:none}
+
+/* v67 : voyages — trucs à faire (avant / sur place / après) */
+.vtodo{background:rgba(255,255,255,.94);border-radius:22px;padding:14px;display:flex;flex-direction:column;gap:8px;box-shadow:0 0 0 1.5px rgba(141,123,240,.10),0 8px 20px rgba(141,123,240,.10)}
+.vt-g{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--ink2);margin-top:4px}
+.vt-d{display:block;font-size:12px;font-weight:700;color:var(--ink2);margin-top:1px;text-decoration:none}
+.vt-add{display:flex;flex-direction:column;gap:8px;margin-top:4px;padding-top:10px;border-top:1px solid rgba(141,123,240,.12)}
+.vt-when{display:flex;gap:6px;flex-wrap:wrap}
+.vtw{border:0;border-radius:999px;background:var(--n-bg);color:var(--ink2);font:inherit;font-size:12px;font-weight:800;padding:6px 12px;cursor:pointer}
+.vtw.on{background:var(--lav);color:#fff}
+.vt-row{display:flex;gap:8px}.vt-row .in{flex:1;min-width:0;background:var(--n-bg);border-radius:14px}
+.vt-row .btn{flex:none;padding:8px 16px;border-radius:14px}

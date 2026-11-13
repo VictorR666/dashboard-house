@@ -53,7 +53,7 @@ def handle(route):
         r = {'ok': True, 'sheets': state, 'settings': {'hiddenEvents': [], 'eventNames': {}},
              'people': {'p1': 'Personne A', 'p2': 'Personne B'},
              'weather': {'city': 'Paris', 'temp': 7.2, 'cond': 'partly', 'label': 'Éclaircies', 'isDay': True, 'low': 4, 'high': 9},
-             'events': [{'id': 'e1', 'summary': 'Vétérinaire', 'start': {'dateTime': time.strftime('%Y-%m-%dT18:00:00Z')}}]}
+             'events': [{'id': 'e1', 'summary': 'Vétérinaire', 'start': {'dateTime': (datetime.date.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%dT18:00:00Z')}}]}
     elif body['a'] == 'put':
         rows = state[body['t']]
         for i, x in enumerate(rows):
@@ -177,11 +177,18 @@ def main():
                     assert 'lien externe' in page.inner_text('.sheet-card') and page.is_visible('.sheet-card a[data-close]')
                     page.screenshot(path=f'{OUT}/{name}-billets-popup.png')
                     page.click('.sheet-x'); page.wait_for_timeout(200)
-                    page.click('.vsec-h [data-act=v-add][data-v=activite]'); page.wait_for_timeout(300)
-                    page.fill('.sheet-card [data-tf=title]', 'Fado au Clube')
+                    assert page.is_visible('.vtodo .qc-prog'), 'barre de progression des trucs à faire'
+                    page.click('.vt-when [data-v=apres]'); page.fill('#vt-in', 'Développer les photos'); page.keyboard.press('Enter'); page.wait_for_timeout(800)
+                    r = [r for r in state['voyages'] if r[3] == 'Développer les photos']
+                    assert r and r[0][2] == 'Activité' and '"when": "apres"' in r[0][11].replace('":"', '": "'), r
+                    assert 'au retour' in page.inner_text('.vtodo').lower()
+                    page.click('.vtodo .tq-st >> text=Développer les photos'); page.wait_for_timeout(300)
+                    page.click('.sheet-card [data-act=tf-set][data-v=avant]'); page.fill('.sheet-card [data-tf=title]', 'Fado au Clube')
                     page.screenshot(path=f'{OUT}/{name}-voyage-form.png')
                     page.click('[data-act=tf-save]'); page.wait_for_timeout(800)
-                    assert any(r[3] == 'Fado au Clube' and r[2] == 'Activité' for r in state['voyages'])
+                    r = [r for r in state['voyages'] if r[3] == 'Fado au Clube']
+                    assert r and '"when": "avant"' in r[0][11].replace('":"', '": "'), r
+                    page.screenshot(path=f'{OUT}/{name}-voyage-todo.png', full_page=True)
                     page.click('[data-act=pack-fold]'); page.wait_for_timeout(1500)
                     tp = [r for r in state['voyages'] if r[2] == 'Valise' and r[1] == '']
                     assert len(tp) == 5, tp
