@@ -344,7 +344,7 @@
     h+='<div class="tcol"><section class="tbox"><div class="ch"><span class="ic lav"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="14" rx="3"/><path d="M4 11h16M8 3v4M16 3v4"/></svg></span><h2>À venir</h2></div>'+up+'</section>';
     /* Courses */
     var todo=S.courses.filter(function(c){return !c.done}).sort(function(a,b){return (a.createdAt||0)-(b.createdAt||0)});
-    h+='<section class="tbox"><div class="ch"><span class="ic lav"><svg viewBox="0 0 24 24"><path d="M4 5h2l2 10h10l2-7H7"/><circle cx="9.5" cy="19" r="1.3"/><circle cx="16.5" cy="19" r="1.3"/></svg></span><h2>Courses</h2>'+(todo.length?'<small class="h2sub">'+todo.length+' à acheter</small>':'')+'</div>'+
+    h+='<section class="tbox"><div class="ch"><span class="ic lav"><svg viewBox="0 0 24 24"><path d="M4 5h2l2 10h10l2-7H7"/><circle cx="9.5" cy="19" r="1.3"/><circle cx="16.5" cy="19" r="1.3"/></svg></span><h2>Courses</h2></div>'+
       '<form id="f-course3" class="addform" autocomplete="off"><input class="in" required maxlength="80" enterkeyhint="done" placeholder="Ajouter… ex. 2 lait" aria-label="Ajouter à la liste de courses"><button class="btn" type="submit">OK</button></form>'+
       (todo.length?'<div class="tchips2">'+todo.map(function(c){return '<button class="tcc" data-act="c-toggle" data-id="'+esc(c.id)+'" aria-label="Dans le panier : '+esc(c.title)+'"><span class="circ">'+CHECK+'</span>'+esc(c.title)+(c.qty?' <i>'+esc(c.qty)+'</i>':'')+'</button>'}).join('')+'</div>':'<p class="tempty">La liste est vide.</p>')+'</section></div>';
     /* Bandeau bas */
@@ -500,7 +500,7 @@
   function renderCourses(){
     var el=$('l-courses');if(!el)return;
     var todo=S.courses.filter(function(c){return !c.done}),inCart=S.courses.filter(function(c){return c.done});
-    $('c-count').textContent=todo.length?todo.length+' à acheter':'';var cvc=$('cv-count');if(cvc)cvc.textContent=todo.length?todo.length+' à acheter':(inCart.length?'Tout est dans le panier':'');
+    $('c-count').textContent='';var cvc=$('cv-count');if(cvc)cvc.textContent='';
     var row=function(c){return '<div class="crow'+(c.done?' done':'')+'"><button class="cchk" data-act="c-toggle" data-id="'+esc(c.id)+'" aria-label="'+(c.done?'Remettre dans la liste : ':'Dans le panier : ')+esc(c.title)+'"><span class="circ">'+CHECK+'</span><span class="ct">'+esc(c.title)+'</span>'+(c.qty?'<span class="cq">'+esc(c.qty)+'</span>':'')+'</button><button class="sx" data-act="c-del" data-id="'+esc(c.id)+'" aria-label="Supprimer : '+esc(c.title)+'" title="Supprimer">×</button></div>'};
     var byDate=function(a,b){return (a.createdAt||0)-(b.createdAt||0)};
     var h=todo.sort(byDate).map(row).join('');
