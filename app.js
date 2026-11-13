@@ -383,36 +383,37 @@
       dock('quetes','🗺️','Quêtes',nq?nq+' en cours':'Une idée ?','')+
       dock('wish','🎁','Envies',nw?nw+' envie'+(nw>1?'s':''):'Rien pour l\'instant','')+'</nav>'}
   /* ---- Onglet Test : accueil « scène » — Kimchi dans un décor qui suit l'heure et la météo, une jauge arc-en-ciel, puis 4 lignes ---- */
-  function sceneMood(){var h=new Date().getHours(),c=W&&W.cond;
-    if(h>=21||h<6)return 'night';if(c==='rain'||c==='storm'||c==='snow'||c==='fog')return 'grey';if(h>=18)return 'dusk';return 'day'}
+  function sceneMood(){var h=new Date().getHours(),c=W&&W.cond,night=W?W.isDay===false:(h>=20||h<7);
+    if(c==='rain'||c==='storm')return night?'night rain':'rain';if(c==='snow')return 'snow';
+    if(night)return 'night';if(c==='cloudy'||c==='fog')return 'grey';if(h>=18)return 'dusk';return 'day'}
+  /* Décor de la carte : soleil, nuages, pluie, neige ou étoiles selon la météo, et une colline pour Kimchi */
+  function sceneDeco(mood){var d='';
+    if(/night/.test(mood))d+='<circle cx="292" cy="40" r="15" fill="#FFF3C4"/><circle cx="299" cy="35" r="13" fill="#5A4BA8"/><g fill="#fff" opacity=".85"><circle cx="190" cy="26" r="1.6"/><circle cx="230" cy="58" r="1.2"/><circle cx="330" cy="76" r="1.4"/><circle cx="160" cy="70" r="1.1"/></g>';
+    else if(mood==='day')d+='<circle cx="300" cy="44" r="26" fill="#FFD36E"/><circle cx="300" cy="44" r="38" fill="#FFD36E" opacity=".25"/>';
+    else if(mood==='dusk')d+='<circle cx="300" cy="80" r="26" fill="#FFB27A" opacity=".9"/>';
+    if(/rain|grey|snow/.test(mood)||mood==='day')d+='<g fill="#fff" opacity="'+(mood==='day'?'.85':'.95')+'"><ellipse cx="225" cy="52" rx="34" ry="13"/><ellipse cx="248" cy="44" rx="22" ry="14"/>'+(mood==='day'?'':'<ellipse cx="320" cy="70" rx="30" ry="12"/><ellipse cx="300" cy="64" rx="18" ry="11"/>')+'</g>';
+    if(/rain/.test(mood))d+='<g stroke="#8FB4E8" stroke-width="2.4" stroke-linecap="round" class="sc-rain"><path d="M215 72l-4 10M235 74l-4 10M255 70l-4 10M305 86l-4 10M325 88l-4 10"/></g>';
+    if(mood==='snow')d+='<g fill="#fff" class="sc-rain"><circle cx="215" cy="80" r="2.5"/><circle cx="240" cy="86" r="2.5"/><circle cx="300" cy="92" r="2.5"/><circle cx="322" cy="84" r="2.5"/></g>';
+    d+='<ellipse cx="290" cy="232" rx="150" ry="46" fill="'+(/night/.test(mood)?'#3B3374':mood==='snow'?'#F4F6FB':'#BFE8C9')+'"/>';
+    return '<svg class="sc-svg" viewBox="0 0 360 230" preserveAspectRatio="xMaxYMax slice" aria-hidden="true">'+d+'</svg>'}
   function renderHub3(){var el=$('hub3');if(!el||TAB!=='test')return;
-    var due=dueList(),td=iso(new Date()),done=S.routines.filter(function(r){return r.lastDone===td}).length,tot=due.length+done,nt=nextTrip(),ts=nt&&tripState(nt);
+    var due=dueList(),td=iso(new Date()),done=S.routines.filter(function(r){return r.lastDone===td}).length,nt=nextTrip(),ts=nt&&tripState(nt),mood=sceneMood();
     var title=!loaded.routines?'Coucou !':due.length?(due.length===1?'1 petite mission pour l\'appart':due.length+' petites missions pour l\'appart'):done?'Bien joué, tout est fait ✨':'Tout roule à la maison 🐾';
-    var sub=kimchiSays(due,nt,ts).t;
-    /* Jauge arc-en-ciel : part de la journée déjà faite */
-    var pct=tot?done/tot:1,L=Math.PI*120,mood=sceneMood();
-    var arc=function(r,col,w){return '<path d="M'+(160-r)+' 170 A'+r+' '+r+' 0 0 1 '+(160+r)+' 170" fill="none" stroke="'+col+'" stroke-width="'+w+'" stroke-linecap="round"/>'};
-    var deco=mood==='night'?'<circle cx="262" cy="46" r="16" fill="#FFF3C4"/><circle cx="270" cy="40" r="14" fill="#4B3F8F"/><g fill="#fff" opacity=".8"><circle cx="40" cy="40" r="1.6"/><circle cx="80" cy="22" r="1.2"/><circle cx="220" cy="20" r="1.4"/><circle cx="300" cy="80" r="1.2"/></g>'
-      :mood==='grey'?'<g fill="#fff" opacity=".9"><ellipse cx="60" cy="50" rx="34" ry="14"/><ellipse cx="84" cy="42" rx="22" ry="14"/><ellipse cx="258" cy="62" rx="30" ry="12"/></g>'
-      :mood==='dusk'?'<circle cx="270" cy="70" r="22" fill="#FFB27A" opacity=".9"/>'
-      :'<circle cx="268" cy="46" r="20" fill="#FFD36E"/><g fill="#fff" opacity=".85"><ellipse cx="58" cy="44" rx="26" ry="10"/><ellipse cx="74" cy="38" rx="16" ry="10"/></g>';
-    var svg='<svg class="sc-svg" viewBox="0 0 320 190" aria-hidden="true">'+deco+
-      arc(120,'rgba(255,255,255,.55)',14)+arc(104,'#FFC6A8',12)+arc(90,'#FFB0C8',10)+arc(77,'#CFC6FA',9)+
-      '<path d="M40 170 A120 120 0 0 1 280 170" fill="none" stroke="#8D7BF0" stroke-width="14" stroke-linecap="round" stroke-dasharray="'+(L*pct).toFixed(1)+' '+L.toFixed(1)+'"/>'+
-      '<ellipse cx="160" cy="186" rx="150" ry="22" fill="'+(mood==='night'?'#3B3374':'#BFE8C9')+'"/></svg>';
-    var h='<div class="sc-head"><h2>'+title+'</h2><p>'+esc(sub)+'</p></div>'+
-      '<section class="scene '+mood+'"><div class="sc-wrap">'+svg+'<img class="sc-k" src="assets/kimchi-anim.svg" alt="Kimchi"></div>'+
-      (tot?'<div class="sc-g"><span>0</span><b>'+done+'/'+tot+' aujourd\'hui</b><span>'+tot+'</span></div>':'')+'</section>';
-    /* Les lignes « Aujourd'hui », chacune ouvre sa section */
-    var row=function(v,ic,t,s2,extra){return '<button class="sc-row" data-act="hub-go" data-v="'+v+'"><span class="sc-ic">'+ic+'</span><span class="sc-m"><span class="sc-t">'+t+'</span><span class="sc-s">'+s2+'</span>'+(extra||'')+'</span><span class="sc-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span></button>'};
-    var rows='';
-    rows+=row('todo','🧹','Missions maison',due.length?due.length+' à faire · '+esc(due.slice(0,2).map(function(x){return x.r.title}).join(', '))+(due.length>2?'…':''):'Tout est fait');
+    var sub=kimchiSays(due,nt,ts).t,t=function(n){return Math.round(n)+'°'};
+    var wx=W&&typeof W.temp==='number'?'<div class="sc-wx"><span class="sc-wic">'+wIcon(W.cond,W.isDay)+'</span><span class="sc-temp">'+t(W.temp)+'</span><span class="sc-wl"><b>'+esc(W.label||'')+'</b>'+esc(W.city||'')+(typeof W.low==='number'?' · '+t(W.low)+' / '+t(W.high):'')+'</span></div>':'';
+    var h='<section class="scene '+mood+'">'+sceneDeco(mood)+wx+'<div class="sc-txt"><h2>'+title+'</h2><p>'+esc(sub)+'</p></div><img class="sc-k" src="assets/kimchi-anim.svg" alt="Kimchi"></section>';
+    /* En ce moment */
+    var row=function(v,ic,tt,s2,extra){return '<button class="sc-row" data-act="hub-go" data-v="'+v+'"><span class="sc-ic">'+ic+'</span><span class="sc-m"><span class="sc-t">'+tt+'</span><span class="sc-s">'+s2+'</span>'+(extra||'')+'</span><span class="sc-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span></button>'};
+    var rows=row('todo','🧹','Missions maison',due.length?due.length+' à faire · '+esc(due.slice(0,2).map(function(x){return x.r.title}).join(', '))+(due.length>2?'…':''):'Tout est fait');
     var m=S.projects.filter(function(p){return p.main&&p.status!=='done'})[0];
     if(m){var ss=m.steps||[],dn=ss.filter(function(x){return x.done}).length;rows+=row('quetes','📌',esc(m.title),ss.length?dn+'/'+ss.length+' mini-quêtes':'Quête principale',ss.length?'<span class="sc-bar"><i style="width:'+Math.round(dn/ss.length*100)+'%"></i></span>':'')}
-    if(nt){var da=departAt(nt);rows+=row('voyage',esc(tEmo(nt)),esc(nt.title),ts.k==='now'?'En vacances · jour '+ts.day+' sur '+ts.tot:ts.n===0?'C\'est aujourd\'hui ! 🎉':'Départ dans '+ts.n+' jour'+(ts.n>1?'s':'')+(da&&da.exact?' · '+esc(hPart(nt.start)):''))}
+    /* Le prochain voyage : compte à rebours façon aéroport */
+    if(nt){var da=departAt(nt),cd=ts.k==='now'?'<span class="k2-now">🌴 En vacances · jour '+ts.day+' sur '+ts.tot+'</span>':ts.n===0?'<span class="k2-now">🎉 C\'est aujourd\'hui !</span>':da?'<span class="flap" role="timer" data-cd="'+da.d.getTime()+'">'+flapInner(da.d-Date.now())+'</span>':'<span class="k2-now">J-'+ts.n+'</span>';
+      rows+='<button class="sc-trip" data-act="hub-go" data-v="voyage"><span class="sc-tl">'+esc(tEmo(nt)+' '+nt.title)+(ts.k==='soon'&&ts.n>0?' dans':'')+'</span>'+cd+'</button>'}
+    /* Le prochain événement : comme sur l'accueil */
     if(cal.status==='ok'){var now=new Date(),e=cal.events.filter(function(x){return x&&HID.indexOf(x.id)<0}).map(function(x){return {e:x,i:evInfo(x)}}).filter(function(x){return x.i&&x.i.n>=0&&(x.i.n>0||x.i.allDay||x.i.d>now)})[0];
-      if(e)rows+=row('agenda','📅',esc(EVN[e.e.id]||e.e.summary||'Événement'),esc(cap(e.i.n===0?"aujourd'hui":e.i.n===1?'demain':e.i.d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'short'})))+(e.i.allDay?'':' · '+e.i.d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})))}
-    h+='<div class="sc-sec">Aujourd\'hui</div><div class="sc-rows">'+rows+'</div>';
+      if(e)rows+='<button class="sc-ev" data-act="hub-go" data-v="agenda"><span class="k2-evd"><b>'+e.i.d.getDate()+'</b>'+esc(e.i.d.toLocaleDateString('fr-FR',{month:'short'}).replace('.',''))+'</span><span class="k2-evm"><span class="k2-evt">'+esc(EVN[e.e.id]||e.e.summary||'Événement')+'</span><span class="k2-evs">'+esc(cap(e.i.n===0?"aujourd'hui":e.i.n===1?'demain':e.i.d.toLocaleDateString('fr-FR',{weekday:'long'})))+(e.i.allDay?'':' · '+e.i.d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}))+'</span></span></button>'}
+    h+='<div class="sc-sec">En ce moment</div><div class="sc-rows">'+rows+'</div>';
     h+='<div class="sc-sec">Raccourcis</div><nav class="sc-dock">'+[['courses','🛒','Courses'],['wish','🎁','Envies'],['agenda','📅','Agenda']].map(function(x){return '<button class="sc-dk" data-act="hub-go" data-v="'+x[0]+'"><span>'+x[1]+'</span>'+x[2]+'</button>'}).join('')+'</nav>';
     el.innerHTML=h}
   /* Petite fête quand on coche la dernière chose du jour */
