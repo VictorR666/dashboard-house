@@ -55,7 +55,8 @@ Pourquoi ce montage :
   - on peut les renommer ou les masquer, mais seulement dans l'app : l'agenda n'est jamais modifié.
 - **Météo** : Open-Meteo, avec un cache de 30 minutes côté script.
 - **Courses** :
-  - ajout rapide (« 2 lait », « tomates x3 ») et classement automatique par rayon ;
+  - liste simple, sans icônes ni catégories, dans l'ordre d'ajout ;
+  - ajout rapide (« 2 lait », « tomates x3 ») ;
   - panier, « Vider le panier » avec annulation ;
   - mise à jour toutes les 15 s quand l'onglet est ouvert, 60 s sinon.
 - **Wishlist** : budget, pour qui, urgence, lien, recherche Amazon.
@@ -240,7 +241,7 @@ Vérifie toujours le rendu sur téléphone (390 × 844) et sur ordinateur (1440 
 2. Ajoute la valeur dans la liste acceptée par `setTab()`.
 3. Ajoute les règles CSS `body[data-tab="xxx"]` qui disent quelles cartes afficher.
 
-**Changer le classement des courses** : modifie le tableau `RAY` dans `app.js` (libellé, emoji et expression régulière par rayon). Les mots sont comparés en minuscules et sans accents.
+**Courses** : l'affichage est volontairement simple (ni icône ni catégorie). Le rayon et l'icône sont tout de même devinés et enregistrés dans le Sheet (tableau `RAY` dans `app.js`) : il suffit de modifier `renderCourses()` pour les réafficher un jour.
 
 ## 12. Dépannage
 

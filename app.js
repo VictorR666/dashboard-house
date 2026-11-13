@@ -426,12 +426,11 @@
     var el=$('l-courses');if(!el)return;
     var todo=S.courses.filter(function(c){return !c.done}),inCart=S.courses.filter(function(c){return c.done});
     $('c-count').textContent=todo.length?todo.length+' à acheter':'';
-    var row=function(c){return '<div class="crow'+(c.done?' done':'')+'"><button class="cchk" data-act="c-toggle" data-id="'+esc(c.id)+'" aria-label="'+(c.done?'Remettre dans la liste : ':'Dans le panier : ')+esc(c.title)+'"><span class="circ">'+CHECK+'</span><span class="em" aria-hidden="true">'+esc(c.emoji)+'</span><span class="ct">'+esc(c.title)+'</span>'+(c.qty?'<span class="cq">'+esc(c.qty)+'</span>':'')+'</button><button class="sx" data-act="c-del" data-id="'+esc(c.id)+'" aria-label="Supprimer : '+esc(c.title)+'" title="Supprimer">×</button></div>'};
-    var h='';
-    RAY.forEach(function(r){var l=todo.filter(function(c){return c.rayon===r.k}).sort(function(a,b){return (a.createdAt||0)-(b.createdAt||0)});
-      if(l.length)h+='<div class="sec-label">'+r.e+' '+esc(r.l)+'</div>'+l.map(row).join('')});
+    var row=function(c){return '<div class="crow'+(c.done?' done':'')+'"><button class="cchk" data-act="c-toggle" data-id="'+esc(c.id)+'" aria-label="'+(c.done?'Remettre dans la liste : ':'Dans le panier : ')+esc(c.title)+'"><span class="circ">'+CHECK+'</span><span class="ct">'+esc(c.title)+'</span>'+(c.qty?'<span class="cq">'+esc(c.qty)+'</span>':'')+'</button><button class="sx" data-act="c-del" data-id="'+esc(c.id)+'" aria-label="Supprimer : '+esc(c.title)+'" title="Supprimer">×</button></div>'};
+    var byDate=function(a,b){return (a.createdAt||0)-(b.createdAt||0)};
+    var h=todo.sort(byDate).map(row).join('');
     if(!h)h='<p class="empty">'+(loaded.courses?(inCart.length?'Tout est dans le panier 🎉':'La liste est vide.'):'Chargement…')+'</p>';
-    if(inCart.length)h+='<div class="cart-h"><span class="sec-label">🧺 Dans le panier ('+inCart.length+')</span><button class="lnk" data-act="c-clear">Vider le panier</button></div>'+inCart.map(row).join('');
+    if(inCart.length)h+='<div class="cart-h"><span class="sec-label">Dans le panier ('+inCart.length+')</span><button class="lnk" data-act="c-clear">Vider le panier</button></div>'+inCart.map(row).join('');
     el.innerHTML=h;
   }
   var lastClear=null;
