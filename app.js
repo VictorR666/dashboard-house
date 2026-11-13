@@ -635,6 +635,7 @@
     else if(a==='wf-got'){upd('shop',wishOpen,{done:!wd.done});wishOpen=null;renderSheet()}
     else if(a==='wf-del'){var wid=wishOpen;wishOpen=null;renderSheet();delUndo('shop',wid,'Envie supprimée')}
     else if(a==='tab'){setTab(b.getAttribute('data-tab'))}
+    else if(a==='course-toggle'){var cf2=$('f-course');cf2.hidden=!cf2.hidden;if(!cf2.hidden)$('c-title').focus()}
     else if(a==='c-toggle'){it=find('courses',id);if(it)updUndo('courses',id,{done:!it.done},it.done?'Remis dans la liste':'Dans le panier ✓')}
     else if(a==='c-del'){delUndo('courses',id,'Article supprimé')}
     else if(a==='c-clear'){clearCart()}
@@ -656,6 +657,15 @@
     else if(a==='logout'){if(confirm('Déconnecter cet appareil ? Le code d\'accès sera redemandé.'))logout('')}
   });
 
+  /* Les boutons + deviennent − quand leur formulaire est ouvert */
+  function syncPlus(){
+    var pairs=[['[data-act="add-toggle"]','#f-add'],['[data-act="wishq-toggle"]','#f-wish'],['[data-act="course-toggle"]','#f-course'],['[data-act="qadd-toggle"]','#f-qadd']];
+    GROUPS.forEach(function(g){pairs.push(['[data-act="care-add"][data-group="'+g+'"]','form.care-add[data-group="'+g+'"]'])});
+    pairs.forEach(function(p){var b=document.querySelector(p[0]),f=document.querySelector(p[1]);if(!b||!f)return;var open=!f.hidden;
+      b.setAttribute('aria-expanded',open);b.textContent=p[0].indexOf('qadd')>=0?(open?'− Fermer':'+ Nouvelle'):(open?'−':'+')});
+  }
+  document.addEventListener('click',function(){setTimeout(syncPlus,0)});
+  document.addEventListener('submit',function(){setTimeout(syncPlus,0)});
   document.addEventListener('submit',function(e){
     var f=e.target;if(f.id==='login-form')return;e.preventDefault();
     if(f.classList&&f.classList.contains('care-add')){

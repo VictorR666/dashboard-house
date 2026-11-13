@@ -427,3 +427,11 @@ body[data-tab="courses"] .s-courses{grid-column:span 2}
 .s-courses .sec-label{margin-top:8px}
 
 .h2sub{font-family:var(--font-b);font-size:12.5px;font-weight:800;color:var(--ink2);margin-left:4px;vertical-align:baseline}
+
+/* Boutons : texte et icônes toujours centrés */
+.btn,.mini{display:inline-flex;align-items:center;justify-content:center;line-height:1;text-align:center;gap:4px}
+.addform .btn{min-height:32px;min-width:38px}
+.minor .addform .btn,.s-wish .addform .btn,.s-courses .addform .btn{min-height:30px}
+.mini{min-height:24px;min-width:28px}
+.ico-arrow{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;display:block}
+.s-courses .addform .in{padding:6px 12px;font-size:13.5px}
