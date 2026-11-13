@@ -859,3 +859,24 @@ body[data-tab="home"] .viewsw{display:flex}
 .tq-step.done .tq-st{text-decoration:line-through;color:var(--ink2)}
 .tq-add{color:var(--lav);font-weight:800}
 .tq-win{flex:1;font-weight:900;color:var(--lav)}
+/* v47 : la bascule de vue devient un petit bouton discret dans l'en-tête */
+.viewsw{display:none!important}
+.viewtg{display:none;flex:none;width:34px;height:34px;border:0;border-radius:50%;background:rgba(255,255,255,.88);color:var(--ink2);padding:0;place-items:center;box-shadow:0 0 0 1.5px rgba(141,123,240,.10);cursor:pointer;align-self:center}
+.viewtg svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round}
+.viewtg:hover{color:var(--lav)}
+body[data-tab="home"] .viewtg{display:grid}
+@media (max-width:899px),(orientation:portrait){.head .viewtg{position:absolute;top:0;right:0;width:30px;height:30px}.head{position:relative}.head .weather{margin-right:38px}}
+@media (max-width:899px),(orientation:portrait){
+  .head .viewtg{position:static;grid-column:4;grid-row:1;justify-self:end}
+  .head{grid-template-columns:auto auto minmax(0,1fr) auto}
+  .head .mascot{grid-column:1}.head>div:not(.mascot):not(.weather){grid-column:2}
+  .head .weather{grid-column:3;margin-right:0}
+  body[data-tab="home"][data-view="simple"] .head{column-gap:8px}
+  body[data-tab="home"][data-view="simple"] .head>div:not(.mascot):not(.weather){grid-column:1/3}
+}
+/* v47 : onglet Routines — les plantes reprennent le format de l'accueil (tuile haute, illustration en bas à droite) */
+body[data-tab="maison"] .s-plantes .body{gap:10px}
+body[data-tab="maison"] .s-plantes .ptile{flex:none;min-height:120px;align-items:center;border-radius:22px}
+body[data-tab="maison"] .s-plantes .ptile .pa{inset:auto 10px 0 auto;width:84px;height:88%}
+body[data-tab="maison"] .s-plantes .ptile .pt{padding:12px 100px 12px 10px;gap:2px}
+body[data-tab="maison"] .s-plantes .ptile .pn{font-size:17px}

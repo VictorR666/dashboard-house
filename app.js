@@ -253,8 +253,8 @@
     return {c:c,txt:txt};
   }
   /* Règle unique : le rond = marquer comme fait (ou annuler si fait aujourd'hui), le texte = ouvrir le détail */
-  function careChk(r){var on=r.lastDone===iso(new Date());
-    return '<button class="chk care-chk'+(on?' on':'')+'" data-act="care-chk" data-id="'+esc(r.id)+'" aria-pressed="'+on+'" aria-label="'+(on?'Annuler, pas encore fait : ':'Fait aujourd\'hui : ')+esc(r.title)+'">'+CHECK+'</button>'}
+  function careChk(r){var on=r.lastDone===iso(new Date())||careState(r).c==='g'; /* vert = à jour = déjà coché */
+    return '<button class="chk care-chk'+(on?' on':'')+'" data-act="care-chk" data-id="'+esc(r.id)+'" aria-pressed="'+on+'" aria-label="'+(r.lastDone===iso(new Date())?'Annuler, pas encore fait : ':on?'À jour, refait aujourd\'hui : ':'Fait aujourd\'hui : ')+esc(r.title)+'">'+CHECK+'</button>'}
   function careToggle(id){var r=find('routines',id);if(!r)return;
     if(r.lastDone===iso(new Date())&&r.hasPrev){undoDate(id);toastMsg('Remis comme avant');return}
     var pv=snap('routines',id,['lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText']);setDate(id,iso(new Date()));offerUndo('routines',id,pv,'Marqué comme fait ✓')}
@@ -332,7 +332,9 @@
   /* Vue simple (raccourcis) ou détaillée (toutes les cartes) : choix gardé sur chaque appareil */
   var VIEW=lsGet('maison-view');if(VIEW!=='simple'&&VIEW!=='detail')VIEW=matchMedia('(min-width:900px) and (orientation:landscape)').matches?'detail':'simple';
   function setView(v){VIEW=v==='detail'?'detail':'simple';lsSet('maison-view',VIEW);document.body.setAttribute('data-view',VIEW);
-    [].forEach.call(document.querySelectorAll('[data-act="view-set"]'),function(b){var on=b.getAttribute('data-v')===VIEW;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
+    var tg=$('viewtg');if(tg){var toD=VIEW==='simple',lab=toD?'Passer à la vue détaillée':'Passer à la vue simple';tg.setAttribute('aria-label',lab);tg.title=lab;
+      tg.innerHTML=toD?'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg>'
+        :'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="7" rx="2.5"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg>'}
     renderHub();fitTodo();window.scrollTo(0,0)}
   var agOpen=false;
   function agendaPanel(){var nt=$('trip-next'),cl=$('l-cal');
@@ -1046,6 +1048,7 @@
     else if(a==='care-chk'){careToggle(id)}
     else if(a==='hub-go'){hubGo(b.getAttribute('data-v'))}
     else if(a==='view-set'){setView(b.getAttribute('data-v'))}
+    else if(a==='view-toggle'){setView(VIEW==='simple'?'detail':'simple')}
     else if(a==='ag-detail'){agOpen=false;renderSheet();setView('detail');setTimeout(function(){var c=document.querySelector('.s-cal');if(c)c.scrollIntoView({block:'start'})},60)}
     else if(a==='ta-done'){var pv2=snap('routines',id,['lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText']);setDate(id,iso(new Date()));offerUndo('routines',id,pv2,'Marqué comme fait ✓')}
     else if(a==='done-today'){var pv=snap('routines',id,['lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText']);openId=null;calFor=null;setDate(id,iso(new Date()));renderSheet();offerUndo('routines',id,pv,'Marqué comme fait ✓')}
