@@ -1,6 +1,6 @@
 /* Service worker : garde une copie de l'app (pas des données) pour l'ouvrir hors ligne.
    Toujours réseau d'abord, pour que chaque modif publiée arrive à la prochaine ouverture. */
-const CACHE = 'maison-shell-v67';
+const CACHE = 'maison-shell-v68';
 self.addEventListener('install', e => { self.skipWaiting(); });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
