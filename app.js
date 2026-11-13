@@ -357,7 +357,7 @@
     /* 1. Quête principale : une ligne, la barre, la prochaine étape */
     var m=S.projects.filter(function(p){return p.main&&p.status!=='done'})[0];
     if(m){var ss=m.steps||[],dn=ss.filter(function(x){return x.done}).length,nx=-1,id=esc(m.id);ss.some(function(x,i){if(!x.done){nx=i;return true}});
-      h+='<div class="k2-part"><div class="k2-lab">Projet en cours</div><button class="k2-q" data-act="proj-open" data-id="'+id+'"><span>'+esc((m.emoji?m.emoji+' ':'')+m.title)+'</span>'+(ss.length?'<i>'+dn+'/'+ss.length+'</i>':'')+'</button>'+
+      h+='<div class="k2-part"><div class="k2-lab">📌 Quête principale</div><button class="k2-q" data-act="proj-open" data-id="'+id+'"><span>'+esc((m.emoji?m.emoji+' ':'')+m.title)+'</span>'+(ss.length?'<i>'+dn+'/'+ss.length+'</i>':'')+'</button>'+
         (ss.length?'<div class="bar k2-bar"><i style="width:'+Math.round(dn/ss.length*100)+'%"></i></div>':'')+
         (nx>=0?'<div class="k2-step"><button class="chk" data-act="ps" data-id="'+id+'" data-i="'+nx+'" aria-label="Terminer : '+esc(ss[nx].t)+'">'+CHECK+'</button><button class="k2-st" data-act="proj-open" data-id="'+id+'">'+esc(ss[nx].t)+'</button></div>':'')+'</div>'}
     /* 3. Les prochaines vacances */

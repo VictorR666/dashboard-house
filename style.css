@@ -925,3 +925,11 @@ body[data-tab="home"][data-view="simple"] .hub2{min-height:calc(100vh - 170px);m
 .k2-lab{font-size:12px;font-weight:800;color:var(--ink2)}
 .k2-top .hub-next{margin-top:8px}
 @media (min-width:900px) and (orientation:landscape){body[data-tab="home"][data-view="simple"] .hub2{min-height:0}.k2-dock{flex:none}}
+/* v52 : vue simple — pas de « Déconnecter », et la page s'arrête juste sous les raccourcis */
+body[data-tab="home"][data-view="simple"] .foot{display:none}
+@media (max-width:899px),(orientation:portrait){
+  body[data-tab="home"][data-view="simple"]{padding-bottom:0;overscroll-behavior-y:none}
+  html:has(body[data-tab="home"][data-view="simple"]){overscroll-behavior-y:none}
+  body[data-tab="home"][data-view="simple"] .hub2{padding-bottom:calc(max(10px,env(safe-area-inset-bottom,0px)) + 74px)}
+  body[data-tab="home"][data-view="simple"] .wrap{gap:12px}
+}
