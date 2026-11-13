@@ -808,3 +808,10 @@ body[data-tab="courses"] .s-courses [data-act="course-toggle"]{display:none}
 .tn-cd .fsep{height:30px;gap:6px}.tn-cd .fsep b{width:4px;height:4px}
 .tn-cd .fg{gap:2px}.tn-cd .fg small{font-size:9px}
 @media (min-width:900px) and (orientation:landscape){.tn-cd .fd i{width:19px;height:27px}.tn-cd .fd b{font-size:16px}.tn-cd .fsep{height:27px;padding:0}.tn-cd .flap{gap:2px}}
+/* v42 : quêtes — croix centrées sur leur ligne, épingle en icône à côté du titre */
+.sx{display:inline-grid;place-items:center;line-height:1;padding:0 0 2px;align-self:center}
+.step{align-items:center}.step span{line-height:1.35}
+.qc-pin{flex:none;width:30px;height:30px;border:0;border-radius:50%;background:transparent;font-size:15px;line-height:1;padding:0;display:grid;place-items:center;filter:grayscale(1);opacity:.4;cursor:pointer}
+.qc-pin:hover{opacity:.8;background:var(--n-bg)}
+.qc-pin.on{filter:none;opacity:1;background:var(--lav-soft)}
+.qc-f{justify-content:flex-end}

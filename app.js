@@ -436,7 +436,7 @@
     var note=String(o.notes||'').replace(/https?:\/\/[^\s<>"']+/g,'').trim();
     return '<article class="qcard'+(fin?' done':'')+(o.main?' main':'')+'">'+
       (o.main?'<div class="qc-main">📌 Quête principale</div>':'')+
-      '<div class="qc-h"><span class="em" aria-hidden="true">'+esc(o.emoji||'✨')+'</span><button class="qc-t" data-act="proj-open" data-id="'+id+'">'+esc(o.title)+'</button>'+
+      '<div class="qc-h"><span class="em" aria-hidden="true">'+esc(o.emoji||'✨')+'</span><button class="qc-t" data-act="proj-open" data-id="'+id+'">'+esc(o.title)+'</button>'+'<button class="qc-pin'+(o.main?' on':'')+'" data-act="pmain" data-id="'+id+'" aria-pressed="'+!!o.main+'" aria-label="'+(o.main?'Retirer de la quête principale':'Mettre en quête principale')+'" title="'+(o.main?'Retirer de la quête principale':'Mettre en quête principale')+'">📌</button>'+
       '<select class="pr '+p+'" data-prio="'+id+'" aria-label="Urgence">'+['high','med','low'].map(function(k){return '<option value="'+k+'"'+(k===p?' selected':'')+'>'+PRIO[k]+'</option>'}).join('')+'</select></div>'+
       (ss.length?'<div class="qc-prog"><div class="bar"><i style="width:'+pc+'%"></i></div><span>'+done+'/'+ss.length+'</span></div>':'')+
       (ss.length?'<ul class="steps">'+ss.map(function(x,i){return '<li class="step'+(x.done?' done':'')+'"><button class="chk" data-act="ps" data-id="'+id+'" data-i="'+i+'" aria-label="Mini-quête : '+esc(x.t)+'">'+CHECK+'</button><span>'+esc(x.t)+'</span><button class="sx" data-act="sd" data-id="'+id+'" data-i="'+i+'" aria-label="Supprimer : '+esc(x.t)+'" title="Supprimer">×</button></li>'}).join('')+'</ul>':'')+
@@ -444,7 +444,7 @@
       '<div class="seg status">'+[['todo','À faire'],['doing','En cours'],['done','Terminé']].map(function(x){return '<button type="button" class="'+(st===x[0]?'on ':'')+x[0]+'" data-act="pset" data-id="'+id+'" data-f="status" data-v="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div>'+
       (note?'<p class="qc-note">'+esc(note)+'</p>':'')+
       (us.length?'<div class="nlinks">'+us.map(function(u){return '<a class="btn ghost" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">↗ '+esc(u.replace(/^https?:\/\/(www\.)?/,'').split('/')[0])+'</a>'}).join('')+'</div>':'')+
-      '<div class="qc-f"><button class="lnk" data-act="pmain" data-id="'+id+'">'+(o.main?'📌 Retirer de la principale':'📌 Mettre en principale')+'</button><button class="lnk" data-act="proj-open" data-id="'+id+'">Modifier…</button></div></article>';
+      '<div class="qc-f"><button class="lnk" data-act="proj-open" data-id="'+id+'">Modifier…</button></div></article>';
   }
   function renderQView(){
     if(!qOpen)return;var L=$('qv-list');if(!L)return;
