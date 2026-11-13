@@ -761,3 +761,14 @@ body[data-tab="courses"] .s-courses [data-act="course-toggle"]{display:none}
 .tq-none .tq-t span{font-size:14px;font-weight:700;opacity:.9}
 .tq-next{flex:none;background:#fff;color:var(--lav)}
 @media (max-width:899px),(orientation:portrait){.s-main .body{overflow:visible}}
+/* v37 : toutes les cartes de l'accueil ont le même en-tête et les mêmes marges (plus d'air partout) */
+.grid>.card,.grid>.card.minor,.grid>.s-proj{padding:18px 18px 16px}
+.grid>.card .ch,.grid>.card.minor .ch,.grid>.s-proj .ch,.s-wish .ch{gap:10px;margin-bottom:12px}
+.grid>.card .ic,.grid>.card.minor .ic,.grid>.s-proj .ic{width:30px;height:30px}
+.grid>.card .ic svg,.grid>.card.minor .ic svg,.grid>.s-proj .ic svg{width:17px;height:17px}
+.grid>.card .ch h2,.grid>.card.minor .ch h2,.grid>.s-proj .ch h2{font-size:17px}
+.grid>.card .mini,.grid>.card.minor .mini{font-size:12px;padding:4px 10px;min-width:30px;min-height:28px}
+.minor .row{padding:8px 10px 8px 12px;border-radius:20px}
+.minor .t{font-size:14px}.minor .sub{font-size:12px}.minor .em{font-size:22px;width:26px}
+.grid>.card .body{gap:8px}
+@media (max-width:899px),(orientation:portrait){.grid>.card,.grid>.card.minor,.grid>.s-proj{padding:20px 20px 18px}}
