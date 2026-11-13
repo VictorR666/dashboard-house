@@ -688,3 +688,11 @@ body[data-tab="maison"] .grid>.s-todoall{display:flex;grid-column:1/-1}
 .ico-undo{width:1.05em;height:1.05em;flex:none;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.15em;margin-right:4px}
 .plinks .lnk,.prow .lnk{display:inline-flex;align-items:center}
 .evx .ico-undo{margin:0;width:13px;height:13px}
+/* v25 : ordinateur moins zoomé, avec de vraies marges tout autour */
+@media (min-width:900px) and (orientation:landscape){
+  body{padding:clamp(40px,7vh,96px) clamp(56px,9vw,200px)}
+  .wrap{max-width:1360px;zoom:1!important}
+  body[data-tab="home"]{padding-bottom:clamp(88px,10vh,120px)}
+}
+@media (min-width:1500px) and (orientation:landscape){.wrap{zoom:1.05!important}}
+@media (min-width:2300px) and (orientation:landscape){.wrap{zoom:1.25!important;max-width:1500px}}
