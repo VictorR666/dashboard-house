@@ -463,7 +463,7 @@
       '<form class="stepform" data-form="step" data-id="'+id+'"><input class="in" maxlength="120" data-stepinput required placeholder="Nouvelle mini-quête" aria-label="Nouvelle mini-quête"><button class="btn" type="submit">+</button></form>'+
       '<div class="lab">Urgence</div>'+sg('prio',[['high','Urgent'],['med','Pas urgent'],['low','Optionnel']],PRIO[o.prio]?o.prio:'med')+
       '<div class="lab">Avancement</div>'+sg('status',[['todo','À faire'],['doing','En cours'],['done','Terminé']],st)+
-      '<div class="lab">Liens et notes</div><textarea class="in notes" maxlength="2000" data-field="pnotes" rows="3" placeholder="Un lien, une idée, une remarque…" aria-label="Liens et notes">'+esc(o.notes||'')+'</textarea>'+
+      '<div class="lab">Liens et notes</div><textarea class="in notes" maxlength="2000" data-field="pnotes" rows="3" placeholder="" aria-label="Liens et notes">'+esc(o.notes||'')+'</textarea>'+
       (us.length?'<div class="nlinks">'+us.map(function(u){return '<a class="btn ghost" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">↗ '+esc(u.replace(/^https?:\/\/(www\.)?/,'').split('/')[0])+'</a>'}).join('')+'</div>':'')+
       '<button class="btn ghost pin" data-act="pmain" data-id="'+id+'">'+(o.main?'📌 Retirer de la quête principale':'📌 Mettre en quête principale')+'</button>'+
       '<div class="prow"><button class="lnk del" data-act="pdel" data-id="'+id+'">Supprimer la quête</button><button class="btn valid" data-act="proj-save" data-id="'+id+'">Valider</button></div></div>';
@@ -575,13 +575,13 @@
     var seg=function(f,opts,cur){return '<div class="seg">'+opts.map(function(o){return '<button type="button" class="'+(cur===o[0]?'on':'')+'" data-act="wf-set" data-f="'+f+'" data-v="'+o[0]+'">'+o[1]+'</button>'}).join('')+'</div>'};
     return '<div class="panel wish">'+
       '<div class="pj-title">'+(isNew?'Nouvelle envie ✨':'Modifier l\'envie')+'</div>'+
-      '<div class="lab">Icône et titre</div>'+iconField(wd.emoji||(wd.title?autoEmoji(wd.title):''),'data-wf="title"',wd.title||'','Ex. casque sans fil','data-act="wf-set" data-f="emoji"',WEMO,wd.emoji)+
+      '<div class="lab">Icône et titre</div>'+iconField(wd.emoji||(wd.title?autoEmoji(wd.title):''),'data-wf="title"',wd.title||'','','data-act="wf-set" data-f="emoji"',WEMO,wd.emoji)+
       '<div class="wgrid"><div><div class="lab">Pour qui ?</div>'+seg('who',[['p1',esc(whoLabel('p1'))],['p2',esc(whoLabel('p2'))],['couple','💑 Couple']],wd.who)+'</div>'+
       '<div><div class="lab">Urgence</div>'+seg('urgency',[['low','🌱 Un jour'],['med','⏳ Bientôt'],['high','🔥 Vite']],wd.urgency)+'</div></div>'+
       '<div class="wgrid"><div><div class="lab">Budget</div><div class="eur"><input class="in" type="number" min="0" max="1000000" step="1" inputmode="decimal" data-wf="budget" value="'+esc(wd.budget||'')+'" placeholder="0" aria-label="Budget"><span>€</span></div></div>'+
       '<div><div class="lab">Idée de prix</div><a class="btn ghost wamz" id="wf-amz" href="'+esc(amz)+'" target="_blank" rel="noopener noreferrer">🔎 Chercher sur Amazon</a></div></div>'+
       '<div class="lab">Lien</div><div class="lrow"><input class="in" maxlength="500" data-wf="link" value="'+esc(wd.link||'')+'" placeholder="https://…" aria-label="Lien">'+(lk?'<a class="btn ghost" href="'+esc(lk)+'" target="_blank" rel="noopener noreferrer">Ouvrir ↗</a>':'')+'</div>'+
-      '<div class="lab">Note</div><input class="in" maxlength="200" data-wf="note" value="'+esc(wd.note||'')+'" placeholder="Taille, couleur, magasin…" aria-label="Note">'+
+      '<div class="lab">Note</div><input class="in" maxlength="200" data-wf="note" value="'+esc(wd.note||'')+'" placeholder="" aria-label="Note">'+
       '<div class="prow">'+(isNew?'':'<button class="lnk del" data-act="wf-del">Supprimer</button><button class="lnk" data-act="wf-got">'+(wd.done?UNDO+'Pas encore':'✓ Obtenu')+'</button>')+'<button class="btn valid" data-act="wf-save">'+(isNew?'Ajouter':'Valider')+'</button></div></div>';
   }
   function wishSave(){
@@ -711,7 +711,7 @@
     (tp.items||[]).forEach(function(x){if(!have[nrm(x.t)]){cur.push({t:x.t,done:false});have[nrm(x.t)]=1;n++}});
     if(n)setPack(vOpen,cur);toastMsg(n?'« '+tp.title+' » : '+n+' objet'+(n>1?'s':'')+' ajouté'+(n>1?'s':''):'Tout est déjà dans la valise')}
   function vPack(t){var v=packOf(t.id),items=v?v.items:[];
-    var form='<form class="stepform" data-form="pack"><input class="in" maxlength="80" data-packinput required enterkeyhint="done" placeholder="Ajouter… ex. maillot de bain" aria-label="Ajouter à la valise"><button class="btn" type="submit">+</button></form>';
+    var form='<form class="stepform" data-form="pack"><input class="in" maxlength="80" data-packinput required enterkeyhint="done" placeholder="Ajouter…" aria-label="Ajouter à la valise"><button class="btn" type="submit">+</button></form>';
     var T=tpls(),chips='<div class="lab">Ajouter une liste type</div><div class="tchips">'+T.map(function(tp){return '<button class="tchip" data-act="tpl-use" data-id="'+esc(tp.id)+'">'+esc((tp.emoji||'🧳')+' '+tp.title)+' <i>'+(tp.items||[]).length+'</i></button>'}).join('')+
       '<button class="tchip ghost" data-act="tpl-mgr">⚙️ Gérer les listes</button></div>';
     if(!items.length){
@@ -825,9 +825,9 @@
     var inp=function(f,lab,ph,max){return '<div><div class="lab">'+lab+'</div><input class="in" maxlength="'+(max||120)+'" data-tf="'+f+'" value="'+esc(d[f]==null?'':d[f])+'" placeholder="'+esc(ph||'')+'" aria-label="'+esc(lab)+'"></div>'};
     var notes=function(lab,ph){return '<div class="lab">'+lab+'</div><textarea class="in notes" maxlength="1000" data-tf="notes" rows="2" placeholder="'+esc(ph)+'" aria-label="'+esc(lab)+'">'+esc(d.notes||'')+'</textarea>'};
     var h='<div class="panel tform"><div class="pj-title">'+(ty==='logement'?(isNew?'Nouvel hébergement':'Hébergement'):(isNew?'Nouvelle activité':'Activité'))+'</div>';
-    if(ty==='logement')h+=inp('title','Nom','Ex. Airbnb Alfama')+inp('place','Adresse','Ex. Rua da Rosa 12, Lisbonne',200)+notes('Infos utiles (facultatif)','Code de la porte, contact…');
-    else h+=inp('title','Activité','Ex. Musée des azulejos')+
-      '<div><div class="lab">Jour (facultatif)</div><input class="in" type="date" data-tf="sD" value="'+esc(d.sD||'')+'" aria-label="Jour de l\'activité"></div>'+notes('Note (facultatif)','Horaires, à réserver avant…');
+    if(ty==='logement')h+=inp('title','Nom','')+inp('place','Adresse','',200)+notes('Infos utiles (facultatif)','');
+    else h+=inp('title','Activité','')+
+      '<div><div class="lab">Jour (facultatif)</div><input class="in" type="date" data-tf="sD" value="'+esc(d.sD||'')+'" aria-label="Jour de l\'activité"></div>'+notes('Note (facultatif)','');
     h+='<div class="prow">'+(isNew?'':'<button class="lnk del" data-act="tf-del">Supprimer</button>')+'<button class="btn valid" data-act="tf-save">'+(isNew?'Ajouter':'Valider')+'</button></div></div>';
     return h}
   function tSave(){var e=tEdit;if(!e)return;var d=e.d,sp=splitEmoji(d.title||''),title=sp.title||(e.type==='logement'?'Hébergement':'');
@@ -845,7 +845,7 @@
   var tplMgr=false,tplEdit=null,vBilEdit=false,bilPop=null;
   /* Billets : pop-up de confirmation avant d'ouvrir un lien externe, ou pour le régler */
   function bilPanel(){var t=vOpen&&find('voyages',vOpen);if(!t)return '';var lk=safeUrl(t.link),dom=lk.replace(/^https?:\/\/(www\.)?/,'').split('/')[0];
-    var form='<div class="lab">Lien vers les billets</div><input class="in" type="url" inputmode="url" maxlength="500" data-bil value="'+esc(t.link||'')+'" placeholder="https://www.sncf-connect.com/…" aria-label="Lien vers les billets">';
+    var form='<div class="lab">Lien vers les billets</div><input class="in" type="url" inputmode="url" maxlength="500" data-bil value="'+esc(t.link||'')+'" placeholder="https://…" aria-label="Lien vers les billets">';
     if(lk&&!bilPop.edit)return '<div class="panel bil"><div class="pj-title">🎟️ Billets</div><div class="bil-warn">⚠️ Attention, cela va ouvrir un lien externe :<b>'+esc(dom)+'</b></div>'+
       '<div class="prow bil-row"><button class="btn ghost" data-act="bil-edit">Modifier le lien</button><a class="btn valid" href="'+esc(lk)+'" target="_blank" rel="noopener noreferrer" data-close>Valider</a></div></div>';
     return '<div class="panel bil"><div class="pj-title">🎟️ Billets</div>'+(lk?'':'<div class="bil-warn">⚠️ Attention, aucun lien programmé pour les billets.</div>')+form+
@@ -856,7 +856,7 @@
   function tplPanel(){
     if(tplEdit){var e=tplEdit;
       return '<div class="panel tform"><div class="pj-title">'+(e.id==='new'?'Nouvelle liste type':'Modifier la liste type')+'</div><div class="lab">Nom</div>'+
-        iconField(e.emoji||'🧳','data-tpl="title"',e.title||'','Ex. Ski, week-end chez les parents…','data-act="tpl-emo"',TPLEMO,e.emoji)+
+        iconField(e.emoji||'🧳','data-tpl="title"',e.title||'','','data-act="tpl-emo"',TPLEMO,e.emoji)+
         '<div class="lab">Objets ('+e.items.length+')</div>'+(e.items.length?'<ul class="steps tpl-items">'+e.items.map(function(x,i){return '<li class="step"><span>'+esc(x)+'</span><button class="sx" data-act="tpl-rm" data-i="'+i+'" aria-label="Retirer : '+esc(x)+'" title="Retirer">×</button></li>'}).join('')+'</ul>':'<div class="sub">Pas encore d\'objet.</div>')+
         '<form class="stepform" data-form="tplitem"><input class="in" maxlength="80" data-tplinput required enterkeyhint="done" placeholder="Ajouter un objet" aria-label="Ajouter un objet"><button class="btn" type="submit">+</button></form>'+
         '<div class="prow"><button class="lnk" data-act="tpl-mgr">‹ Toutes les listes</button><button class="btn valid" data-act="tpl-save">Valider</button></div></div>'}
@@ -980,10 +980,11 @@
     var ae=document.activeElement;if(ae&&el.contains(ae)&&ae.tagName==='INPUT'&&ae.value)return;
     var m=S.projects.filter(function(p){return p.main&&p.status!=='done'})[0],h='';
     if(m){var ss=m.steps||[],nx=-1,id=esc(m.id),nm=esc((m.emoji?m.emoji+' ':'')+m.title);ss.some(function(x,i){if(!x.done){nx=i;return true}});var dn=ss.filter(function(x){return x.done}).length;
-      h+='<div class="tq"><div class="tq-k">📌 Quête principale'+(ss.length?' · '+dn+'/'+ss.length:'')+'</div>'+
-        (nx>=0?'<div class="tq-row"><button class="chk" data-act="ps" data-id="'+id+'" data-i="'+nx+'" aria-label="Terminer : '+esc(ss[nx].t)+'">'+CHECK+'</button><button class="tq-t" data-act="proj-open" data-id="'+id+'"><b>'+nm+'</b><span>→ '+esc(ss[nx].t)+'</span></button></div>'
-          :ss.length?'<div class="tq-row"><button class="tq-t" data-act="proj-open" data-id="'+id+'"><b>'+nm+'</b><span>Toutes les étapes sont faites 🎉</span></button><button class="btn tq-next" data-act="main-finish" data-id="'+id+'">Choisir la suivante</button></div>'
-          :'<button class="tq-t" data-act="proj-open" data-id="'+id+'"><b>'+nm+'</b><span>Ajoute une première étape</span></button>')+'</div>'}
+      /* Toutes les étapes de la quête principale : le rond coche, le texte ouvre la quête */
+      var steps=ss.map(function(x,i){return '<li class="tq-step'+(x.done?' done':'')+'"><button class="chk" data-act="ps" data-id="'+id+'" data-i="'+i+'" aria-label="'+(x.done?'Décocher : ':'Terminer : ')+esc(x.t)+'">'+CHECK+'</button><button class="tq-st" data-act="proj-open" data-id="'+id+'">'+esc(x.t)+'</button></li>'}).join('');
+      h+='<div class="tq"><div class="tq-k">📌 Quête principale'+(ss.length?' · '+dn+'/'+ss.length:'')+'</div><button class="tq-t" data-act="proj-open" data-id="'+id+'"><b>'+nm+'</b></button>'+
+        (ss.length?'<div class="bar tq-bar"><i style="width:'+Math.round(dn/ss.length*100)+'%"></i></div><ul class="tq-steps">'+steps+'</ul>':'<button class="tq-st tq-add" data-act="proj-open" data-id="'+id+'">+ Ajoute une première étape</button>')+
+        (ss.length&&nx<0?'<div class="tq-row"><span class="tq-win">Quête accomplie 🎉</span><button class="btn tq-next" data-act="main-finish" data-id="'+id+'">Choisir la suivante</button></div>':'')+'</div>'}
     else h+='<button class="tq tq-none" data-act="qview-open"><span class="tq-k">📌 Pas de quête principale</span><span class="tq-t"><span>Ouvre les quêtes et épingles-en une</span></span></button>';
     var R={r:0,o:1},due=S.routines.map(function(r){return {r:r,st:careState(r)}}).filter(function(x){return x.st.c==='r'||x.st.c==='o'}).sort(function(a,b){return R[a.st.c]-R[b.st.c]});
     h+='<div class="tsec">À faire'+(due.length?' <i>'+due.length+'</i>':'')+'</div>'+(due.length?due.map(function(x){var r=x.r;return '<div class="tarow '+x.st.c+'">'+careChk(r)+'<div class="main" role="button" tabindex="0" data-act="care-open" data-id="'+esc(r.id)+'"><span class="t">'+(r.emoji?esc(r.emoji)+' ':'')+esc(r.title)+'</span><span class="sub">'+esc((r.group||'Maison')+' · '+x.st.txt)+'</span></div></div>'}).join(''):'<p class="tempty">'+(loaded.routines?'Tout est à jour ✨':'Chargement…')+'</p>');
