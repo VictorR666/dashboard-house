@@ -94,10 +94,17 @@ def main():
                 page.screenshot(path=f'{OUT}/{name}-routines.png', full_page=True)
                 if name == 'mobile':
                     assert page.locator('#l-todoall .tarow').count() == 1, 'checklist À faire'
-                    page.click('[data-act=ta-done]'); page.wait_for_timeout(800)
+                    page.click('#l-todoall [data-act=care-chk]'); page.wait_for_timeout(800)
                     assert state['routines'][2][4] == time.strftime('%Y-%m-%d'), state['routines'][2]
                     assert 'Tout est à jour' in page.inner_text('#l-todoall')
                     page.click('[data-act=undo-upd]'); page.wait_for_timeout(800)
+                    # le rond d'une carte de routine coche directement, et le texte ouvre la fiche
+                    page.click('#l-Kimchi [data-act=care-chk]'); page.wait_for_timeout(800)
+                    assert state['routines'][0][4] == time.strftime('%Y-%m-%d'), state['routines'][0]
+                    page.click('#l-Kimchi [data-act=care-chk]'); page.wait_for_timeout(800)
+                    assert state['routines'][0][4] != time.strftime('%Y-%m-%d'), 'le 2e tap devrait annuler'
+                    page.click('#l-Kimchi .row .t'); page.wait_for_timeout(300)
+                    assert page.is_visible('.sheet-card .bigdone'); page.click('.sheet-x'); page.wait_for_timeout(200)
                 page.click('.tabbar [data-tab=courses]'); page.wait_for_timeout(300)
                 if name == 'mobile':
                     page.click('[data-act=course-toggle] >> visible=true')
@@ -108,6 +115,15 @@ def main():
                     assert len(state['courses']) == 3, state['courses']
                 page.screenshot(path=f'{OUT}/{name}-courses.png', full_page=True)
                 page.click('.tabbar [data-tab=home]'); page.wait_for_timeout(300)
+                if name == 'mobile':
+                    before0 = state['projects'][0][4]
+                    page.click('#l-main .mq-step .circ >> nth=0'); page.wait_for_timeout(800)
+                    assert state['projects'][0][4] != before0, 'rond de la quête principale'
+                    page.click('[data-act=undo-upd]'); page.wait_for_timeout(800)
+                    assert state['projects'][0][4] == before0
+                    page.click('#l-main .mq-t >> nth=0'); page.wait_for_timeout(300)
+                    assert page.is_visible('.sheet-card .pj'), 'le texte doit ouvrir la quête'
+                    page.click('.sheet-x'); page.wait_for_timeout(200)
                 page.click('.h2btn'); page.wait_for_timeout(400)
                 if name == 'mobile':
                     before = state['projects'][0][4]

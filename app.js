@@ -254,9 +254,15 @@
     var IC={g:'✅',o:'🟠',r:'🚨'};if(IC[c])txt=IC[c]+' '+txt;
     return {c:c,txt:txt};
   }
+  /* Règle unique : le rond = marquer comme fait (ou annuler si fait aujourd'hui), le texte = ouvrir le détail */
+  function careChk(r){var on=r.lastDone===iso(new Date());
+    return '<button class="chk care-chk'+(on?' on':'')+'" data-act="care-chk" data-id="'+esc(r.id)+'" aria-pressed="'+on+'" aria-label="'+(on?'Annuler, pas encore fait : ':'Fait aujourd\'hui : ')+esc(r.title)+'">'+CHECK+'</button>'}
+  function careToggle(id){var r=find('routines',id);if(!r)return;
+    if(r.lastDone===iso(new Date())&&r.hasPrev){undoDate(id);toastMsg('Remis comme avant');return}
+    var pv=snap('routines',id,['lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText']);setDate(id,iso(new Date()));offerUndo('routines',id,pv,'Marqué comme fait ✓')}
   function careRow(r){
     var st=careState(r);
-    return '<div class="row '+st.c+' care" role="button" tabindex="0" aria-haspopup="dialog" data-act="care-open" data-id="'+esc(r.id)+'">'+
+    return '<div class="row '+st.c+' care" role="button" tabindex="0" aria-haspopup="dialog" data-act="care-open" data-id="'+esc(r.id)+'">'+careChk(r)+
       (r.emoji?'<span class="em" aria-hidden="true">'+esc(r.emoji)+'</span>':'<span class="dot"></span>')+
       '<div class="main"><span class="t">'+esc(r.title)+'</span><span class="sub">'+esc(st.txt)+'</span></div></div>';
   }
@@ -309,7 +315,7 @@
       d=r.lastDone?st.txt.replace(/^\S+\s/,''):'';
     var ic={g:'😌',o:'😅',r:'🥵',n:''}[st.c];
     return '<div class="ptile '+st.c+'" role="button" tabindex="0" aria-haspopup="dialog" data-act="care-open" data-id="'+esc(r.id)+'">'+plantArt(r)+
-      '<div class="pt"><span class="pn">'+esc(r.title)+'</span><span class="ps">'+(ic?'<i aria-hidden="true">'+ic+'</i> ':'')+lab+'</span><span class="pd">'+esc(d||'')+'</span></div></div>';
+      '<div class="pt"><span class="pn">'+careChk(r)+esc(r.title)+'</span><span class="ps">'+(ic?'<i aria-hidden="true">'+ic+'</i> ':'')+lab+'</span><span class="pd">'+esc(d||'')+'</span></div></div>';
   }
   function renderCare(){
     GROUPS.forEach(function(g){
@@ -323,7 +329,7 @@
     var L=S.routines.map(function(r){return {r:r,st:careState(r)}}).filter(function(x){return x.st.c==='r'||x.st.c==='o'})
       .sort(function(a,b){if(R[a.st.c]!==R[b.st.c])return R[a.st.c]-R[b.st.c];return (a.r.lastDone||'')<(b.r.lastDone||'')?-1:1});
     var c=$('ta-count');if(c)c.textContent=L.length?L.length+' à faire':'';
-    el.innerHTML=L.length?L.map(function(x){var r=x.r;return '<div class="tarow '+x.st.c+'"><button class="chk" data-act="ta-done" data-id="'+esc(r.id)+'" aria-label="Fait : '+esc(r.title)+'">'+CHECK+'</button>'+
+    el.innerHTML=L.length?L.map(function(x){var r=x.r;return '<div class="tarow '+x.st.c+'">'+careChk(r)+
       '<div class="main" role="button" tabindex="0" data-act="care-open" data-id="'+esc(r.id)+'"><span class="t">'+(r.emoji?esc(r.emoji)+' ':'')+esc(r.title)+'</span><span class="sub">'+esc((GL[r.group]||'Maison')+' · '+x.st.txt)+'</span></div></div>'}).join('')
       :'<p class="empty">'+(loaded.routines?'Tout est à jour ✨':'Chargement…')+'</p>'}
   function setDate(id,val){
@@ -948,12 +954,12 @@
     var ss=m.steps||[],todo=[];ss.forEach(function(x,i){if(!x.done)todo.push(i)});
     var done=ss.length-todo.length,id=esc(m.id);
     var head='<div class="mq-top"><div><div class="mq-lab">📌 Quête principale</div><button class="mq-title" data-act="proj-open" data-id="'+id+'">'+(m.emoji?esc(m.emoji)+' ':'')+esc(m.title)+'</button></div></div>'+masc;
-    if(!ss.length){el.innerHTML=head+'<button class="mq-step" data-act="proj-open" data-id="'+id+'"><span class="circ"></span>Ajoute tes premières mini-quêtes</button>';return}
+    if(!ss.length){el.innerHTML=head+'<div class="mq-step"><span class="circ" aria-hidden="true"></span><button class="mq-t" data-act="proj-open" data-id="'+id+'">Ajoute tes premières mini-quêtes</button></div>';return}
     if(!todo.length){el.innerHTML=head+'<div class="mq-bar">'+ss.map(function(){return '<i class="on"></i>'}).join('')+'</div><div class="mq-win"><b>🎉</b>Quête accomplie !<button class="btn" data-act="main-finish" data-id="'+id+'">Choisir la suivante</button></div>';return}
     var bar='<div class="mq-bar">'+ss.map(function(x){return '<i'+(x.done?' class="on"':'')+'></i>'}).join('')+'</div>';
     var chips='<div class="mq-chips"><span>'+done+'/'+ss.length+'</span><span>'+todo.length+' restante'+(todo.length>1?'s':'')+'</span></div>';
     var rows=todo.slice(0,2).map(function(i,k){
-      return '<button class="mq-step'+(k?' small':'')+'" data-act="ps" data-id="'+id+'" data-i="'+i+'" aria-label="Terminer : '+esc(ss[i].t)+'"><span class="circ"></span><span>'+esc(ss[i].t)+'</span></button>';
+      return '<div class="mq-step'+(k?' small':'')+'"><button class="circ" data-act="ps" data-id="'+id+'" data-i="'+i+'" aria-label="Terminer : '+esc(ss[i].t)+'"></button><button class="mq-t" data-act="proj-open" data-id="'+id+'">'+esc(ss[i].t)+'</button></div>';
     }).join('');
     el.innerHTML=head+bar+chips+rows;
   }
@@ -1009,6 +1015,7 @@
     else if(vClick(a,b,id)){}
     else if(a==='sheet-close'){iconOpen=false;tEdit=null;tplMgr=false;tplEdit=null;bilPop=null;evEdit=null;wishOpen=null;projId=null;openId=null;calFor=null;confirmDel=null;renderSheet()}
     else if(a==='care-add'){var cf=document.querySelector('form.care-add[data-group="'+b.getAttribute('data-group')+'"]');if(cf){cf.hidden=!cf.hidden;if(!cf.hidden)cf.querySelector('input').focus()}}
+    else if(a==='care-chk'){careToggle(id)}
     else if(a==='ta-done'){var pv2=snap('routines',id,['lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText']);setDate(id,iso(new Date()));offerUndo('routines',id,pv2,'Marqué comme fait ✓')}
     else if(a==='done-today'){var pv=snap('routines',id,['lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText']);openId=null;calFor=null;setDate(id,iso(new Date()));renderSheet();offerUndo('routines',id,pv,'Marqué comme fait ✓')}
     else if(a==='undo'){openId=null;calFor=null;undoDate(id);renderSheet()}
