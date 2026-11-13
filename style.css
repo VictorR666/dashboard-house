@@ -649,3 +649,8 @@ body{background-repeat:no-repeat}
 .vv-bil{flex:none;font-size:12.5px;padding:6px 12px}
 .vlink{text-align:center;margin-top:18px;font-size:12.5px;font-weight:700;color:var(--ink2)}.vlink .lnk{display:inline;width:auto;font-size:12.5px}
 .vview .vi-link{margin-top:6px}.vdel{margin-top:8px}
+/* v19 : prochain voyage dans la carte « À venir », sous le titre */
+.s-cal .tripnext{flex:none;width:100%;max-width:none;margin:0 0 9px;border-radius:18px;padding:7px 12px 7px 7px;gap:9px;box-shadow:none;order:0}
+.s-cal .tn-n,.s-cal .tn-em{width:40px;height:40px}.s-cal .tn-n b{font-size:18px}.s-cal .tn-n{font-size:9px}.s-cal .tn-em{font-size:21px}
+.s-cal .tn-t{font-size:14px}.s-cal .tn-s{font-size:12px}.s-cal .tn-x{font-size:11.5px}
+@media (max-width:899px),(orientation:portrait){.s-cal .tripnext{grid-column:auto;grid-row:auto;margin:0 0 12px;padding:9px 14px 9px 9px}}
