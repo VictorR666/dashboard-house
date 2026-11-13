@@ -880,3 +880,43 @@ body[data-tab="maison"] .s-plantes .ptile{flex:none;min-height:120px;align-items
 body[data-tab="maison"] .s-plantes .ptile .pa{inset:auto 10px 0 auto;width:84px;height:88%}
 body[data-tab="maison"] .s-plantes .ptile .pt{padding:12px 100px 12px 10px;gap:2px}
 body[data-tab="maison"] .s-plantes .ptile .pn{font-size:17px}
+/* ---- Onglet Test : vue simple v2 ---- */
+.hub2{display:none}
+body[data-tab="test"] .grid{display:none}
+body[data-tab="test"] .hub2{display:flex;flex-direction:column;gap:16px;padding-bottom:96px;max-width:620px;width:100%;margin:0 auto}
+body[data-tab="test"]{overflow:auto;display:block}
+body[data-tab="test"] .wrap{justify-content:flex-start}
+body[data-tab="test"] .mascot{display:none}
+.k2-card{display:flex;flex-direction:column;border-radius:28px;padding:16px 18px;border:2.5px solid transparent;
+  background:linear-gradient(#fff,#fff) padding-box,linear-gradient(135deg,#6F5BDD,#A898FF 50%,#8D7BF0) border-box;box-shadow:0 12px 30px rgba(111,91,221,.16)}
+.k2-top{display:flex;align-items:center;gap:12px}
+.k2{flex:none;width:72px;height:auto}
+.k2.jump{animation:kjump .9s ease}
+@keyframes kjump{0%,100%{transform:translateY(0) rotate(0)}25%{transform:translateY(-22px) rotate(-8deg)}50%{transform:translateY(0) rotate(0)}70%{transform:translateY(-10px) rotate(6deg)}}
+.k2-hi{font-family:var(--font-d);font-weight:600;font-size:22px;line-height:1.1}
+.k2-t{font-size:14px;font-weight:700;color:var(--ink2);margin-top:3px}
+.k2-part{border-top:1.5px solid rgba(141,123,240,.14);margin-top:14px;padding-top:12px;display:flex;flex-direction:column;gap:7px}
+.k2-q{display:flex;justify-content:space-between;align-items:baseline;gap:8px;border:0;background:none;padding:0;font:inherit;text-align:left;color:var(--ink);cursor:pointer}
+.k2-q span{font-weight:900;font-size:14px}.k2-q i{font-style:normal;font-size:12px;font-weight:800;color:var(--lav)}
+.k2-bar{margin:0;background:var(--n-bg);height:6px}
+.k2-step{display:flex;align-items:center;gap:10px}
+.k2-step .chk{width:22px;height:22px}.k2-step .chk svg{width:11px;height:11px}
+.k2-st{flex:1;border:0;background:none;padding:2px 0;font:inherit;font-size:14px;font-weight:700;color:var(--ink);text-align:left;cursor:pointer}
+.k2-pills{display:flex;flex-wrap:wrap;gap:8px}
+.k2-pill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;background:var(--n-bg);padding:6px 12px 6px 6px}
+.k2-pill .care-chk{width:24px;height:24px;margin:0}
+.k2-pt{border:0;background:none;padding:0;font:inherit;font-size:14px;font-weight:800;color:var(--ink);cursor:pointer}
+.k2-more{border:0;background:none;font:inherit;font-size:12px;font-weight:800;color:var(--lav);padding:6px 4px;cursor:pointer}
+.k2-trip{display:flex;flex-direction:column;align-items:center;gap:8px;border:0;background:none;padding:0;font:inherit;color:var(--ink);cursor:pointer}
+.k2-tl{font-size:14px;font-weight:900}
+.k2-trip .fd i{width:24px;height:34px}.k2-trip .fd b{font-size:21px}.k2-trip .fsep{height:34px}
+.k2-now{font-family:var(--font-d);font-weight:600;font-size:17px;color:var(--lav)}
+.k2-dock{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;background:rgba(255,255,255,.92);border-radius:24px;padding:10px 6px;box-shadow:0 0 0 1.5px rgba(141,123,240,.10),0 8px 20px rgba(141,123,240,.08)}
+.dk{display:flex;flex-direction:column;align-items:center;gap:4px;border:0;background:none;padding:4px 0;font:inherit;color:var(--ink);cursor:pointer;border-radius:16px}
+.dk:active{transform:scale(.94)}
+.dk-ic{position:relative;width:44px;height:44px;border-radius:15px;background:var(--lav-soft);display:grid;place-items:center;font-size:22px}
+.dk-ic b{position:absolute;top:-6px;right:-8px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--lav);color:#fff;font-size:12px;font-weight:900;display:grid;place-items:center;box-shadow:0 0 0 2px #fff}
+.dk-l{font-size:12px;font-weight:800;color:var(--ink2)}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:70;overflow:hidden}
+.confetti i{position:absolute;top:-12px;width:8px;height:12px;border-radius:2px;animation:conf 1.5s ease-in forwards}
+@keyframes conf{to{top:105%;opacity:.2;translate:0 0;rotate:540deg}}

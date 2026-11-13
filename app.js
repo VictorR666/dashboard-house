@@ -257,7 +257,7 @@
     return '<button class="chk care-chk'+(on?' on':'')+'" data-act="care-chk" data-id="'+esc(r.id)+'" aria-pressed="'+on+'" aria-label="'+(r.lastDone===iso(new Date())?'Annuler, pas encore fait : ':on?'À jour, refait aujourd\'hui : ':'Fait aujourd\'hui : ')+esc(r.title)+'">'+CHECK+'</button>'}
   function careToggle(id){var r=find('routines',id);if(!r)return;
     if(r.lastDone===iso(new Date())&&r.hasPrev){undoDate(id);toastMsg('Remis comme avant');return}
-    var pv=snap('routines',id,['lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText']);setDate(id,iso(new Date()));offerUndo('routines',id,pv,'Marqué comme fait ✓')}
+    var before=dueList().length;var pv=snap('routines',id,['lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText']);setDate(id,iso(new Date()));offerUndo('routines',id,pv,'Marqué comme fait ✓');if(before>0&&!dueList().length)celebrate()}
   function careRow(r){
     var st=careState(r);
     return '<div class="row '+st.c+' care" role="button" tabindex="0" aria-haspopup="dialog" data-act="care-open" data-id="'+esc(r.id)+'">'+careChk(r)+
@@ -362,6 +362,46 @@
       tile('quetes','🗺️','Quêtes',m?esc(m.title)+(mss.length?' · '+mdn+'/'+mss.length:''):'Une idée ?')+
       tile('wish','🎁','Envies',nw?nw+' envie'+(nw>1?'s':''):'Rien pour l\'instant')+
       '</div>'}
+  /* ---- Onglet « Test » : vue simple v2 — une grande carte « Aujourd'hui » (quête, 3 choses, vacances) + un dock de raccourcis ---- */
+  function dueList(){var R={r:0,o:1};return S.routines.map(function(r){return {r:r,st:careState(r)}}).filter(function(x){return x.st.c==='r'||x.st.c==='o'}).sort(function(a,b){return R[a.st.c]-R[b.st.c]})}
+  function kimchiSays(due,nt,ts){var h=new Date().getHours(),hi=h<6?'Bonne nuit':h<12?'Bonjour':h<18?'Bon après-midi':'Bonsoir';
+    var t;
+    if(!loaded.routines)t='Je regarde ce qui se passe à la maison…';
+    else if(nt&&ts.k==='soon'&&ts.n<=7&&due.length<=1)t='Plus que '+ts.n+' dodo'+(ts.n>1?'s':'')+' avant '+nt.title+' 🧳';
+    else if(nt&&ts.k==='now')t='Profitez bien de '+nt.title+' 🌴';
+    else if(!due.length)t=h>=20||h<6?'Tout est fait, Kimchi s\'endort 😴':'Tout roule, Kimchi approuve 🐾';
+    else if(due.length===1)t='Une petite chose et c\'est bon !';
+    else t=due.length+' petites choses, rien qui presse.';
+    return {hi:hi,t:t}}
+  function renderHub2(){var el=$('hub2');if(!el||TAB!=='test')return;
+    var due=dueList(),nt=nextTrip(),ts=nt&&tripState(nt),k=kimchiSays(due,nt,ts),h='';
+    h+='<div class="k2-top"><img class="k2" id="k2" src="assets/kimchi-anim.svg" alt=""><div><div class="k2-hi">'+k.hi+' !</div><div class="k2-t">'+esc(k.t)+'</div></div></div>';
+    /* 1. Quête principale : une ligne, la barre, la prochaine étape */
+    var m=S.projects.filter(function(p){return p.main&&p.status!=='done'})[0];
+    if(m){var ss=m.steps||[],dn=ss.filter(function(x){return x.done}).length,nx=-1,id=esc(m.id);ss.some(function(x,i){if(!x.done){nx=i;return true}});
+      h+='<div class="k2-part"><button class="k2-q" data-act="proj-open" data-id="'+id+'"><span>📌 '+esc((m.emoji?m.emoji+' ':'')+m.title)+'</span>'+(ss.length?'<i>'+dn+'/'+ss.length+'</i>':'')+'</button>'+
+        (ss.length?'<div class="bar k2-bar"><i style="width:'+Math.round(dn/ss.length*100)+'%"></i></div>':'')+
+        (nx>=0?'<div class="k2-step"><button class="chk" data-act="ps" data-id="'+id+'" data-i="'+nx+'" aria-label="Terminer : '+esc(ss[nx].t)+'">'+CHECK+'</button><button class="k2-st" data-act="proj-open" data-id="'+id+'">'+esc(ss[nx].t)+'</button></div>':'')+'</div>'}
+    /* 2. Trois choses à faire au maximum */
+    if(due.length){h+='<div class="k2-part"><div class="k2-pills">'+due.slice(0,3).map(function(x){var r=x.r;return '<span class="k2-pill">'+careChk(r)+'<button class="k2-pt" data-act="care-open" data-id="'+esc(r.id)+'">'+(r.emoji?esc(r.emoji)+' ':'')+esc(r.title)+'</button></span>'}).join('')+
+      (due.length>3?'<button class="k2-more" data-act="hub-go" data-v="todo">+'+(due.length-3)+' autre'+(due.length>4?'s':'')+'</button>':'')+'</div></div>'}
+    /* 3. Les prochaines vacances */
+    if(nt){var da=departAt(nt),cd='';
+      if(ts.k==='now')cd='<span class="k2-now">🌴 En vacances · jour '+ts.day+' sur '+ts.tot+'</span>';
+      else if(ts.k==='soon'&&ts.n===0)cd='<span class="k2-now">🎉 C\'est aujourd\'hui !</span>';
+      else if(da)cd='<span class="flap" role="timer" data-cd="'+da.d.getTime()+'">'+flapInner(da.d-Date.now())+'</span>';
+      h+='<div class="k2-part"><button class="k2-trip" data-act="trip-open" data-id="'+esc(nt.id)+'"><span class="k2-tl">'+esc(tEmo(nt)+' '+nt.title)+(ts.k==='soon'?' dans':'')+'</span>'+cd+'</button></div>'}
+    var nc=S.courses.filter(function(c){return !c.done}).length;
+    var dock=function(v,em,lab,badge){return '<button class="dk" data-act="hub-go" data-v="'+v+'"><span class="dk-ic">'+em+(badge?'<b>'+badge+'</b>':'')+'</span><span class="dk-l">'+lab+'</span></button>'};
+    el.innerHTML='<section class="k2-card">'+h+'</section><nav class="k2-dock" aria-label="Raccourcis">'+
+      dock('courses','🛒','Courses',nc||'')+dock('agenda','📅','Agenda','')+dock('todo','🧹','Routines',due.length||'')+dock('voyage','🧳','Voyages',nt&&ts.k==='soon'?'J-'+ts.n:'')+dock('quetes','🗺️','Quêtes','')+dock('wish','🎁','Envies','')+'</nav>'}
+  /* Petite fête quand on coche la dernière chose du jour */
+  function celebrate(){var k=$('k2');if(k){k.classList.remove('jump');void k.offsetWidth;k.classList.add('jump')}
+    if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+    var box=document.createElement('div');box.className='confetti';box.setAttribute('aria-hidden','true');
+    var C=['#8D7BF0','#FF9E73','#52C496','#FFC857','#B9AEF5'];
+    for(var i=0;i<28;i++){var p=document.createElement('i');p.style.left=(5+Math.random()*90)+'%';p.style.background=C[i%C.length];p.style.animationDelay=(Math.random()*.25)+'s';p.style.transform='rotate('+(Math.random()*360)+'deg)';box.appendChild(p)}
+    document.body.appendChild(box);setTimeout(function(){box.remove()},1800)}
   /* Raccourcis : chaque tuile ouvre directement l'espace voulu */
   function hubGo(v){
     if(v==='courses'){cview(true,true)}
@@ -550,10 +590,10 @@
   function unclearCart(){if(!lastClear)return;var l=lastClear;lastClear=null;hideToast();l.forEach(function(o){if(!find('courses',o.id)){S.courses.push(o);shWrite('courses',o)}});render()}
 
   /* ---- Onglets (Accueil / Maison / Courses) ---- */
-  var TAB=lsGet('maison-tab')||'home';if(TAB==='test')TAB='home';if(['home','maison','courses','voyage'].indexOf(TAB)<0)TAB='home';
+  var TAB=lsGet('maison-tab')||'home';if(['home','maison','courses','voyage','test'].indexOf(TAB)<0)TAB='home';
   function setTab(t){TAB=t;lsSet('maison-tab',t);document.body.setAttribute('data-tab',t);
     [].forEach.call(document.querySelectorAll('.tabbar button'),function(b){var on=b.getAttribute('data-tab')===t;b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false')});
-    window.scrollTo(0,0);fitTodo();if(t==='home')renderHub();if((t==='courses'||t==='voyage')&&Date.now()-lastLoad>15000)load()}
+    window.scrollTo(0,0);fitTodo();if(t==='home')renderHub();if(t==='test')renderHub2();if((t==='courses'||t==='voyage')&&Date.now()-lastLoad>15000)load()}
   function whoLabel(k){return k==='couple'?'Couple':(PEOPLE[k]||(k==='p1'?'Personne 1':k==='p2'?'Personne 2':''))}
   var UW={high:3,med:2,low:1};
   function fitTotal(){var te=$('w-total');if(!te)return;te.style.visibility='';requestAnimationFrame(function(){if(te.scrollWidth>te.clientWidth+1)te.style.visibility='hidden'})}
@@ -1016,7 +1056,7 @@
     var b=$('banner');if(!b)return;
     if(fromCache){var d=new Date(fromCache);b.innerHTML='<div class="note">Dernières données · '+esc(d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}))+'</div>'}
   }
-  function render(){renderCare();renderTodoAll();renderHub();renderTodo();renderMain();renderShop();renderCourses();renderQView();renderTrips();renderTripNext();renderVView();renderSheet(true);cacheSave()}
+  function render(){renderCare();renderTodoAll();renderHub();renderHub2();renderTodo();renderMain();renderShop();renderCourses();renderQView();renderTrips();renderTripNext();renderVView();renderSheet(true);cacheSave()}
 
   function clock(){var n=new Date();$('hello').textContent=n.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});$('today').textContent=n.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}
   clock();setInterval(clock,15000);
