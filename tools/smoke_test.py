@@ -122,6 +122,17 @@ def main():
                         page.fill('#c-title', item); page.keyboard.press('Enter'); page.wait_for_timeout(150)
                     page.wait_for_timeout(800)
                     assert len(state['courses']) == 3, state['courses']
+                    # appui long + glisser : « lait » passe en dernier
+                    rows = page.locator('#l-courses .crow:not(.done)')
+                    r0 = rows.nth(0).bounding_box(); r2 = rows.nth(2).bounding_box()
+                    page.mouse.move(r0['x'] + 60, r0['y'] + r0['height'] / 2); page.mouse.down(); page.wait_for_timeout(500)
+                    for k in range(1, 11):
+                        page.mouse.move(r0['x'] + 60, r0['y'] + r0['height'] / 2 + (r2['y'] + r2['height'] * .8 - r0['y'] - r0['height'] / 2) * k / 10); page.wait_for_timeout(40)
+                    page.mouse.up(); page.wait_for_timeout(900)
+                    order = page.eval_on_selector_all('#l-courses .crow:not(.done) .ct', 'e => e.map(x => x.textContent)')
+                    assert order == ['pain', 'tomates', 'lait'], order
+                    assert not any(r[5] for r in state['courses']), 'le glisser ne doit pas cocher'
+                    assert '"ord"' in [r for r in state['courses'] if r[2] == 'lait'][0][6], state['courses']
                 page.screenshot(path=f'{OUT}/{name}-courses.png', full_page=True)
                 page.click('.tabbar [data-tab=home]'); page.wait_for_timeout(300)
                 if name == 'mobile':

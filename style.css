@@ -1127,3 +1127,9 @@ body[data-tab="agenda"] .agtab{display:flex;flex-direction:column;gap:14px;max-w
   body[data-tab="home"][data-view="detail"] .grid{padding-bottom:0}
   body[data-tab="home"][data-view="detail"] .viewbot-d{margin:18px auto calc(max(10px,env(safe-area-inset-bottom,0px)) + 76px)}
 }
+
+/* v66 : réordonner les courses (appui long) */
+#l-courses .crow:not(.done),#cv-list .crow:not(.done){-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.crow.cdrag{position:relative;z-index:5;transition:none;border-radius:16px;background:#fff;box-shadow:0 10px 26px rgba(91,72,180,.22),0 0 0 1.5px rgba(141,123,240,.35);scale:1.02}
+.cdragging .crow:not(.cdrag){transition:transform .15s}
+.cdragging{touch-action:none}
