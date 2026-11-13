@@ -92,6 +92,12 @@ def main():
                 page.screenshot(path=f'{OUT}/{name}-accueil.png')
                 page.click('.tabbar [data-tab=maison]'); page.wait_for_timeout(300)
                 page.screenshot(path=f'{OUT}/{name}-routines.png', full_page=True)
+                if name == 'mobile':
+                    assert page.locator('#l-todoall .tarow').count() == 1, 'checklist À faire'
+                    page.click('[data-act=ta-done]'); page.wait_for_timeout(800)
+                    assert state['routines'][2][4] == time.strftime('%Y-%m-%d'), state['routines'][2]
+                    assert 'Tout est à jour' in page.inner_text('#l-todoall')
+                    page.click('[data-act=undo-upd]'); page.wait_for_timeout(800)
                 page.click('.tabbar [data-tab=courses]'); page.wait_for_timeout(300)
                 if name == 'mobile':
                     page.click('[data-act=course-toggle] >> visible=true')
