@@ -1119,3 +1119,11 @@ body[data-tab="agenda"] .agtab{display:flex;flex-direction:column;gap:14px;max-w
 .ag-t{flex:1;min-width:0;font-weight:800;font-size:14px;overflow-wrap:anywhere}
 .ag-hid{align-self:center;font-size:12px}
 .ag-gc{align-self:center;font-size:12px;font-weight:800;color:var(--ink2);text-decoration:none}
+/* v63 : sur téléphone, même espace sous le contenu sur toutes les pages (comme l'accueil) */
+@media (max-width:899px),(orientation:portrait){
+  body,body[data-tab]{padding-bottom:0!important}
+  :is(body[data-tab="maison"],body[data-tab="courses"],body[data-tab="voyage"]) .grid,
+  body[data-tab="quetes"] .qtab,body[data-tab="agenda"] .agtab,body[data-tab="home"][data-view="simple"] .hub3{padding-bottom:calc(max(10px,env(safe-area-inset-bottom,0px)) + 76px)!important}
+  body[data-tab="home"][data-view="detail"] .grid{padding-bottom:0}
+  body[data-tab="home"][data-view="detail"] .viewbot-d{margin:18px auto calc(max(10px,env(safe-area-inset-bottom,0px)) + 76px)}
+}
