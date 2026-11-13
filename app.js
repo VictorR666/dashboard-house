@@ -605,22 +605,15 @@
     if(!k)return '';var h=hPart(k.start);return vEmoji(k)+' '+k.title+' · '+relDay(dPart(k.start))+(h?' '+h:'')}
 
   /* Accueil : compte à rebours du prochain voyage (ou « Jour 2 sur 5 » pendant le voyage) */
-  /* En-tête : « Prochaines vacances dans » + compte à rebours façon aéroport */
-  function renderHdrCd(){var el=$('hdr-cd');if(!el)return;var t=nextTrip(),st=t&&tripState(t),da=t&&departAt(t);
-    if(!t||st.k!=='soon'||!da){el.hidden=true;el.innerHTML='';return}
-    var at=Number(el.getAttribute('data-at')||0),id=el.getAttribute('data-id');
-    if(at===da.d.getTime()&&id===t.id&&el.querySelector('.flap')){el.hidden=false;return}
-    el.setAttribute('data-at',da.d.getTime());el.setAttribute('data-id',t.id);
-    el.innerHTML='<span class="hc-k">Prochaines vacances dans <b>'+esc(tEmo(t)+' '+t.title)+'</b></span><span class="flap" role="timer" data-cd="'+da.d.getTime()+'">'+flapInner(da.d-Date.now())+'</span>';
-    el.hidden=false}
-  function renderTripNext(){renderHdrCd();var el=$('trip-next');if(!el)return;var t=nextTrip();
+  function renderTripNext(){var el=$('trip-next');if(!el)return;var t=nextTrip();
     if(!t){el.hidden=true;el.innerHTML='';return}
     var st=tripState(t),big=st.k==='now'?'Jour '+st.day+' sur '+st.tot:st.n===1?'Départ demain !':'Départ dans '+st.n+' jours';
     /* Même gabarit qu'un événement « À venir » : pastille à gauche, titre, une ligne de détail */
     var sub=st.k==='now'?(nextEv(t)||(hPart(t.end)?'Retour '+relDay(dPart(t.end))+' à '+hPart(t.end):big)):('Départ '+relDay(dPart(t.start))+(hPart(t.start)?' · '+hPart(t.start):''));
     el.className='tripnext '+st.k;el.setAttribute('data-id',t.id);el.setAttribute('aria-label','Voyage '+t.title+' : '+big);
     el.innerHTML=(st.k==='soon'?'<span class="tn-n"><b>J-'+st.n+'</b></span>':'<span class="tn-em" aria-hidden="true">'+esc(tEmo(t))+'</span>')+
-      '<span class="tn-main"><span class="tn-t">'+esc(tEmo(t)+' '+t.title)+'</span><span class="tn-s">'+esc(sub)+'</span></span>';
+      '<span class="tn-main"><span class="tn-t">'+esc(tEmo(t)+' '+t.title)+'</span><span class="tn-s">'+esc(sub)+'</span></span>'+
+      (st.k==='soon'&&departAt(t)?'<span class="tn-cd"><span class="tn-cdk">Prochaines vacances dans</span><span class="flap" role="timer" data-cd="'+departAt(t).d.getTime()+'">'+flapInner(departAt(t).d-Date.now())+'</span></span>':'');
     el.hidden=false}
 
   /* Onglet Voyages : la liste des voyages */
