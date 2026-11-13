@@ -772,3 +772,12 @@ body[data-tab="courses"] .s-courses [data-act="course-toggle"]{display:none}
 .minor .t{font-size:14px}.minor .sub{font-size:12px}.minor .em{font-size:22px;width:26px}
 .grid>.card .body{gap:8px}
 @media (max-width:899px),(orientation:portrait){.grid>.card,.grid>.card.minor,.grid>.s-proj{padding:20px 20px 18px}}
+/* v38 : quête principale sans fond violet ; la carte « Aujourd'hui » mise en avant par une bordure dégradée violette */
+.tq{background:var(--lav-soft);color:var(--ink)}
+.tq-k{color:var(--lav);opacity:1}
+.tq-t{color:var(--ink)}.tq-t span{color:var(--ink2);opacity:1}
+.tq .chk{border-color:var(--lav);background:#fff}.tq .chk:hover{background:var(--lav-soft)}
+.tq-next{background:var(--lav);color:#fff}
+.grid>.s-main{border:2.5px solid transparent;background:linear-gradient(#fff,#fff) padding-box,linear-gradient(135deg,#6F5BDD 0%,#A898FF 50%,#8D7BF0 100%) border-box;box-shadow:0 12px 30px rgba(111,91,221,.18)}
+/* v38 : séparateur entre la semaine en cours et les événements suivants dans « À venir » */
+.s-cal .body>.sec-label{border-top:1.5px solid rgba(141,123,240,.16);padding-top:14px;margin:10px 4px 2px}
