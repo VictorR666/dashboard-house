@@ -391,16 +391,17 @@ html.q-open,html.q-open body{overflow:hidden!important}
 body:has(#sheet:not([hidden])) .tabbar,html.q-open .tabbar{display:none}
 /* Vues Maison et Courses : seulement leurs cartes, en colonnes, page qui défile */
 body[data-tab="maison"] .grid>.card:not(.s-kimchi):not(.s-plantes):not(.s-maison),
-body[data-tab="courses"] .grid>.card:not(.s-courses):not(.s-wish){display:none}
-:is(body[data-tab="maison"],body[data-tab="courses"]) .head{display:none}
-:is(body[data-tab="maison"],body[data-tab="courses"]){overflow:auto;display:block}
-:is(body[data-tab="maison"],body[data-tab="courses"]) .wrap{justify-content:flex-start;max-width:1180px}
-:is(body[data-tab="maison"],body[data-tab="courses"]) .grid{display:grid;flex:none;grid-template-rows:none;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));align-items:start;gap:18px;padding-bottom:90px}
-:is(body[data-tab="maison"],body[data-tab="courses"]) .grid>.card{grid-column:auto;height:auto;overflow:visible}
-:is(body[data-tab="maison"],body[data-tab="courses"]) .body{overflow:visible}
+body[data-tab="courses"] .grid>.card:not(.s-courses):not(.s-wish),
+body[data-tab="voyage"] .grid>.card:not(.s-voyage){display:none}
+:is(body[data-tab="maison"],body[data-tab="courses"],body[data-tab="voyage"]) .head{display:none}
+:is(body[data-tab="maison"],body[data-tab="courses"],body[data-tab="voyage"]){overflow:auto;display:block}
+:is(body[data-tab="maison"],body[data-tab="courses"],body[data-tab="voyage"]) .wrap{justify-content:flex-start;max-width:1180px}
+:is(body[data-tab="maison"],body[data-tab="courses"],body[data-tab="voyage"]) .grid{display:grid;flex:none;grid-template-rows:none;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));align-items:start;gap:18px;padding-bottom:90px}
+:is(body[data-tab="maison"],body[data-tab="courses"],body[data-tab="voyage"]) .grid>.card{grid-column:auto;height:auto;overflow:visible}
+:is(body[data-tab="maison"],body[data-tab="courses"],body[data-tab="voyage"]) .body{overflow:visible}
 body[data-tab="courses"] .s-courses{grid-column:span 2}
-@media (max-width:899px),(orientation:portrait){body[data-tab="courses"] .s-courses{grid-column:auto}:is(body[data-tab="maison"],body[data-tab="courses"]) .wrap{padding-top:4px}}
-:is(body[data-tab="maison"],body[data-tab="courses"]) .sync{display:none}
+@media (max-width:899px),(orientation:portrait){body[data-tab="courses"] .s-courses{grid-column:auto}:is(body[data-tab="maison"],body[data-tab="courses"],body[data-tab="voyage"]) .wrap{padding-top:4px}}
+:is(body[data-tab="maison"],body[data-tab="courses"],body[data-tab="voyage"]) .sync{display:none}
 /* Le bouton synchroniser et les messages passent au-dessus des onglets */
 @media (max-width:899px),(orientation:portrait){
   .sync{bottom:calc(max(10px,env(safe-area-inset-bottom,0px)) + 64px);width:46px;height:46px}
@@ -456,3 +457,111 @@ body[data-tab="courses"] .s-courses{grid-column:span 2}
 @media (max-width:899px),(orientation:portrait){.in{font-size:16px}}
 /* Bouton « ✓ FAIT » : visible mais plus discret */
 .bigdone{padding:11px 14px;font-size:16px;letter-spacing:.03em;border-radius:16px;box-shadow:0 4px 12px rgba(53,185,124,.25)}
+
+/* ---- Voyages ---- */
+.s-voyage{display:none}
+body[data-tab="voyage"] .grid>.s-voyage{display:flex;grid-column:1/-1}
+.trips{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:12px}
+.ttile{display:flex;align-items:center;gap:12px;width:100%;border:0;text-align:left;font:inherit;color:var(--ink);background:var(--lav-soft);border-radius:22px;padding:14px 14px 14px 12px;cursor:pointer}
+.ttile.soon{background:linear-gradient(135deg,#FFF3EC,#FFE3D3)}
+.ttile.now{background:linear-gradient(135deg,#E9FAF1,#CDF1DE)}
+.ttile.past{background:var(--n-bg);opacity:.75}
+.tt-em{flex:none;width:44px;height:44px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:24px}
+.tt-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.tt-t{font-family:var(--font-d);font-weight:600;font-size:19px;line-height:1.15;overflow-wrap:anywhere}
+.tt-d{font-size:13px;font-weight:800;color:var(--ink2)}
+.tt-c{font-size:12px;font-weight:700;color:var(--ink2)}
+.tt-b{flex:none;font-size:12.5px;font-weight:900;border-radius:999px;padding:4px 10px;background:#fff;color:#D9652F}
+.ttile.now .tt-b{color:var(--g-ink)}.ttile.past .tt-b,.ttile.nodate .tt-b{color:var(--ink2)}
+.s-voyage .donetog{margin-top:12px}
+/* Accueil : prochain voyage */
+.tripnext{display:flex;align-items:center;gap:10px;min-width:0;max-width:340px;margin-left:auto;border:0;font:inherit;color:var(--ink);text-align:left;cursor:pointer;
+  background:linear-gradient(135deg,#FFF3EC,#FFE3D3);border-radius:999px;padding:6px 18px 6px 6px;box-shadow:0 0 0 1.5px rgba(255,158,115,.2),0 8px 20px rgba(255,158,115,.16)}
+.tripnext.now{background:linear-gradient(135deg,#E9FAF1,#CDF1DE);box-shadow:0 0 0 1.5px rgba(82,196,150,.25),0 8px 20px rgba(82,196,150,.16)}
+.tripnext:not([hidden])~.weather,.tripnext:not([hidden])~.sync{margin-left:0}
+.tn-n,.tn-em{flex:none;width:50px;height:50px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.tn-n{color:#D9652F;font-size:10px;font-weight:900}.tn-n b{font-family:var(--font-d);font-size:22px;font-weight:600}
+.tn-em{font-size:26px}
+.tn-main{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.tn-t{font-weight:900;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tn-s{font-size:12.5px;font-weight:800;color:var(--o-ink)}.tripnext.now .tn-s{color:var(--g-ink)}
+.tn-x{font-size:12px;font-weight:700;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:899px),(orientation:portrait){
+  .tripnext{grid-column:1/-1;grid-row:2;max-width:none;margin:0;border-radius:26px;padding:10px 16px 10px 10px}
+  .tn-t{font-size:16px}
+}
+/* Page d'un voyage */
+.vview .qv-in{max-width:760px}
+.vview .qv-tt h2{overflow-wrap:anywhere}
+.vv-top{display:flex;flex-direction:column;gap:10px;min-width:0}
+.vbillets{display:flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:18px;padding:12px 16px;font:inherit;font-size:15px;font-weight:900;color:#fff;background:linear-gradient(135deg,#FFB088,#FF8A5C);box-shadow:0 8px 20px rgba(255,138,92,.28)}
+.vbillets b{background:rgba(255,255,255,.3);border-radius:999px;padding:1px 9px;font-size:13px}
+.vbillets.on{box-shadow:0 0 0 3px var(--bg),0 0 0 5.5px #FF8A5C}
+.vtabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:3px 2px 5px;-webkit-overflow-scrolling:touch}
+.vtabs::-webkit-scrollbar{display:none}
+.vtabs button{flex:none;border:0;border-radius:999px;padding:8px 14px;font:inherit;font-size:13.5px;font-weight:800;background:#fff;color:var(--ink2);box-shadow:0 0 0 1.5px rgba(141,123,240,.14)}
+.vtabs button.on{background:var(--lav);color:#fff;box-shadow:0 4px 12px rgba(141,123,240,.3)}
+.vtabs button i{font-style:normal;margin-left:6px;font-size:12px;opacity:.75}
+.vv-body{display:flex;flex-direction:column;gap:10px;padding-bottom:20px}
+.vv-body>.empty{padding:22px 10px}
+.vcard,.pday,.ticket,.vpack{background:rgba(255,255,255,.94);border-radius:22px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;box-shadow:0 0 0 1.5px rgba(141,123,240,.10),0 8px 20px rgba(141,123,240,.10)}
+.vc-top{display:flex;align-items:flex-start;gap:10px}
+.vc-h{flex:1;min-width:0;display:flex;align-items:flex-start;gap:10px;cursor:pointer;border-radius:14px}
+.vc-h .em{font-size:24px;width:30px;margin-top:1px}
+.vcard .t{font-size:15.5px}
+.vmeta{font-size:12.5px;font-weight:700;color:var(--ink2);overflow-wrap:anywhere}
+.vcard .chk{margin-top:2px;width:26px;height:26px}
+.vcard.done{opacity:.6}.vcard.done .t{text-decoration:line-through}.vcard.done .chk{background:var(--lav);color:#fff}
+.vnote{margin:0;font-size:13px;font-weight:700;color:var(--ink2);white-space:pre-wrap;overflow-wrap:anywhere;background:var(--n-bg);border-radius:12px;padding:6px 10px}
+.vbtns{display:flex;flex-wrap:wrap;gap:6px}
+.vbtns a{text-decoration:none;font-size:12.5px;padding:6px 12px}
+.vref{border:0;border-radius:999px;background:var(--o-bg);color:var(--o-ink);font:inherit;font-size:12.5px;font-weight:800;padding:6px 12px}
+.vref b,.tk-ref b{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.05em}
+.vadd{border:2px dashed rgba(141,123,240,.35);background:transparent;border-radius:18px;padding:12px;font:inherit;font-weight:800;color:var(--lav)}
+.vadd:hover{background:var(--lav-soft)}
+.vv-body .sec-label{margin-top:8px}
+/* Programme jour par jour */
+.pday{gap:6px}
+.pday.today{box-shadow:0 0 0 2.5px var(--mint),0 8px 20px rgba(82,196,150,.18)}
+.pday.gone{opacity:.65}
+.pd-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:0 2px 2px}
+.pd-h b{font-family:var(--font-d);font-weight:600;font-size:17px}
+.pd-h span{font-size:11.5px;font-weight:900;color:#D9652F;text-transform:uppercase;letter-spacing:.05em}
+.pd-h i{margin-left:auto;font-style:normal;font-size:12px;font-weight:900;color:var(--g-ink);background:var(--g-bg);border-radius:999px;padding:2px 9px}
+.pit{display:flex;align-items:center;gap:10px;width:100%;border:0;background:var(--n-bg);border-radius:14px;padding:8px 10px;text-align:left;font:inherit;color:var(--ink)}
+.pi-h{flex:none;width:42px;font-size:13px;font-weight:900;color:var(--lav);font-variant-numeric:tabular-nums}
+.pi-em{flex:none;font-size:18px;width:22px;text-align:center}
+.pi-t{flex:1;min-width:0;font-weight:800;font-size:14px;display:flex;flex-direction:column;overflow-wrap:anywhere}
+.pi-t small{font-size:12px;font-weight:700;color:var(--ink2)}
+.pit.dim{background:transparent;padding:2px 10px;color:var(--ink2)}.pit.dim .pi-t{font-weight:700;font-size:13px}
+.pit.done .pi-t{text-decoration:line-through;color:var(--ink2)}
+.pfree{margin:0;font-size:13px;font-weight:700;color:var(--ink2);padding:2px 10px 4px}
+.pideas{display:flex;flex-wrap:wrap;gap:6px}
+.pideas button{border:0;border-radius:999px;background:#fff;padding:7px 12px;font:inherit;font-weight:800;font-size:13px;color:var(--ink);box-shadow:0 0 0 1.5px rgba(141,123,240,.15)}
+/* Mes billets */
+.ticket{background:#fff;padding:14px 16px;gap:10px}
+.tk-h{display:flex;gap:12px;align-items:center;padding-bottom:10px;border-bottom:2px dashed rgba(141,123,240,.22);cursor:pointer}
+.tk-em{flex:none;font-size:30px}
+.tk-m{display:flex;flex-direction:column;min-width:0}
+.tk-k{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#D9652F}
+.tk-m b{font-size:16.5px;font-weight:900;overflow-wrap:anywhere}
+.tk-m span{font-size:13px;font-weight:700;color:var(--ink2)}
+.tk-x{font-size:13px;font-weight:800;color:var(--ink2)}
+.tk-ref{display:flex;align-items:center;gap:10px;border:0;border-radius:14px;background:var(--n-bg);padding:10px 12px;font:inherit;text-align:left;color:var(--ink)}
+.tk-ref small{flex:none;font-size:11px;font-weight:900;color:var(--ink2);text-transform:uppercase}
+.tk-ref b{flex:1;min-width:0;font-size:20px;overflow-wrap:anywhere}
+.tk-ref i{flex:none;font-style:normal;font-size:12px;font-weight:900;color:var(--lav)}
+.tk-open{text-decoration:none;padding:11px 16px;font-size:14px}
+.vhint{text-align:center;padding:0 10px}
+/* Valise */
+.vpack{padding:14px;gap:10px}
+.vpack .steps{gap:6px}.vpack .step{font-size:14.5px}.vpack .step .chk{width:22px;height:22px}
+.vpack>.btn{align-self:center;padding:10px 18px}
+.vpack select.in{width:100%;border-radius:12px;padding:8px 12px}
+.vpack>.empty{padding:6px}
+/* Formulaires voyage */
+.tform .wgrid{gap:10px}
+.dt{display:flex;gap:6px}.dt .in{min-width:0;-webkit-appearance:none;appearance:none;min-height:36px}.dt .in:first-child{flex:1.6}
+.vseg{flex-wrap:wrap;border-radius:18px}.vseg button{flex:1 1 auto;white-space:nowrap;font-size:12.5px;padding:6px 8px}
+.tform input[type=date].in,.tform input[type=time].in{width:100%}
+.tform .in{width:100%}

@@ -17,7 +17,10 @@ var TABS = {
   routines: { name: 'Entretien', width: 8 },
   shop:     { name: 'Wishlist',  width: 10 },
   projects: { name: 'Quetes',    width: 6 },
-  courses:  { name: 'Courses',   width: 7, header: ['id', 'icône', 'article', 'quantité', 'rayon', 'dans le panier', '_t'] }
+  courses:  { name: 'Courses',   width: 7, header: ['id', 'icône', 'article', 'quantité', 'rayon', 'dans le panier', '_t'] },
+  // text: true = chaque cellule est gardée en texte brut (références comme « 012345 », dates « 2026-12-20 08:35 »)
+  voyages:  { name: 'Voyages',   width: 12, text: true,
+              header: ['id', 'voyage', 'type', 'titre', 'début', 'fin', 'lieu', 'réf', 'lien', 'notes', 'fait', '_t'] }
 };
 var SETTINGS_TAB = 'Reglages';
 var MAX_ROWS = 500;
@@ -118,7 +121,7 @@ function put_(t, row) {
   if (!Array.isArray(row) || row.length !== def.width) throw new Error('row');
   var id = String(row[0] == null ? '' : row[0]);
   if (!/^[A-Za-z0-9_-]{1,40}$/.test(id)) throw new Error('id');
-  var clean = row.map(cell_);
+  var clean = row.map(def.text ? textCell_ : cell_);
   withLock_(function () {
     var sh = sheet_(def);
     var n = findRow_(sh, def, id, true);
@@ -176,6 +179,13 @@ function cell_(v) {
   var s = String(v == null ? '' : v).slice(0, 5000);
   if (/^[=+\-@\t\r|]/.test(s)) s = "'" + s;
   return s;
+}
+/* Texte brut : l'apostrophe initiale empêche toute formule ET toute conversion en nombre ou en date. */
+function textCell_(v) {
+  if (typeof v === 'number') v = isFinite(v) ? String(v) : '';
+  if (typeof v === 'boolean') v = v ? 'oui' : '';
+  var s = String(v == null ? '' : v).slice(0, 5000);
+  return s ? "'" + s : '';
 }
 function sheet_(def) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();

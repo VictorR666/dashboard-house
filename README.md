@@ -43,7 +43,8 @@ Pourquoi ce montage :
 - **Onglets en bas** (petite barre discrète, sur tous les écrans) :
   - **Accueil** : le dashboard complet, sur un seul écran en paysage, en colonne sur téléphone ;
   - **Routines** : les cartes Kimchi (le chien), Plantes et Entretien Maison ;
-  - **Courses** : la liste de courses et la wishlist.
+  - **Courses** : la liste de courses et la wishlist ;
+  - **Voyages** : la liste des voyages à venir, puis les voyages passés.
 - **Quête principale** : la quête épinglée, avec ses mini-quêtes (étapes) à cocher.
 - **Quêtes secondaires** : un résumé sur l'accueil. Un clic sur le titre ouvre une **page plein écran** (`#quetes`) avec toutes les quêtes en détail : statut, urgence, mini-quêtes, notes et liens.
 - **Routines** :
@@ -62,6 +63,11 @@ Pourquoi ce montage :
 - **Wishlist** : budget, pour qui, urgence, lien, recherche Amazon.
 - **Annulation** : après chaque validation (mini-quête, quête terminée, routine « fait », article mis au panier) ou suppression, un bouton « Annuler » reste affiché 6 secondes.
 - **Courses en plein écran** (`#courses`, clic sur le titre « Courses › ») : grandes cases pour le magasin, écran gardé allumé (Wake Lock) quand le navigateur le permet.
+- **Voyages** :
+  - sur l'accueil, le prochain voyage avec son compte à rebours (« Départ dans 12 jours »), puis « Jour 2 sur 5 » pendant le voyage, avec le prochain trajet ou la prochaine activité ;
+  - une page par voyage (`#voyage`) avec : **Programme** jour par jour (calculé à partir des dates de chaque élément), **Trajets** (aller, retour, avion, train…), **Sur place** (location, navette, pass…), **Hébergement**, **Activités** (avec date, ou en « idée » sans date, à cocher une fois faites) et **Valise** (liste à cocher, liste type de 20 objets, ou copie de la valise d'un autre voyage) ;
+  - le bouton **Mes billets** regroupe, dans l'ordre chronologique, tout ce qui a une référence ou un lien, avec un bouton « Copier » sur la référence ;
+  - un billet = une **référence** + un **lien** (appli ou mail de la compagnie). Aucun fichier n'est stocké : le script n'a pas accès à Drive. Ne jamais saisir de numéro de passeport ou de carte bancaire.
 - **Hors ligne** : l'app et les dernières données restent sur l'appareil. Chaque modification va d'abord dans une **file d'attente locale** (`localStorage`, clé `maison-outbox`), puis part vers le script dès que le réseau répond, avec de nouveaux essais espacés progressivement. Un petit bandeau indique les modifs en attente. Rien n'est perdu si l'app est fermée hors ligne.
 
 ## 3. Architecture
@@ -106,6 +112,7 @@ Organisation de `app.js`, de haut en bas :
 2. **Conversion lignes ↔ objets** : `SHT`, `fromRow()`, `toRow()`.
 3. **Chargement et écritures** : `load()`, `applyLoad()`, `queue()`, `shWrite()`, `shDel()`, `upd()`, `addDoc()`.
 4. **Rendu de chaque carte** : `renderCare`, `renderTodo`, `renderMain`, `renderShop`, `renderCourses`, `renderCal`, `renderWeather`, `renderQView`.
+   Voyages : `renderTrips` (liste), `renderTripNext` (accueil), `renderVView` (page d'un voyage), `tPanel`/`tSave` (fiche d'édition), `vClick` (clics).
 5. **Fenêtres de détail** : `renderSheet` (routine, quête, envie, renommage d'événement).
 6. **Onglets** (`setTab`) et **page des quêtes** (`qview`).
 7. **Gestion des clics** : un seul écouteur, basé sur les attributs `data-act`.
@@ -120,6 +127,7 @@ La ligne 1 de chaque onglet contient les en-têtes. Les données commencent à l
 | `Wishlist` | id, icône, titre, budget, pour qui (prénom ou `Couple`), urgence (`Un jour`/`Bientôt`/`Vite`), lien, note, obtenu (`oui`/vide), `_t` |
 | `Quetes` | id, icône, titre, principale (`oui`/vide), mini-quêtes (une par ligne, préfixe `✓ ` si faite), `_t` |
 | `Courses` | id, icône, article, quantité, rayon (libellé), dans le panier (`oui`/vide), `_t`. L'onglet est créé automatiquement au premier ajout. |
+| `Voyages` | id, voyage (id du voyage parent, vide pour un voyage), type (`Voyage`, `Trajet`, `Transport sur place`, `Hébergement`, `Activité`, `Valise`), titre, début, fin (`2026-12-20` ou `2026-12-20 08:35`), lieu, réf, lien, notes (pour la valise : un objet par ligne, préfixe `✓ ` si rangé), fait (`oui`/vide), `_t` (icône, mode de transport, n° de vol, place, prix, statut). Créé automatiquement. Toutes les cellules sont écrites **en texte brut** (`text: true` dans `TABS`) pour qu'une référence comme `012345` ou une date ne soit jamais convertie. |
 | `Reglages` | nom, valeur (JSON). Contient `hiddenEvents` et `eventNames`, créés automatiquement. |
 
 Les dates sont acceptées sous plusieurs formes (`2026-11-13`, `13/11/2026`, numéro de série Sheets) et normalisées par `nDate()`.
