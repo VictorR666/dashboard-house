@@ -342,7 +342,7 @@
     else if(nt&&ts.k==='soon'&&ts.n<=7)t=ts.n<=1?'Demain, direction '+nt.title+' ! 🧳':'Plus que '+ts.n+' dodos avant '+nt.title+' 🧳';
     else if(c==='rain'||c==='storm')t='Il pleut, parfait pour une quête au chaud ☔';
     else if(c==='snow')t='Il neige ! Kimchi veut absolument sortir ❄️';
-    else if((c==='clear'||c==='partly')&&day&&h>=9&&h<19)t='Beau temps, Kimchi réclame une balade ☀️';
+    else if((c==='clear'||c==='partly')&&day&&h>=9&&h<19)t='Beau temps, Kimchi est de bonne humeur ☀️';
     else if(h>=21||h<6)t=due.length?'Soirée tranquille, le reste attendra demain 🌙':'Tout est fait, Kimchi s\'endort 😴';
     else if(h>=18)t='Soirée tranquille à la maison 🛋️';
     else if(h<12)t='Belle journée à la maison 🐾';
@@ -351,7 +351,7 @@
   /* Vue simple : une carte « Aujourd'hui » (prochainement, à faire, quête principale, vacances) + 6 raccourcis */
   function renderHub2(){var el=$('hub2');if(!el||TAB!=='home'||VIEW!=='simple')return;
     var due=dueList(),nt=nextTrip(),ts=nt&&tripState(nt),k=kimchiSays(due,nt,ts),h='',now=new Date();
-    h+='<div class="k2-top"><img class="k2" id="k2" src="assets/kimchi-anim.svg" alt=""><div><div class="k2-hi">'+k.hi+' !</div><div class="k2-t">'+esc(k.t)+'</div></div></div>';
+    h+='<div class="k2-top"><img class="k2" id="k2" src="assets/kimchi-anim.svg" alt=""><div class="k2-hi">'+esc(k.t)+'</div></div>';
     /* Prochainement : le prochain événement de l'agenda */
     var evs=cal.status==='ok'?cal.events.filter(function(x){return x&&HID.indexOf(x.id)<0}).map(function(x){return {e:x,i:evInfo(x)}}).filter(function(x){return x.i&&x.i.n>=0}):[];
     var e=evs.filter(function(x){return x.i.n>0||x.i.allDay||x.i.d>now})[0];
@@ -382,8 +382,41 @@
       dock('voyage','🧳','Voyages',nt?esc(nt.title):'Rien de prévu','')+
       dock('quetes','🗺️','Quêtes',nq?nq+' en cours':'Une idée ?','')+
       dock('wish','🎁','Envies',nw?nw+' envie'+(nw>1?'s':''):'Rien pour l\'instant','')+'</nav>'}
+  /* ---- Onglet Test : accueil « scène » — Kimchi dans un décor qui suit l'heure et la météo, une jauge arc-en-ciel, puis 4 lignes ---- */
+  function sceneMood(){var h=new Date().getHours(),c=W&&W.cond;
+    if(h>=21||h<6)return 'night';if(c==='rain'||c==='storm'||c==='snow'||c==='fog')return 'grey';if(h>=18)return 'dusk';return 'day'}
+  function renderHub3(){var el=$('hub3');if(!el||TAB!=='test')return;
+    var due=dueList(),td=iso(new Date()),done=S.routines.filter(function(r){return r.lastDone===td}).length,tot=due.length+done,nt=nextTrip(),ts=nt&&tripState(nt);
+    var title=!loaded.routines?'Coucou !':due.length?(due.length===1?'1 petite mission pour l\'appart':due.length+' petites missions pour l\'appart'):done?'Bien joué, tout est fait ✨':'Tout roule à la maison 🐾';
+    var sub=kimchiSays(due,nt,ts).t;
+    /* Jauge arc-en-ciel : part de la journée déjà faite */
+    var pct=tot?done/tot:1,L=Math.PI*120,mood=sceneMood();
+    var arc=function(r,col,w){return '<path d="M'+(160-r)+' 170 A'+r+' '+r+' 0 0 1 '+(160+r)+' 170" fill="none" stroke="'+col+'" stroke-width="'+w+'" stroke-linecap="round"/>'};
+    var deco=mood==='night'?'<circle cx="262" cy="46" r="16" fill="#FFF3C4"/><circle cx="270" cy="40" r="14" fill="#4B3F8F"/><g fill="#fff" opacity=".8"><circle cx="40" cy="40" r="1.6"/><circle cx="80" cy="22" r="1.2"/><circle cx="220" cy="20" r="1.4"/><circle cx="300" cy="80" r="1.2"/></g>'
+      :mood==='grey'?'<g fill="#fff" opacity=".9"><ellipse cx="60" cy="50" rx="34" ry="14"/><ellipse cx="84" cy="42" rx="22" ry="14"/><ellipse cx="258" cy="62" rx="30" ry="12"/></g>'
+      :mood==='dusk'?'<circle cx="270" cy="70" r="22" fill="#FFB27A" opacity=".9"/>'
+      :'<circle cx="268" cy="46" r="20" fill="#FFD36E"/><g fill="#fff" opacity=".85"><ellipse cx="58" cy="44" rx="26" ry="10"/><ellipse cx="74" cy="38" rx="16" ry="10"/></g>';
+    var svg='<svg class="sc-svg" viewBox="0 0 320 190" aria-hidden="true">'+deco+
+      arc(120,'rgba(255,255,255,.55)',14)+arc(104,'#FFC6A8',12)+arc(90,'#FFB0C8',10)+arc(77,'#CFC6FA',9)+
+      '<path d="M40 170 A120 120 0 0 1 280 170" fill="none" stroke="#8D7BF0" stroke-width="14" stroke-linecap="round" stroke-dasharray="'+(L*pct).toFixed(1)+' '+L.toFixed(1)+'"/>'+
+      '<ellipse cx="160" cy="186" rx="150" ry="22" fill="'+(mood==='night'?'#3B3374':'#BFE8C9')+'"/></svg>';
+    var h='<div class="sc-head"><h2>'+title+'</h2><p>'+esc(sub)+'</p></div>'+
+      '<section class="scene '+mood+'"><div class="sc-wrap">'+svg+'<img class="sc-k" src="assets/kimchi-anim.svg" alt="Kimchi"></div>'+
+      (tot?'<div class="sc-g"><span>0</span><b>'+done+'/'+tot+' aujourd\'hui</b><span>'+tot+'</span></div>':'')+'</section>';
+    /* Les lignes « Aujourd'hui », chacune ouvre sa section */
+    var row=function(v,ic,t,s2,extra){return '<button class="sc-row" data-act="hub-go" data-v="'+v+'"><span class="sc-ic">'+ic+'</span><span class="sc-m"><span class="sc-t">'+t+'</span><span class="sc-s">'+s2+'</span>'+(extra||'')+'</span><span class="sc-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span></button>'};
+    var rows='';
+    rows+=row('todo','🧹','Missions maison',due.length?due.length+' à faire · '+esc(due.slice(0,2).map(function(x){return x.r.title}).join(', '))+(due.length>2?'…':''):'Tout est fait');
+    var m=S.projects.filter(function(p){return p.main&&p.status!=='done'})[0];
+    if(m){var ss=m.steps||[],dn=ss.filter(function(x){return x.done}).length;rows+=row('quetes','📌',esc(m.title),ss.length?dn+'/'+ss.length+' mini-quêtes':'Quête principale',ss.length?'<span class="sc-bar"><i style="width:'+Math.round(dn/ss.length*100)+'%"></i></span>':'')}
+    if(nt){var da=departAt(nt);rows+=row('voyage',esc(tEmo(nt)),esc(nt.title),ts.k==='now'?'En vacances · jour '+ts.day+' sur '+ts.tot:ts.n===0?'C\'est aujourd\'hui ! 🎉':'Départ dans '+ts.n+' jour'+(ts.n>1?'s':'')+(da&&da.exact?' · '+esc(hPart(nt.start)):''))}
+    if(cal.status==='ok'){var now=new Date(),e=cal.events.filter(function(x){return x&&HID.indexOf(x.id)<0}).map(function(x){return {e:x,i:evInfo(x)}}).filter(function(x){return x.i&&x.i.n>=0&&(x.i.n>0||x.i.allDay||x.i.d>now)})[0];
+      if(e)rows+=row('agenda','📅',esc(EVN[e.e.id]||e.e.summary||'Événement'),esc(cap(e.i.n===0?"aujourd'hui":e.i.n===1?'demain':e.i.d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'short'})))+(e.i.allDay?'':' · '+e.i.d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})))}
+    h+='<div class="sc-sec">Aujourd\'hui</div><div class="sc-rows">'+rows+'</div>';
+    h+='<div class="sc-sec">Raccourcis</div><nav class="sc-dock">'+[['courses','🛒','Courses'],['wish','🎁','Envies'],['agenda','📅','Agenda']].map(function(x){return '<button class="sc-dk" data-act="hub-go" data-v="'+x[0]+'"><span>'+x[1]+'</span>'+x[2]+'</button>'}).join('')+'</nav>';
+    el.innerHTML=h}
   /* Petite fête quand on coche la dernière chose du jour */
-  function celebrate(){var k=$('k2');if(k){k.classList.remove('jump');void k.offsetWidth;k.classList.add('jump')}
+  function celebrate(){[].forEach.call(document.querySelectorAll('.k2,.sc-k'),function(k){k.classList.remove('jump');void k.offsetWidth;k.classList.add('jump')});
     if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
     var box=document.createElement('div');box.className='confetti';box.setAttribute('aria-hidden','true');
     var C=['#8D7BF0','#FF9E73','#52C496','#FFC857','#B9AEF5'];
@@ -402,7 +435,7 @@
     var R={r:0,o:1},GL={Kimchi:'Kimchi',Plantes:'Plantes',Maison:'Maison'};
     var L=S.routines.map(function(r){return {r:r,st:careState(r)}}).filter(function(x){return x.st.c==='r'||x.st.c==='o'})
       .sort(function(a,b){if(R[a.st.c]!==R[b.st.c])return R[a.st.c]-R[b.st.c];return (a.r.lastDone||'')<(b.r.lastDone||'')?-1:1});
-    var c=$('ta-count');if(c)c.textContent=L.length?L.length+' à faire':'';
+    var td=iso(new Date()),dn=S.routines.filter(function(r){return r.lastDone===td}).length,c=$('ta-count');if(c)c.textContent=(L.length+dn)?dn+'/'+(L.length+dn):'';
     el.innerHTML=L.length?L.map(function(x){var r=x.r;return '<div class="tarow '+x.st.c+'">'+careChk(r)+
       '<div class="main" role="button" tabindex="0" data-act="care-open" data-id="'+esc(r.id)+'"><span class="t">'+(r.emoji?esc(r.emoji)+' ':'')+esc(r.title)+'</span><span class="sub">'+esc((GL[r.group]||'Maison')+' · '+x.st.txt)+'</span></div></div>'}).join('')
       :'<p class="empty">'+(loaded.routines?'Tout est à jour ✨':'Chargement…')+'</p>'}
@@ -592,11 +625,11 @@
   function unclearCart(){if(!lastClear)return;var l=lastClear;lastClear=null;hideToast();l.forEach(function(o){if(!find('courses',o.id)){S.courses.push(o);shWrite('courses',o)}});render()}
 
   /* ---- Onglets (Accueil / Maison / Courses) ---- */
-  var TAB=lsGet('maison-tab')||'home';if(TAB==='test')TAB='home';if(['home','maison','courses','voyage','quetes'].indexOf(TAB)<0)TAB='home';
+  var TAB=lsGet('maison-tab')||'home';if(['home','maison','courses','voyage','quetes','test'].indexOf(TAB)<0)TAB='home';
   function setTab(t){TAB=t;lsSet('maison-tab',t);document.body.setAttribute('data-tab',t);
     var PT={maison:'Routines',courses:'Courses',voyage:'Voyages'},ph=$('pt-h');if(ph)ph.textContent=PT[t]||'';var pa=$('pt-act');if(pa)pa.hidden=t!=='voyage';
     [].forEach.call(document.querySelectorAll('.tabbar button'),function(b){var on=b.getAttribute('data-tab')===t;b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false')});
-    window.scrollTo(0,0);fitTodo();if(t==='home')renderHub();if(t==='quetes')renderQTab();if((t==='courses'||t==='voyage')&&Date.now()-lastLoad>15000)load()}
+    window.scrollTo(0,0);fitTodo();if(t==='home')renderHub();if(t==='quetes')renderQTab();if(t==='test')renderHub3();if((t==='courses'||t==='voyage')&&Date.now()-lastLoad>15000)load()}
   function whoLabel(k){return k==='couple'?'Couple':(PEOPLE[k]||(k==='p1'?'Personne 1':k==='p2'?'Personne 2':''))}
   var UW={high:3,med:2,low:1};
   function fitTotal(){var te=$('w-total');if(!te)return;te.style.visibility='';requestAnimationFrame(function(){if(te.scrollWidth>te.clientWidth+1)te.style.visibility='hidden'})}
@@ -1059,7 +1092,7 @@
     var b=$('banner');if(!b)return;
     if(fromCache){var d=new Date(fromCache);b.innerHTML='<div class="note">Dernières données · '+esc(d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}))+'</div>'}
   }
-  function render(){renderCare();renderTodoAll();renderHub();renderQTab();renderTodo();renderMain();renderShop();renderCourses();renderQView();renderTrips();renderTripNext();renderVView();renderSheet(true);cacheSave()}
+  function render(){renderCare();renderTodoAll();renderHub();renderQTab();renderHub3();renderTodo();renderMain();renderShop();renderCourses();renderQView();renderTrips();renderTripNext();renderVView();renderSheet(true);cacheSave()}
 
   function clock(){var n=new Date();$('hello').textContent=n.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});$('today').textContent=n.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}
   clock();setInterval(clock,15000);
