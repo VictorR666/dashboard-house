@@ -16,7 +16,8 @@
 var TABS = {
   routines: { name: 'Entretien', width: 8 },
   shop:     { name: 'Wishlist',  width: 10 },
-  projects: { name: 'Quetes',    width: 6 }
+  projects: { name: 'Quetes',    width: 6 },
+  courses:  { name: 'Courses',   width: 7, header: ['id', 'icône', 'article', 'quantité', 'rayon', 'dans le panier', '_t'] }
 };
 var SETTINGS_TAB = 'Reglages';
 var MAX_ROWS = 500;
@@ -177,7 +178,13 @@ function cell_(v) {
   return s;
 }
 function sheet_(def) {
-  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(def.name);
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(def.name);
+  if (!sh && def.header) { // onglet créé automatiquement (ex. Courses)
+    sh = ss.insertSheet(def.name);
+    sh.getRange(1, 1, 1, def.width).setValues([def.header]).setFontWeight('bold');
+    sh.setFrozenRows(1);
+  }
   if (!sh) throw new Error('missing tab');
   return sh;
 }
@@ -277,7 +284,7 @@ function verifier() {
   console.log(code.length >= 12 ? '✅ Code d\'accès défini' : '❌ ACCESS_CODE manquant ou trop court (12 caractères minimum)');
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   Object.keys(TABS).forEach(function (k) {
-    var sh = ss.getSheetByName(TABS[k].name);
+    var sh = ss.getSheetByName(TABS[k].name) || (TABS[k].header ? sheet_(TABS[k]) : null);
     console.log(sh ? '✅ Onglet ' + TABS[k].name + ' : ' + Math.max(sh.getLastRow() - 1, 0) + ' lignes' : '❌ Onglet ' + TABS[k].name + ' introuvable');
   });
   var ids = (p.getProperty('CALENDAR_IDS') || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);

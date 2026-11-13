@@ -347,9 +347,9 @@ body:has(#sheet:not([hidden])) .sync{display:none!important;visibility:hidden}
 @media (min-width:900px) and (orientation:landscape){.foot{position:fixed;left:0;right:0;bottom:8px;margin:0}}
 
 /* Bouton titre « Quêtes secondaires » */
-.h2btn{border:0;background:none;padding:0;font:inherit;color:inherit;display:inline-flex;align-items:center;gap:4px;text-align:left}
-.h2btn span{color:var(--lav);font-size:1.15em;line-height:1;transition:transform .15s}
-.h2btn:hover span{transform:translateX(2px)}
+.h2btn{border:0;background:none;padding:0;font:inherit;line-height:1.2;color:inherit;display:inline-flex;align-items:center;gap:3px;text-align:left}
+.h2btn .chev{flex:none;width:.9em;height:.9em;display:block;fill:none;stroke:var(--lav);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}
+.h2btn:hover .chev{transform:translateX(2px)}
 
 /* Page plein écran des quêtes */
 html.q-open,html.q-open body{overflow:hidden!important}
@@ -382,3 +382,48 @@ html.q-open,html.q-open body{overflow:hidden!important}
 .qc-note{margin:0;font-size:13.5px;font-weight:700;color:var(--ink2);white-space:pre-wrap;overflow-wrap:anywhere;background:var(--n-bg);border-radius:14px;padding:8px 12px}
 .qc-f{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:1.5px solid rgba(141,123,240,.12);padding-top:8px}
 .qc-f .lnk{font-size:13px}
+
+/* ---- Onglets ---- */
+.s-courses{display:none}
+.tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:max(10px,env(safe-area-inset-bottom,0px));z-index:30;display:flex;gap:2px;padding:4px;border-radius:999px;background:rgba(255,255,255,.92);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 0 0 1px rgba(141,123,240,.12),0 6px 18px rgba(80,60,160,.14)}
+.tabbar button{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:62px;border:0;background:transparent;border-radius:999px;padding:5px 10px 4px;color:var(--ink2);font:inherit;font-size:10px;font-weight:800;line-height:1.1}
+.tabbar svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+.tabbar button.on{background:var(--lav-soft);color:var(--lav)}
+body:has(#sheet:not([hidden])) .tabbar,html.q-open .tabbar{display:none}
+/* Vues Maison et Courses : seulement leurs cartes, en colonnes, page qui défile */
+body[data-tab="maison"] .grid>.card:not(.s-kimchi):not(.s-plantes):not(.s-maison),
+body[data-tab="courses"] .grid>.card:not(.s-courses):not(.s-wish){display:none}
+body[data-tab="courses"] .s-courses{display:flex}
+body:not([data-tab="home"]) .head{display:none}
+body:not([data-tab="home"]){overflow:auto;display:block}
+body:not([data-tab="home"]) .wrap{justify-content:flex-start;max-width:1180px}
+body:not([data-tab="home"]) .grid{display:grid;flex:none;grid-template-rows:none;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));align-items:start;gap:18px;padding-bottom:90px}
+body:not([data-tab="home"]) .grid>.card{grid-column:auto;height:auto;overflow:visible}
+body:not([data-tab="home"]) .body{overflow:visible}
+body[data-tab="courses"] .s-courses{grid-column:span 2}
+@media (max-width:899px),(orientation:portrait){body[data-tab="courses"] .s-courses{grid-column:auto}body:not([data-tab="home"]) .wrap{padding-top:4px}}
+body:not([data-tab="home"]) .sync{display:none}
+/* Le bouton synchroniser et les messages passent au-dessus des onglets */
+@media (max-width:899px),(orientation:portrait){
+  .sync{bottom:calc(max(10px,env(safe-area-inset-bottom,0px)) + 64px);width:46px;height:46px}
+  .toast{bottom:calc(max(10px,env(safe-area-inset-bottom,0px)) + 64px)}
+  body{padding-bottom:120px}
+}
+@media (min-width:900px) and (orientation:landscape){.foot{left:16px;right:auto;bottom:14px}.toast{bottom:70px}body[data-tab="home"]{padding-bottom:72px}}
+/* ---- Liste de courses ---- */
+.s-courses .addform{margin-bottom:10px}
+.s-courses .addform .in{padding:9px 14px;font-size:15px}
+.crow{display:flex;align-items:center;gap:4px;flex:none}
+.cchk{flex:1;min-width:0;display:flex;align-items:center;gap:10px;border:0;background:var(--n-bg);border-radius:16px;padding:9px 12px;text-align:left;font:inherit;color:var(--ink)}
+.cchk .circ{flex:none;width:22px;height:22px;border-radius:50%;border:2.2px solid var(--mint);background:#fff;color:transparent;display:grid;place-items:center}
+.cchk .circ svg{width:12px;height:12px}
+.cchk .em{font-size:19px;width:22px;text-align:center;flex:none}
+.cchk .ct{flex:1;min-width:0;font-weight:800;font-size:14.5px;overflow-wrap:anywhere}
+.cq{flex:none;font-size:12px;font-weight:900;color:var(--g-ink);background:var(--g-bg);border-radius:999px;padding:2px 9px}
+.crow.done .cchk{background:transparent}
+.crow.done .circ{background:var(--mint);border-color:var(--mint);color:#fff}
+.crow.done .ct{text-decoration:line-through;color:var(--ink2)}
+.crow.done .em,.crow.done .cq{opacity:.5}
+.cart-h{display:flex;align-items:baseline;justify-content:space-between;margin-top:10px}
+.cart-h .lnk{font-size:12.5px;color:#D9483D}
+.s-courses .sec-label{margin-top:8px}
