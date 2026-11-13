@@ -733,7 +733,6 @@
       '<input class="in vi-title" maxlength="80" data-trip="title" value="'+esc(t.title)+'" aria-label="Destination" placeholder="Destination"></div>'+
       (vEmoOpen?'<div class="emos pop">'+TRIPEMO.map(function(e){return '<button type="button" class="emo'+(t.emoji===e?' on':'')+'" data-act="trip-emo" data-e="'+e+'" aria-label="Icône '+e+'">'+e+'</button>'}).join('')+'</div>':'')+
       dt('🚆 Départ','start',t.start)+dt('🏠 Retour','end',t.end)+
-      '<div class="vi-cd">'+countdownHtml(t)+'</div>'+
       '<div class="vbil"><a class="vbillets" href="'+esc(lk)+'" target="_blank" rel="noopener noreferrer">🎟️ Mes billets'+(t.link?'':' SNCF')+' ↗</a><button class="lnk" data-act="bil-edit" aria-expanded="'+vBilEdit+'">✎ lien</button></div>'+
       (vBilEdit?'<div class="vi-link"><input class="in" type="url" maxlength="500" data-trip="link" value="'+esc(t.link||'')+'" placeholder="Vide = SNCF Connect" aria-label="Lien vers les billets"></div>':'')+'</section>';
     var H=kids(t.id,'logement').sort(byStart);
