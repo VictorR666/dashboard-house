@@ -696,3 +696,12 @@ body[data-tab="maison"] .grid>.s-todoall{display:flex;grid-column:1/-1}
 }
 @media (min-width:1500px) and (orientation:landscape){.wrap{zoom:1.05!important}}
 @media (min-width:2300px) and (orientation:landscape){.wrap{zoom:1.25!important;max-width:1500px}}
+/* v26 : ordinateur nettement plus petit (tout est réduit, typo comprise) et grandes marges */
+@media (min-width:900px) and (orientation:landscape){
+  html{zoom:.8}
+  body{padding:clamp(56px,10vh,150px) clamp(96px,15vw,360px)}
+  .wrap{max-width:1280px}
+  body[data-tab="home"]{padding-bottom:clamp(96px,12vh,160px)}
+}
+@media (min-width:1800px) and (orientation:landscape){html{zoom:.88}.wrap{zoom:1!important}}
+@media (min-width:2300px) and (orientation:landscape){html{zoom:1}.wrap{zoom:1.1!important}}
