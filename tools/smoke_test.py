@@ -161,9 +161,13 @@ def main():
                     page.click('.sheet-x'); page.wait_for_timeout(200)
                     page.click('[data-act=vview-close]'); page.wait_for_timeout(300)
                     page.click('[data-act=trip-new]'); page.wait_for_timeout(500)
-                    page.fill('[data-trip=title]', 'Rome'); page.keyboard.press('Enter'); page.wait_for_timeout(800)
-                    assert any(r[3] == 'Rome' and r[2] == 'Voyage' for r in state['voyages']), state['voyages']
+                    page.fill('[data-trip=title]', 'Rome'); page.fill('[data-trip=startD]', _d(20)); page.fill('[data-trip=startT]', '07:15')
                     page.screenshot(path=f'{OUT}/{name}-voyage-nouveau.png')
+                    page.click('[data-act=trip-ok]'); page.wait_for_timeout(900)
+                    assert not page.is_visible('#vview'), 'Valider ne referme pas la page'
+                    rome = [r for r in state['voyages'] if r[3] == 'Rome' and r[2] == 'Voyage']
+                    assert rome and rome[0][4] == _d(20) + ' 07:15', rome
+                    page.screenshot(path=f'{OUT}/{name}-voyages-apres.png')
                 ctx.close()
             browser.close()
     finally:
