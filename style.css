@@ -394,15 +394,15 @@ body:has(#sheet:not([hidden])) .tabbar,html.q-open .tabbar{display:none}
 body[data-tab="maison"] .grid>.card:not(.s-kimchi):not(.s-plantes):not(.s-maison),
 body[data-tab="courses"] .grid>.card:not(.s-courses):not(.s-wish){display:none}
 body[data-tab="courses"] .s-courses{display:flex}
-body:not([data-tab="home"]) .head{display:none}
-body:not([data-tab="home"]){overflow:auto;display:block}
-body:not([data-tab="home"]) .wrap{justify-content:flex-start;max-width:1180px}
-body:not([data-tab="home"]) .grid{display:grid;flex:none;grid-template-rows:none;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));align-items:start;gap:18px;padding-bottom:90px}
-body:not([data-tab="home"]) .grid>.card{grid-column:auto;height:auto;overflow:visible}
-body:not([data-tab="home"]) .body{overflow:visible}
+:is(body[data-tab="maison"],body[data-tab="courses"]) .head{display:none}
+:is(body[data-tab="maison"],body[data-tab="courses"]){overflow:auto;display:block}
+:is(body[data-tab="maison"],body[data-tab="courses"]) .wrap{justify-content:flex-start;max-width:1180px}
+:is(body[data-tab="maison"],body[data-tab="courses"]) .grid{display:grid;flex:none;grid-template-rows:none;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));align-items:start;gap:18px;padding-bottom:90px}
+:is(body[data-tab="maison"],body[data-tab="courses"]) .grid>.card{grid-column:auto;height:auto;overflow:visible}
+:is(body[data-tab="maison"],body[data-tab="courses"]) .body{overflow:visible}
 body[data-tab="courses"] .s-courses{grid-column:span 2}
-@media (max-width:899px),(orientation:portrait){body[data-tab="courses"] .s-courses{grid-column:auto}body:not([data-tab="home"]) .wrap{padding-top:4px}}
-body:not([data-tab="home"]) .sync{display:none}
+@media (max-width:899px),(orientation:portrait){body[data-tab="courses"] .s-courses{grid-column:auto}:is(body[data-tab="maison"],body[data-tab="courses"]) .wrap{padding-top:4px}}
+:is(body[data-tab="maison"],body[data-tab="courses"]) .sync{display:none}
 /* Le bouton synchroniser et les messages passent au-dessus des onglets */
 @media (max-width:899px),(orientation:portrait){
   .sync{bottom:calc(max(10px,env(safe-area-inset-bottom,0px)) + 64px);width:46px;height:46px}
