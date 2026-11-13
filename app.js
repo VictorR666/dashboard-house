@@ -276,13 +276,14 @@
   }
   function renderSheet(soft){
     var sh=$('sheet');if(!sh)return;
-    if(soft&&(wishOpen||evEdit||tEdit||tplMgr||tplEdit))return;
+    if(soft&&(wishOpen||evEdit||tEdit||tplMgr||tplEdit||bilPop))return;
     var ae=document.activeElement,refocus=false;
     if(ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA')&&sh.contains(ae)){
       if(soft&&ae.value)return;
       refocus=ae.hasAttribute('data-stepinput');
     }
     if(evEdit){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card" role="dialog" aria-modal="true" aria-label="Renommer"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">×</button><div class="panel"><div class="pj-title">Renommer l\'événement</div><div class="lab">Nom affiché</div><input class="in" maxlength="80" data-evn value="'+esc(evEdit.v)+'" aria-label="Nom affiché"><div class="hint">Nom d\'origine : '+esc(evEdit.orig)+'<br>Le changement ne modifie que le dashboard, pas Google Agenda.</div><div class="prow"><button class="lnk" data-act="ev-reset">Nom d\'origine</button><button class="btn valid" data-act="ev-save">Valider</button></div></div></div>';sh.hidden=false;var ei=sh.querySelector('[data-evn]');if(ei){ei.focus();ei.select()}return}
+    if(bilPop){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card" role="dialog" aria-modal="true" aria-label="Billets"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">×</button>'+bilPanel()+'</div>';sh.hidden=false;return}
     if(tplMgr||tplEdit){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card wide" role="dialog" aria-modal="true" aria-label="Listes types"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">×</button>'+tplPanel()+'</div>';sh.hidden=false;return}
     if(tEdit){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card wide" role="dialog" aria-modal="true" aria-label="'+esc(VT[tEdit.type]||'Voyage')+'"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">×</button>'+tPanel()+'</div>';sh.hidden=false;return}
     if(wishOpen){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card wide" role="dialog" aria-modal="true" aria-label="Envie"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">×</button>'+wishPanel()+'</div>';sh.hidden=false;return}
@@ -645,7 +646,6 @@
     if(vOpen){renderVView();el.scrollTop=0;var b=el.querySelector('.qv-back');if(b)b.focus({preventScroll:true})}
   }
   window.addEventListener('popstate',function(){if(location.hash!=='#voyage'&&vOpen)vview(null,false)});
-  var SNCF_URL='https://www.sncf-connect.com/';
   var TPLEMO=['🧳','🎒','⛺','🌤️','🐕','🏠','🏖️','🎿','🏔️','🚗','👶','💼','🎉','🧺'];
   var TPL_SEED=[['🎒','Essentiels',PACK_TPL],
     ['⛺','Camping',['⛺ Tente','🛌 Sacs de couchage','🛏️ Matelas gonflables','🔦 Lampes frontales','🔥 Réchaud et gaz','🪔 Briquet','🚰 Gourdes','🔪 Couteau suisse','🦟 Anti-moustique','🧴 Crème solaire','🩹 Trousse de secours','🧻 Papier toilette','🗑️ Sacs poubelle','🧥 Pull chaud']],
@@ -727,7 +727,7 @@
   function vAct(k){var id=esc(k.id);
     return '<article class="vcard vact'+(k.done?' done':'')+'"><div class="vc-top"><button class="chk" data-act="v-done" data-id="'+id+'" aria-label="'+(k.done?'Pas encore fait : ':'Fait : ')+esc(k.title)+'">'+CHECK+'</button><div class="vc-h" role="button" tabindex="0" data-act="v-item" data-id="'+id+'" aria-label="Modifier : '+esc(k.title)+'">'+
       '<span class="em" aria-hidden="true">'+esc(k.emoji||'📍')+'</span><div class="main"><span class="t">'+esc(k.title)+'</span>'+(k.start?'<span class="sub">'+esc(cap(fmtDay(dPart(k.start))))+'</span>':'')+(k.notes?'<span class="vmeta">'+esc(k.notes)+'</span>':'')+'</div></div></div></article>'}
-  function vMain(t){var h='',lk=safeUrl(t.link)||SNCF_URL;
+  function vMain(t){var h='';
     var dt=function(lab,p,v){return '<div class="vi-dt"><span>'+lab+'</span><input class="in" type="date" data-trip="'+p+'D" value="'+esc(dPart(v))+'" aria-label="'+lab+' : jour"><input class="in" type="time" data-trip="'+p+'T" value="'+esc(hPart(v))+'" aria-label="'+lab+' : heure"></div>'};
     h+='<section class="vinfo"><div class="vi-row"><button type="button" class="ibtn'+(vEmoOpen?' open':'')+'" data-act="trip-emo-tog" aria-label="Changer l\'icône">'+esc(t.emoji||'✈️')+'</button>'+
       '<input class="in vi-title" maxlength="80" data-trip="title" value="'+esc(t.title)+'" aria-label="Destination" placeholder="Destination"></div>'+
@@ -741,8 +741,6 @@
     var P=packOf(t.id),pn=P?P.items.length:0,pd=P?P.items.filter(function(x){return x.done}).length:0;
     h+='<button class="vfold" data-act="pack-fold" aria-expanded="'+vPackOpen+'"><span>🧳 Valise</span><i>'+(pn?pd+'/'+pn:'vide')+'</i><b>'+(vPackOpen?'▾':'▸')+'</b></button>'+(vPackOpen?vPack(t):'');
     if(SHOW_PROG)h+='<button class="vfold" data-act="prog-fold" aria-expanded="'+vProgOpen+'"><span>🗓️ Programme jour par jour</span><i></i><b>'+(vProgOpen?'▾':'▸')+'</b></button>'+(vProgOpen?vProg(t):'');
-    h+='<div class="vlink">Lien des billets : <b>'+esc(t.link?safeUrl(t.link).replace(/^https?:\/\/(www\.)?/,'').split('/')[0]:'SNCF Connect')+'</b> · <button class="lnk" data-act="bil-edit" aria-expanded="'+vBilEdit+'">modifier</button></div>'+
-      (vBilEdit?'<div class="vi-link"><input class="in" type="url" maxlength="500" data-trip="link" value="'+esc(t.link||'')+'" placeholder="Vide = SNCF Connect" aria-label="Lien vers les billets"></div>':'');
     h+='<div class="vdel"><button class="lnk del" data-act="trip-del">'+(vDelConfirm?'Oui, supprimer « '+esc(t.title)+' » et tout son contenu':'Supprimer ce voyage')+'</button></div>';
     return h}
   function renderVView(){if(!vOpen)return;var B=$('vv-body');if(!B)return;
@@ -752,7 +750,6 @@
     var st=tripState(t);
     $('vv-title').textContent=(t.emoji||'✈️')+' '+t.title;
     $('vv-sub').textContent=spanTxt(st.sp)+(st.k==='nodate'?'':' · '+tripBadge(st));
-    var vb=$('vv-bil');if(vb)vb.href=safeUrl(t.link)||SNCF_URL;
     B.innerHTML=vMain(t);
   }
   function tripDelete(id){var all=[find('voyages',id)].concat(kids(id)).filter(Boolean);if(!all.length)return;lastMulti=JSON.parse(JSON.stringify(all));
@@ -795,7 +792,17 @@
     renderSheet()}
   function tDel(){var e=tEdit;if(!e||e.id==='new')return;tEdit=null;renderSheet();delUndo('voyages',e.id,'Supprimé')}
   /* Gestion des listes types (pop-up) */
-  var tplMgr=false,tplEdit=null,vBilEdit=false;
+  var tplMgr=false,tplEdit=null,vBilEdit=false,bilPop=null;
+  /* Billets : pop-up de confirmation avant d'ouvrir un lien externe, ou pour le régler */
+  function bilPanel(){var t=vOpen&&find('voyages',vOpen);if(!t)return '';var lk=safeUrl(t.link),dom=lk.replace(/^https?:\/\/(www\.)?/,'').split('/')[0];
+    var form='<div class="lab">Lien vers les billets</div><input class="in" type="url" inputmode="url" maxlength="500" data-bil value="'+esc(t.link||'')+'" placeholder="https://www.sncf-connect.com/…" aria-label="Lien vers les billets">';
+    if(lk&&!bilPop.edit)return '<div class="panel bil"><div class="pj-title">🎟️ Billets</div><div class="bil-warn">⚠️ Attention, cela va ouvrir un lien externe :<b>'+esc(dom)+'</b></div>'+
+      '<div class="prow bil-row"><button class="btn ghost" data-act="bil-edit">Modifier le lien</button><a class="btn valid" href="'+esc(lk)+'" target="_blank" rel="noopener noreferrer" data-close>Valider</a></div></div>';
+    return '<div class="panel bil"><div class="pj-title">🎟️ Billets</div>'+(lk?'':'<div class="bil-warn">⚠️ Attention, aucun lien programmé pour les billets.</div>')+form+
+      '<div class="prow bil-row">'+(lk?'<button class="btn ghost" data-act="bil-cancel">Annuler</button>':'')+'<button class="btn valid" data-act="bil-save">Enregistrer</button></div></div>'}
+  function bilSave(){var i=document.querySelector('.sheet-card [data-bil]'),v=i?i.value.trim():'';var u=v?safeUrl(v):'';
+    if(v&&!u){i.focus();toastMsg('Lien invalide');return}
+    if(vOpen)upd('voyages',vOpen,{link:u});bilPop=u?{edit:false}:{edit:true};renderSheet();if(u)toastMsg('Lien des billets enregistré')}
   function tplPanel(){
     if(tplEdit){var e=tplEdit;
       return '<div class="panel tform"><div class="pj-title">'+(e.id==='new'?'Nouvelle liste type':'Modifier la liste type')+'</div><div class="lab">Nom</div>'+
@@ -821,7 +828,10 @@
       setTimeout(function(){var ti=document.querySelector('#vv-body [data-trip="title"]');if(ti){ti.focus();ti.select()}},60)}
     else if(a==='trips-past'){showPast=!showPast;renderTrips()}
     else if(a==='vview-close'){vview(null,true)}
-    else if(a==='bil-edit'){vBilEdit=!vBilEdit;renderVView();if(vBilEdit){var bi=document.querySelector('#vv-body [data-trip="link"]');if(bi)bi.focus()}}
+    else if(a==='bil-open'){if(vOpen){bilPop={edit:false};tEdit=null;tplMgr=false;tplEdit=null;renderSheet();var bi=document.querySelector('.sheet-card [data-bil]');if(bi)bi.focus()}}
+    else if(a==='bil-edit'){if(bilPop){bilPop.edit=true;renderSheet();var bi2=document.querySelector('.sheet-card [data-bil]');if(bi2){bi2.focus();bi2.select()}}}
+    else if(a==='bil-cancel'){if(bilPop){bilPop.edit=false;renderSheet()}}
+    else if(a==='bil-save'){bilSave()}
     else if(a==='tpl-use'){applyTpl(id)}
     else if(a==='tpl-mgr'){seedTpls();tplMgr=true;tplEdit=null;iconOpen=false;tEdit=null;renderSheet()}
     else if(a==='tpl-new'){tplEdit={id:'new',emoji:'🧳',title:'',items:[]};iconOpen=false;renderSheet()}
@@ -956,6 +966,7 @@
   clock();setInterval(clock,15000);
 
   document.addEventListener('click',function(e){
+    var ca=e.target.closest&&e.target.closest('a[data-close]');if(ca){setTimeout(function(){bilPop=null;renderSheet()},0);return}
     if(e.target.closest&&(e.target.closest('select.pr')||e.target.closest('a[href]')))return;
     var b=e.target.closest('[data-act]');if(!b)return;
     var a=b.getAttribute('data-act'),id=b.getAttribute('data-id'),it;
@@ -975,7 +986,7 @@
       if(pv&&pq){upd('projects',id,{steps:steps(pq).concat([{t:pv,done:false}])})}
       projId=null;confirmDel=null;renderSheet()}
     else if(vClick(a,b,id)){}
-    else if(a==='sheet-close'){iconOpen=false;tEdit=null;tplMgr=false;tplEdit=null;evEdit=null;wishOpen=null;projId=null;openId=null;calFor=null;confirmDel=null;renderSheet()}
+    else if(a==='sheet-close'){iconOpen=false;tEdit=null;tplMgr=false;tplEdit=null;bilPop=null;evEdit=null;wishOpen=null;projId=null;openId=null;calFor=null;confirmDel=null;renderSheet()}
     else if(a==='care-add'){var cf=document.querySelector('form.care-add[data-group="'+b.getAttribute('data-group')+'"]');if(cf){cf.hidden=!cf.hidden;if(!cf.hidden)cf.querySelector('input').focus()}}
     else if(a==='done-today'){var pv=snap('routines',id,['lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText']);openId=null;calFor=null;setDate(id,iso(new Date()));renderSheet();offerUndo('routines',id,pv,'Marqué comme fait ✓')}
     else if(a==='undo'){openId=null;calFor=null;undoDate(id);renderSheet()}
@@ -1082,7 +1093,7 @@
     wd[f]=t.value;
     if(f==='title'){var a=$('wf-amz');if(a)a.href='https://www.amazon.fr/s?k='+encodeURIComponent(t.value)}
   });
-  document.addEventListener('keydown',function(e){var t=e.target;if(e.key==='Enter'&&tEdit&&t&&t.tagName==='INPUT'&&t.hasAttribute('data-tf')){e.preventDefault();tEdit.d[t.getAttribute('data-tf')]=t.value;tSave();return}if(e.key==='Enter'&&evEdit&&t&&t.hasAttribute&&t.hasAttribute('data-evn')){e.preventDefault();evSave(false);return}if(e.key==='Enter'&&wishOpen&&t&&t.getAttribute&&t.getAttribute('data-wf')){e.preventDefault();wishSave()}});
+  document.addEventListener('keydown',function(e){var t=e.target;if(e.key==='Enter'&&bilPop&&t&&t.hasAttribute&&t.hasAttribute('data-bil')){e.preventDefault();bilSave();return}if(e.key==='Enter'&&tEdit&&t&&t.tagName==='INPUT'&&t.hasAttribute('data-tf')){e.preventDefault();tEdit.d[t.getAttribute('data-tf')]=t.value;tSave();return}if(e.key==='Enter'&&evEdit&&t&&t.hasAttribute&&t.hasAttribute('data-evn')){e.preventDefault();evSave(false);return}if(e.key==='Enter'&&wishOpen&&t&&t.getAttribute&&t.getAttribute('data-wf')){e.preventDefault();wishSave()}});
   document.addEventListener('change',function(e){
     var t=e.target;
     var trf=t.getAttribute&&t.getAttribute('data-trip');if(trf){var tv=t.value;t.blur();tripField(trf,tv);return}
@@ -1106,7 +1117,7 @@
   document.addEventListener('visibilitychange',function(){if(!document.hidden){tick();load()}});
   document.addEventListener('keydown',function(e){
     var t=e.target;
-    if(e.key==='Escape'&&(openId||projId||wishOpen||evEdit||tEdit||tplMgr||tplEdit)){tEdit=null;tplMgr=false;tplEdit=null;evEdit=null;wishOpen=null;projId=null;openId=null;calFor=null;confirmDel=null;renderSheet();return}
+    if(e.key==='Escape'&&(openId||projId||wishOpen||evEdit||tEdit||tplMgr||tplEdit||bilPop)){tEdit=null;tplMgr=false;tplEdit=null;bilPop=null;evEdit=null;wishOpen=null;projId=null;openId=null;calFor=null;confirmDel=null;renderSheet();return}
     if(e.key==='Escape'&&qOpen){qview(false,true);return}
     if(e.key==='Escape'&&cOpen){cview(false,true);return}
     if(e.key==='Escape'&&vOpen){vview(null,true);return}

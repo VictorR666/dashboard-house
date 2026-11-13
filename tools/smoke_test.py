@@ -128,6 +128,13 @@ def main():
                 if name == 'mobile':
                     page.fill('[data-trip=endT]', '19:05'); page.locator('[data-trip=endT]').dispatch_event('change'); page.wait_for_timeout(800)
                     assert [r for r in state['voyages'] if r[0] == 'v1'][0][5] == _d(7) + ' 19:05', state['voyages'][0]
+                    page.click('#vv-bil'); page.wait_for_timeout(200)
+                    assert 'aucun lien' in page.inner_text('.sheet-card'), page.inner_text('.sheet-card')
+                    page.fill('.sheet-card [data-bil]', 'https://www.sncf-connect.com/'); page.keyboard.press('Enter'); page.wait_for_timeout(800)
+                    assert [r for r in state['voyages'] if r[0] == 'v1'][0][8] == 'https://www.sncf-connect.com/'
+                    assert 'lien externe' in page.inner_text('.sheet-card') and page.is_visible('.sheet-card a[data-close]')
+                    page.screenshot(path=f'{OUT}/{name}-billets-popup.png')
+                    page.click('.sheet-x'); page.wait_for_timeout(200)
                     page.click('.vsec-h [data-act=v-add][data-v=activite]'); page.wait_for_timeout(300)
                     page.fill('.sheet-card [data-tf=title]', 'Fado au Clube')
                     page.screenshot(path=f'{OUT}/{name}-voyage-form.png')
