@@ -29,9 +29,13 @@
   function lsSet(k,v){try{if(v==null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){}}
   var API=lsGet(LS_API),KEY=lsGet(LS_KEY);
   if(API&&!API_RE.test(API))API=null;
+  /* accepte l'adresse du script seule, encodée, ou le lien d'installation complet */
+  function normApi(v){v=String(v||'').trim();var m=v.match(/#setup=(.+)$/);if(m)v=m[1];
+    for(var i=0;i<2&&/%2F/i.test(v);i++){try{v=decodeURIComponent(v)}catch(e){break}}
+    v=v.replace(/\s+/g,'').replace(/\/exec[?#].*$/,'/exec');return v}
   (function(){ /* lien d'installation : …/#setup=<adresse du script> (le # n'est jamais envoyé à un serveur) */
     var m=location.hash.match(/^#setup=(.+)$/);
-    if(m){var u='';try{u=decodeURIComponent(m[1])}catch(e){}
+    if(m){var u=normApi(m[1]);
       if(API_RE.test(u)){API=u;lsSet(LS_API,u)}
       try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
   })();
@@ -67,7 +71,7 @@
   }
   $('login-form').addEventListener('submit',async function(e){
     e.preventDefault();
-    var u=$('login-url').value.trim(),c=$('login-code').value;
+    var u=normApi($('login-url').value),c=$('login-code').value;
     if(!API){if(!API_RE.test(u)){$('login-err').textContent='Adresse du script invalide.';return}API=u;lsSet(LS_API,u)}
     KEY=c;$('login-go').disabled=true;$('login-err').textContent='';
     try{var j=await api('load');lsSet(LS_KEY,c);$('login-code').value='';$('login').hidden=true;applyLoad(j);startPolling()}
