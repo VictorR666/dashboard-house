@@ -606,3 +606,43 @@ body[data-tab="voyage"] .grid>.s-voyage{display:flex;grid-column:1/-1}
 .thero.now{background:linear-gradient(150deg,#E9FAF1,#CDF1DE)}
 .th-k{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:var(--o-ink)}
 .th-t{font-family:var(--font-d);font-weight:600;font-size:22px;margin-bottom:6px}
+/* v16 : fond qui couvre toute la hauteur sur téléphone (il se répétait quand la page était courte) */
+html{min-height:100%;background-color:var(--bg)}
+body{background-repeat:no-repeat}
+@media (max-width:899px),(orientation:portrait){body{min-height:100vh;min-height:100dvh}}
+/* Compte à rebours façon panneau d'aéroport */
+.flap{display:flex;justify-content:center;align-items:flex-start;gap:4px;flex-wrap:nowrap}
+.fg{display:flex;flex-direction:column;align-items:center;gap:4px}
+.fd{display:flex;gap:3px}
+.fd i{position:relative;display:block;width:30px;height:42px;border-radius:8px;background:#fff;box-shadow:0 2px 0 rgba(217,101,47,.18),0 4px 10px rgba(217,101,47,.12);perspective:200px;font-style:normal;overflow:hidden}
+.fd i::after{content:"";position:absolute;left:0;right:0;top:50%;height:1.5px;background:rgba(217,101,47,.18)}
+.fd b{display:flex;align-items:center;justify-content:center;height:100%;font-family:var(--font-d);font-weight:600;font-size:28px;color:#D9652F;font-variant-numeric:tabular-nums;transform-origin:50% 50%}
+.fd i.flip b{animation:flapflip .4s ease-out}
+@keyframes flapflip{0%{transform:rotateX(-90deg);opacity:.3}60%{transform:rotateX(12deg);opacity:1}100%{transform:rotateX(0)}}
+@media (prefers-reduced-motion:reduce){.fd i.flip b{animation:none}}
+.fg small{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:var(--o-ink)}
+.fsep{display:flex;flex-direction:column;justify-content:center;gap:8px;height:42px;padding:0 1px}
+.fsep b{display:block;width:6px;height:6px;border-radius:50%;background:#FFB088}
+@media (max-width:380px){.fd i{width:26px;height:38px}.fd b{font-size:24px}.fsep{height:38px}}
+.thero .flap{margin-top:4px}
+/* Page d'un voyage simplifiée */
+.vi-dt{display:grid;grid-template-columns:88px minmax(0,1.5fr) minmax(0,1fr);gap:6px;align-items:center}
+.vi-dt span{font-size:12px;font-weight:900;color:var(--o-ink);text-transform:uppercase;letter-spacing:.04em}
+.vi-dt .in{width:100%;min-width:0;background:rgba(255,255,255,.85);border-radius:12px;-webkit-appearance:none;appearance:none;min-height:40px;padding:6px 8px}
+.vbil{display:flex;align-items:center;gap:10px}
+.vbil .vbillets{flex:1;text-decoration:none}
+.vbil .lnk{flex:none;color:var(--o-ink)}
+.vi-link .in{width:100%;background:rgba(255,255,255,.85);border-radius:12px}
+.vact .vc-top{align-items:center}.vact .chk{margin:0}
+.vc-top>.btn{flex:none;align-self:center;text-decoration:none;font-size:12.5px;padding:6px 12px}
+/* Listes types */
+.tchips{display:flex;flex-wrap:wrap;gap:6px}
+.tchip{border:0;border-radius:999px;background:var(--lav-soft);color:var(--ink);font:inherit;font-size:13px;font-weight:800;padding:7px 12px}
+.tchip i{font-style:normal;color:var(--lav);margin-left:2px}
+.tchip.ghost{background:transparent;color:var(--lav);box-shadow:inset 0 0 0 1.5px rgba(141,123,240,.3)}
+.vpack .prow{margin-top:0;justify-content:space-between}
+.trow{display:flex;align-items:center;gap:6px}
+.trow-m{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px;border:0;border-radius:14px;background:var(--n-bg);padding:11px 14px;font:inherit;font-weight:800;text-align:left;color:var(--ink)}
+.trow-m small{flex:none;font-size:12px;color:var(--ink2)}
+.tpl-items{max-height:38vh;overflow:auto}
+.vi-dt{grid-template-columns:auto minmax(0,1.2fr) minmax(0,1fr)}.vi-dt span{font-size:11px;min-width:64px}.vi-dt .in{padding:6px}

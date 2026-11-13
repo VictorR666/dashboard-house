@@ -32,7 +32,7 @@ state = {
 # Voyages d'exemple, datés par rapport à aujourd'hui (un voyage dans 3 jours, un voyage passé)
 _d = lambda n: (datetime.date.today() + datetime.timedelta(days=n)).isoformat()
 state['voyages'] = [
-    ['v1', '', 'Voyage', 'Lisbonne', _d(3), _d(7), '', '', '', '', '', '{"emoji":"🏖️"}'],
+    ['v1', '', 'Voyage', 'Lisbonne', _d(3) + ' 08:35', _d(7) + ' 18:40', '', '', '', '', '', '{"emoji":"🏖️"}'],
     ['t1', 'v1', 'Trajet', 'Paris → Lisbonne', _d(3) + ' 08:35', _d(3) + ' 10:05', 'Orly 3', 'ABC123', 'https://example.com/billet', '', '', '{"mode":"avion","num":"TP433","seat":"14C"}'],
     ['t2', 'v1', 'Trajet', 'Lisbonne → Paris', _d(7) + ' 18:40', _d(7) + ' 22:05', 'LIS T1', 'ABC123', '', '', '', '{"mode":"avion","num":"TP438"}'],
     ['h1', 'v1', 'Hébergement', 'Casa Alfama', _d(3) + ' 15:00', _d(7) + ' 11:00', 'Rua da Rosa 12, Lisbonne', '012345', 'https://example.com/resa', 'Code porte 4821', '', '{}'],
@@ -116,37 +116,44 @@ def main():
                 page.screenshot(path=f'{OUT}/{name}-accueil-voyage.png')
                 page.click('.tabbar [data-tab=voyage]'); page.wait_for_timeout(300)
                 page.screenshot(path=f'{OUT}/{name}-voyages.png', full_page=True)
-                assert page.is_visible('.thero'), 'pas de compte à rebours dans la liste'
+                assert page.is_visible('.thero .flap'), 'pas de compte à rebours dans la liste'
+                sec = lambda: page.inner_text('.thero .fg >> nth=3')
+                a = sec(); page.wait_for_timeout(1300); assert sec() != a, 'les secondes ne défilent pas'
+                page.screenshot(path=f'{OUT}/{name}-voyages.png')
                 page.click('.ttile >> nth=0'); page.wait_for_timeout(400)
-                assert page.locator('.vleg').count() == 2, 'aller et retour non affichés'
-                assert 'Programme' not in page.inner_text('#vv-body'), 'le jour par jour devrait être masqué'
-                page.screenshot(path=f'{OUT}/{name}-voyage.png', full_page=True)
-                page.click('.vbillets'); page.wait_for_timeout(200)
-                assert page.locator('.ticket').count() == 4, page.locator('.ticket .tk-m b').all_inner_texts()
-                page.screenshot(path=f'{OUT}/{name}-voyage-billets.png', full_page=True)
-                page.click('.vbillets'); page.wait_for_timeout(200)
+                txt = page.inner_text('#vv-body')
+                assert 'Transports' not in txt and 'Programme' not in txt and 'Aller' not in txt, txt
+                assert page.input_value('[data-trip=startT]') == '08:35'
+                page.screenshot(path=f'{OUT}/{name}-voyage.png')
                 if name == 'mobile':
-                    page.fill('[data-trip=end]', _d(8)); page.locator('[data-trip=end]').dispatch_event('change'); page.wait_for_timeout(800)
-                    assert [r for r in state['voyages'] if r[0] == 'v1'][0][5] == _d(8)
-                    page.click('[data-act=pack-fold]'); page.wait_for_timeout(200)
-                    page.select_option('[data-pack-copy]', 'v2'); page.wait_for_timeout(800)
-                    page.fill('[data-packinput]', 'Passeport'); page.keyboard.press('Enter'); page.wait_for_timeout(700)
-                    pk = [r for r in state['voyages'] if r[1] == 'v1' and r[2] == 'Valise'][0]
-                    assert 'Passeport' in pk[9] and 'Maillot' in pk[9], pk
-                    page.click('.vsec-h [data-act=v-add][data-v=logement]'); page.wait_for_timeout(300)
-                    page.click('.sheet-x'); page.wait_for_timeout(200)
-                    page.click('.vleg .lg-main >> nth=0'); page.wait_for_timeout(300)
-                    page.click('.sheet-card [data-v=aller]')
-                    page.click('.sheet-card [data-v=train]')
-                    page.fill('.sheet-card [data-tf=sT]', '09:10')
+                    page.fill('[data-trip=endT]', '19:05'); page.locator('[data-trip=endT]').dispatch_event('change'); page.wait_for_timeout(800)
+                    assert [r for r in state['voyages'] if r[0] == 'v1'][0][5] == _d(7) + ' 19:05', state['voyages'][0]
+                    page.click('.vsec-h [data-act=v-add][data-v=activite]'); page.wait_for_timeout(300)
+                    page.fill('.sheet-card [data-tf=title]', 'Fado au Clube')
                     page.screenshot(path=f'{OUT}/{name}-voyage-form.png')
                     page.click('[data-act=tf-save]'); page.wait_for_timeout(800)
-                    row = [r for r in state['voyages'] if r[0] == 't1'][0]
-                    assert row[4].endswith(' 09:10') and '"dir":"aller"' in row[11] and '"mode":"train"' in row[11], row
-                    page.screenshot(path=f'{OUT}/{name}-voyage-apres.png', full_page=True)
+                    assert any(r[3] == 'Fado au Clube' and r[2] == 'Activité' for r in state['voyages'])
+                    page.click('[data-act=pack-fold]'); page.wait_for_timeout(1500)
+                    tp = [r for r in state['voyages'] if r[2] == 'Valise' and r[1] == '']
+                    assert len(tp) == 5, tp
+                    page.click('[data-act=tpl-use] >> text=Camping'); page.wait_for_timeout(900)
+                    pk = [r for r in state['voyages'] if r[1] == 'v1' and r[2] == 'Valise'][0]
+                    assert 'Tente' in pk[9], pk
+                    page.evaluate("document.getElementById('vview').scrollTop=99999"); page.wait_for_timeout(200)
+                    page.screenshot(path=f'{OUT}/{name}-voyage-valise.png')
+                    page.click('[data-act=tpl-from-pack]'); page.wait_for_timeout(300)
+                    page.fill('.sheet-card [data-tpl=title]', 'Ski')
+                    page.fill('.sheet-card [data-tplinput]', 'Gants'); page.keyboard.press('Enter'); page.wait_for_timeout(200)
+                    page.screenshot(path=f'{OUT}/{name}-tpl-edit.png')
+                    page.click('[data-act=tpl-save]'); page.wait_for_timeout(900)
+                    ski = [r for r in state['voyages'] if r[3] == 'Ski' and r[1] == '']
+                    assert ski and 'Gants' in ski[0][9] and 'Tente' in ski[0][9], ski
+                    page.screenshot(path=f'{OUT}/{name}-tpl-mgr.png')
+                    page.click('.trow >> nth=1 >> [data-act=tpl-del]'); page.wait_for_timeout(900)
+                    assert len([r for r in state['voyages'] if r[2] == 'Valise' and r[1] == '']) == 5
+                    page.click('.sheet-x'); page.wait_for_timeout(200)
                     page.click('[data-act=vview-close]'); page.wait_for_timeout(300)
                     page.click('[data-act=trip-new]'); page.wait_for_timeout(500)
-                    assert page.is_visible('#vview') and page.is_visible('[data-trip=title]')
                     page.fill('[data-trip=title]', 'Rome'); page.keyboard.press('Enter'); page.wait_for_timeout(800)
                     assert any(r[3] == 'Rome' and r[2] == 'Voyage' for r in state['voyages']), state['voyages']
                     page.screenshot(path=f'{OUT}/{name}-voyage-nouveau.png')
