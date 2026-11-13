@@ -1081,3 +1081,41 @@ body[data-tab="agenda"] .s-cal .body{overflow:visible}
 body[data-tab="home"][data-view="detail"] .viewbot-d{display:block}
 @media (max-width:899px),(orientation:portrait){body[data-tab="home"][data-view="detail"] .viewbot-d{margin-bottom:20px}}
 @media (min-width:900px) and (orientation:landscape){body[data-tab="home"][data-view="detail"] .viewbot-d{position:fixed;left:16px;bottom:12px;margin:0}}
+/* ---- v61 ---- */
+/* En-tête : petit logo Kimchi à la place de la date et de l'heure */
+.head>.mascot,.head>div:not(.logo):not(.weather):not(#banner):not(.mascot){display:none!important}
+.logo{flex:none;display:flex;align-items:center}
+.logo img{width:46px;height:auto;display:block}
+.head{min-height:0}
+@media (max-width:899px),(orientation:portrait){.head .logo{grid-column:1;grid-row:1}.head{grid-template-columns:auto minmax(0,1fr) auto auto}.head .weather{grid-column:3}.head .logoutb{grid-column:4}}
+/* Accueil : cartes avec checklists, badge sur Missions maison */
+.sc-card{background:#fff;border-radius:22px;box-shadow:0 0 0 1.5px rgba(141,123,240,.10),0 8px 20px rgba(141,123,240,.08);overflow:hidden}
+.sc-row.in{box-shadow:none;border-radius:0;background:none}
+.sc-ic{position:relative}
+.sc-badge{position:absolute;top:-6px;right:-8px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--lav);color:#fff;font-size:12px;font-weight:900;display:grid;place-items:center;box-shadow:0 0 0 2px #fff}
+.sc-list{list-style:none;margin:0;padding:0 14px 12px 70px;display:flex;flex-direction:column;gap:4px}
+.sc-list .chk{width:22px;height:22px}.sc-list .chk svg{width:11px;height:11px}
+.sc-list .tq-step.done .chk{background:var(--lav);color:#fff}
+.sc-mi{display:flex;align-items:center;gap:10px}
+.sc-mi .care-chk{width:22px;height:22px;margin:0}
+.sc-ok{margin:0;padding:0 14px 12px 70px;font-size:12px;font-weight:700;color:var(--ink2)}
+/* Agenda : bandeau de la semaine + chronologie */
+.agtab{display:none}
+body[data-tab="agenda"] .grid{display:none!important}
+body[data-tab="agenda"] .agtab{display:flex;flex-direction:column;gap:14px;max-width:760px;width:100%;margin:0 auto;padding-bottom:100px}
+.ag-strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.ag-day{display:flex;flex-direction:column;align-items:center;gap:2px;border:0;border-radius:16px;background:#fff;padding:8px 0 6px;font:inherit;color:var(--ink);cursor:pointer;box-shadow:0 0 0 1.5px rgba(141,123,240,.10)}
+.ag-day small{font-size:12px;font-weight:800;color:var(--ink2)}
+.ag-day b{font-family:var(--font-d);font-weight:600;font-size:17px}
+.ag-day i{font-style:normal;font-size:12px;line-height:1;color:var(--lav);min-height:12px;letter-spacing:1px}
+.ag-day.today{background:var(--lav);color:#fff}.ag-day.today small,.ag-day.today i{color:#fff}
+.ag-day.sel{box-shadow:0 0 0 2px var(--lav)}
+.ag-list{display:flex;flex-direction:column;gap:16px}
+.ag-g h3{margin:0 4px 8px;font-family:var(--font-d);font-weight:600;font-size:17px}
+.ag-g{scroll-margin-top:20px}
+.ag-it{position:relative;display:flex;align-items:center;gap:12px;width:100%;border:0;background:#fff;border-radius:18px;padding:12px 14px;margin-bottom:8px;font:inherit;text-align:left;color:var(--ink);cursor:pointer;box-shadow:0 0 0 1.5px rgba(141,123,240,.10)}
+.ag-it.trip{background:var(--lav-soft)}
+.ag-k{flex:none;min-width:64px;font-size:12px;font-weight:800;color:var(--lav)}
+.ag-t{flex:1;min-width:0;font-weight:800;font-size:14px;overflow-wrap:anywhere}
+.ag-hid{align-self:center;font-size:12px}
+.ag-gc{align-self:center;font-size:12px;font-weight:800;color:var(--ink2);text-decoration:none}

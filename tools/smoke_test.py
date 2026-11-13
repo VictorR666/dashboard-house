@@ -95,12 +95,12 @@ def main():
                 if name == 'mobile':
                     assert page.is_visible('.scene') and page.is_visible('.sc-trip'), 'vue simple (scène météo)'
                     page.click('.sc-ev'); page.wait_for_timeout(300)
-                    assert page.get_attribute('body', 'data-tab') == 'agenda' and 'Vétérinaire' in page.inner_text('#l-cal'), 'onglet Agenda'
+                    assert page.get_attribute('body', 'data-tab') == 'agenda' and 'Vétérinaire' in page.inner_text('#agtab') and 'Départ · Lisbonne' in page.inner_text('#agtab'), 'onglet Agenda'
                     page.screenshot(path=f'{OUT}/{name}-agenda.png')
                     page.click('.tabbar [data-tab=home]'); page.wait_for_timeout(300)
                     page.click('.viewbot >> visible=true'); page.wait_for_timeout(300)
                 page.screenshot(path=f'{OUT}/{name}-accueil.png')
-                page.click('.tabbar [data-tab=maison]'); page.wait_for_timeout(300)
+                page.evaluate("(()=>{const b=document.createElement('button');b.dataset.act='tab';b.dataset.tab='maison';document.body.appendChild(b);b.click();b.remove()})()"); page.wait_for_timeout(300)
                 page.screenshot(path=f'{OUT}/{name}-routines.png', full_page=True)
                 if name == 'mobile':
                     assert page.locator('#l-todoall .tarow').count() == 1, 'checklist À faire'
