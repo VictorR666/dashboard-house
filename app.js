@@ -555,6 +555,7 @@
       (ss.length?'<div class="bar"><i style="width:'+pc+'%"></i></div>':'')+
       (ss.length?'<ul class="steps">'+ss.map(function(x,i){return '<li class="step'+(x.done?' done':'')+'"><button class="chk" data-act="ps" data-id="'+id+'" data-i="'+i+'" aria-label="Mini-quête : '+esc(x.t)+'">'+CHECK+'</button><span>'+esc(x.t)+'</span><button class="sx" data-act="sd" data-id="'+id+'" data-i="'+i+'" aria-label="Supprimer : '+esc(x.t)+'" title="Supprimer">×</button></li>'}).join('')+'</ul>':'<div class="sub">Pas encore de mini-quête.</div>')+
       '<form class="stepform" data-form="step" data-id="'+id+'"><input class="in" maxlength="120" data-stepinput required placeholder="Nouvelle mini-quête" aria-label="Nouvelle mini-quête"><button class="btn" type="submit">+</button></form>'+
+      '<div class="lab">Catégorie</div>'+sg('cat',QCATS.map(function(c){return [c[0],c[1]+' '+c[2]]}),qCat(o))+
       '<div class="lab">Urgence</div>'+sg('prio',[['high','Urgent'],['med','Pas urgent'],['low','Optionnel']],PRIO[o.prio]?o.prio:'med')+
       '<div class="lab">Avancement</div>'+sg('status',[['todo','À faire'],['doing','En cours'],['done','Terminé']],st)+
       '<div class="lab">Liens et notes</div><textarea class="in notes" maxlength="2000" data-field="pnotes" rows="3" placeholder="" aria-label="Liens et notes">'+esc(o.notes||'')+'</textarea>'+
@@ -588,6 +589,14 @@
       (us.length?'<div class="nlinks">'+us.map(function(u){return '<a class="btn ghost" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">↗ '+esc(u.replace(/^https?:\/\/(www\.)?/,'').split('/')[0])+'</a>'}).join('')+'</div>':'')+
       '<div class="qc-f"><button class="lnk" data-act="proj-open" data-id="'+id+'">Modifier…</button></div></article>';
   }
+  /* Catégories de quêtes (filtres de l'onglet Quêtes). Sans catégorie choisie, on devine d'après le titre. */
+  var QCATS=[['date','💕','Date'],['maison','🏠','Maison'],['afaire','📋','À faire'],['activite','🎨','Activités']],QCATL={};
+  QCATS.forEach(function(c){QCATL[c[0]]=c});
+  var QCAT_RX=[['date',/cine|resto|restaurant|expo|musee|concert|theatre|spectacle|balade|rando|soiree|diner|brunch|week-?end|escape|bowling|casse-tete|puzzle|jeu de societe|pique-nique|patinoire|\bdate\b/],
+    ['maison',/joint|rideau|decor|repar|antivol|velo|peint|menage|nettoy|ranger|rangement|meuble|ampoule|lampe|etagere|jardin|balcon|frigo|salle de bain|bricol|vitre|tapis|canape|placard|lavabo|evier|robinet|entretien/],
+    ['afaire',/achet|cadeau|recuper|carte|biblio|papier|impot|banque|rdv|rendez|appel|reserv|command|rendre|renouvel|inscri|passeport|mairie|colis|payer|resili|dossier|formulaire|mutuelle|assurance|rembours/]];
+  function qCat(o){if(QCATL[o.cat])return o.cat;var t=nrm(o.title);for(var i=0;i<QCAT_RX.length;i++)if(QCAT_RX[i][1].test(t))return QCAT_RX[i][0];return 'activite'}
+  var qtCat='all';try{qtCat=localStorage.getItem('maison-qcat')||'all'}catch(e){}if(qtCat!=='all'&&!QCATL[qtCat])qtCat='all';
   /* Onglet Quêtes : la quête principale mise en avant (avec Kimchi), puis les quêtes secondaires */
   var qtDone=false;
   function renderQTab(){var L=$('qt-list');if(!L||TAB!=='quetes')return;
@@ -596,12 +605,15 @@
     var isFin=function(o){var ss=o.steps||[];return o.status==='done'||(ss.length&&ss.every(function(x){return x.done}))};
     var srt=function(a,b){var sa=a.status==='doing'?0:1,sb=b.status==='doing'?0:1;if(sa!==sb)return sa-sb;var q=(PW[b.prio]||2)-(PW[a.prio]||2);if(q)return q;return (a.createdAt||0)-(b.createdAt||0)};
     var m=S.projects.filter(function(o){return o.main&&!isFin(o)})[0];
-    var act=S.projects.filter(function(o){return !isFin(o)&&o!==m}).sort(srt),fin=S.projects.filter(isFin).sort(srt);
+    var inCat=function(o){return qtCat==='all'||qCat(o)===qtCat};
+    var all=S.projects.filter(function(o){return !isFin(o)&&o!==m}),act=all.filter(inCat).sort(srt),fin=S.projects.filter(isFin).filter(inCat).sort(srt);
+    var chips='<div class="qfil" role="tablist" aria-label="Filtrer les quêtes">'+[['all','🗂️','Toutes']].concat(QCATS).map(function(c){return '<button type="button" role="tab" class="qf'+(qtCat===c[0]?' on':'')+'" aria-selected="'+(qtCat===c[0])+'" data-act="qt-cat" data-v="'+c[0]+'">'+(c[1]?'<span aria-hidden="true">'+c[1]+'</span>':'')+c[2]+'</button>'}).join('')+'</div>';
+    var cl=QCATL[qtCat],emptyTxt=qtCat==='all'?'Aucune autre quête. Une idée ? Ajoute-la avec « + Nouvelle ».':'Rien dans '+cl[1]+' '+cl[2]+' pour l\'instant.';
     var hero=m?'<div class="qhero"><div class="qhero-h"><span>📌 Quête principale</span><img src="assets/kimchi-anim.svg" alt=""></div>'+qCard(m)+'</div>'
       :'<div class="qhero empty"><div class="qhero-h"><span>📌 Quête principale</span><img src="assets/kimchi.svg" alt=""></div><p>Pas encore de quête principale. Touche 📌 sur une quête pour la mettre en avant.</p></div>';
     L.innerHTML=(loaded.projects?hero:'<p class="empty">Chargement…</p>')+
-      '<div class="qt-sec">Quêtes secondaires'+(act.length?' <i>'+act.length+'</i>':'')+'</div>'+
-      (act.length?'<div class="qv-list">'+act.map(qCard).join('')+'</div>':'<p class="empty">Aucune autre quête. Une idée ? Ajoute-la avec « + Nouvelle ».</p>')+
+      '<div class="qt-sec">Quêtes secondaires'+(all.length?' <i>'+all.length+'</i>':'')+'</div>'+chips+
+      (act.length?'<div class="qv-list">'+act.map(qCard).join('')+'</div>':'<p class="empty">'+emptyTxt+'</p>')+
       (fin.length?'<button type="button" class="lnk donetog" data-act="qt-done" aria-expanded="'+qtDone+'">'+(qtDone?'▾':'▸')+' Terminées ('+fin.length+')</button>'+(qtDone?'<div class="qv-list">'+fin.map(qCard).join('')+'</div>':''):'')}
   function renderQView(){
     if(!qOpen)return;var L=$('qv-list');if(!L)return;
@@ -1180,7 +1192,7 @@
     if(e.target.closest&&(e.target.closest('select.pr')||e.target.closest('a[href]')))return;
     var b=e.target.closest('[data-act]');if(!b)return;
     var a=b.getAttribute('data-act'),id=b.getAttribute('data-id'),it;
-    if(a==='pset'){var f=b.getAttribute('data-f'),v=b.getAttribute('data-v');if((f==='prio'&&PRIO[v])||(f==='status'&&NEXT[v])){var o2={};o2[f]=v;if(f==='status'&&v==='done')updUndo('projects',id,o2,'Quête terminée');else upd('projects',id,o2)}}
+    if(a==='pset'){var f=b.getAttribute('data-f'),v=b.getAttribute('data-v');if((f==='prio'&&PRIO[v])||(f==='status'&&NEXT[v])||(f==='cat'&&QCATL[v])){var o2={};o2[f]=v;if(f==='status'&&v==='done')updUndo('projects',id,o2,'Quête terminée');else upd('projects',id,o2)}}
     else if(a==='ps'){it=find('projects',id);if(it){var st=steps(it);var i=Number(b.getAttribute('data-i'));if(st[i]){st[i].done=!st[i].done;updUndo('projects',id,{steps:st},st[i].done?'Mini-quête validée ✓':'Mini-quête décochée')}}}
     else if(a==='proj-open'){iconOpen=false;projId=id;openId=null;confirmDel=null;renderSheet()}
     else if(a==='pmain'){it=find('projects',id);if(it){if(it.main){upd('projects',id,{main:false})}else{S.projects.forEach(function(q){if(q.main&&q.id!==id)upd('projects',q.id,{main:false})});upd('projects',id,{main:true})}projId=null;renderSheet()}}
@@ -1239,6 +1251,7 @@
     else if(a==='ag-day'){var nd=Number(b.getAttribute('data-v'));agSel=nd;renderAgenda();var g=document.getElementById('ag-d'+nd);if(g)g.scrollIntoView({block:'start',behavior:'smooth'});else toastMsg('Rien de prévu ce jour-là')}
     else if(a==='ag-hid'){setHid([]);renderAgenda()}
     else if(a==='qt-done'){qtDone=!qtDone;renderQTab()}
+    else if(a==='qt-cat'){qtCat=b.getAttribute('data-v');if(qtCat!=='all'&&!QCATL[qtCat])qtCat='all';try{localStorage.setItem('maison-qcat',qtCat)}catch(e){}renderQTab()}
     else if(a==='qadd3-toggle'){var q3=$('f-qadd3');q3.hidden=!q3.hidden;if(!q3.hidden)$('q-title3').focus()}
     else if(a==='qview-close'){qview(false,true)}
     else if(a==='qdone-tog'){qShowDone=!qShowDone;renderQView()}
@@ -1291,7 +1304,7 @@
       pi.value='';setPack(pt.id,cur.concat([{t:pv,done:false}]));
       var pi2=document.querySelector('#vv-body [data-packinput]');if(pi2)pi2.focus();return;
     }
-    if(f.id==='f-qadd3'){var q3t=$('q-title3'),q3s=splitEmoji(q3t.value);if(!q3s.title&&!q3s.emoji)return;addDoc('projects',newProj(q3s));q3t.value='';f.hidden=true;return}
+    if(f.id==='f-qadd3'){var q3t=$('q-title3'),q3s=splitEmoji(q3t.value);if(!q3s.title&&!q3s.emoji)return;var np=newProj(q3s);if(QCATL[qtCat])np.cat=qtCat;addDoc('projects',np);q3t.value='';f.hidden=true;return}
     if(f.id==='f-qadd'){
       var qt=$('q-title'),sq0=splitEmoji(qt.value);if(!sq0.title&&!sq0.emoji)return;
       addDoc('projects',newProj(sq0));qt.value='';f.hidden=true;return;

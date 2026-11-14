@@ -1126,3 +1126,10 @@ body[data-tab="agenda"] .agtab{display:flex;flex-direction:column;gap:14px;max-w
 .vtw.on{background:var(--lav);color:#fff}
 .vt-row{display:flex;gap:8px}.vt-row .in{flex:1;min-width:0;background:var(--n-bg);border-radius:14px}
 .vt-row .btn{flex:none;padding:8px 16px;border-radius:14px}
+
+/* v70 : filtres de catégories des quêtes */
+.qfil{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:2px 0}
+.qf{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;border:0;border-radius:16px;background:rgba(255,255,255,.9);box-shadow:0 0 0 1.5px rgba(141,123,240,.14);color:var(--ink2);font:inherit;font-size:12px;font-weight:800;padding:8px 2px 7px;cursor:pointer;white-space:nowrap}
+.qf span{font-size:17px;line-height:1.1}
+.qf.on{background:var(--lav);color:#fff;box-shadow:0 6px 14px rgba(141,123,240,.28)}
+.seg.cat{flex-wrap:wrap}

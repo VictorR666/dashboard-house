@@ -46,7 +46,7 @@ Pourquoi ce montage :
   - **Courses** : la liste de courses et la wishlist ;
   - **Voyages** : la liste des voyages à venir, puis les voyages passés.
 - **Quête principale** : la quête épinglée, avec ses mini-quêtes (étapes) à cocher.
-- **Quêtes secondaires** : un résumé sur l'accueil. Un clic sur le titre ouvre une **page plein écran** (`#quetes`) avec toutes les quêtes en détail : statut, urgence, mini-quêtes, notes et liens.
+- **Quêtes secondaires** : un résumé sur l'accueil. Un clic sur le titre ouvre une **page plein écran** (`#quetes`) avec toutes les quêtes en détail : statut, urgence, mini-quêtes, notes et liens. Sous « Quêtes secondaires », des **filtres par catégorie** (Toutes, 💕 Date, 🏠 Maison, 📋 À faire, 🎨 Activités ; dernier filtre retenu sur l'appareil). La catégorie se choisit dans la fiche de la quête (champ `cat` dans la colonne technique) ; sans choix, elle est devinée d'après le titre (`QCAT_RX`, Activités par défaut). Une quête créée avec un filtre actif prend cette catégorie.
 - **Routines** :
   - chaque tâche a une fréquence (tous les N jours ou semaines) ;
   - la couleur passe au vert, à l'orange puis au rouge selon le temps écoulé depuis la dernière fois ;

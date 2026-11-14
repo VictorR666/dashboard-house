@@ -25,7 +25,9 @@ state = {
                  ['r3', 'Maison', '💧', 'Brita', '2026-09-01', '4', 'semaines', '{}']],
     'shop': [['w1', '🎧', 'Casque', '120,00 €', 'Personne B', 'Bientôt', '', '', '', '{}']],
     'projects': [['p1', '🔧', 'Réparer robinet', 'oui', '✓ acheter joint\nchanger joint', '{"prio":"high"}'],
-                 ['p2', '🍷', 'Vin chaud', '', 'acheter vin\nacheter épices', '{"notes":"Recette https://example.com"}']],
+                 ['p2', '🍷', 'Vin chaud', '', 'acheter vin\nacheter épices', '{"notes":"Recette https://example.com"}'],
+                 ['p3', '🎬', 'Aller au ciné', '', '', '{}'],
+                 ['p4', '🪟', 'Changer les rideaux', '', '', '{}']],
     'courses': [],
     'voyages': [],
 }
@@ -152,6 +154,21 @@ def main():
                     page.click('[data-act=undo-upd]'); page.wait_for_timeout(700)
                     assert state['projects'][0][4] == before, 'annulation ratée'
                 page.screenshot(path=f'{OUT}/{name}-quetes.png')
+                if name == 'mobile':
+                    # filtres par catégorie (devinées d'après le titre, puis choisies dans la quête)
+                    page.click('.qfil [data-v=maison]'); page.wait_for_timeout(300)
+                    titles = page.eval_on_selector_all('#qt-list .qv-list .qc-t', 'e => e.map(x => x.textContent)')
+                    assert titles == ['Changer les rideaux'], titles
+                    page.screenshot(path=f'{OUT}/{name}-quetes-filtre.png')
+                    page.click('#qt-list .qv-list .qc-t'); page.wait_for_timeout(300)
+                    page.click('.sheet-card .seg.cat [data-v=date]'); page.wait_for_timeout(700)
+                    assert '"cat": "date"' in [r for r in state['projects'] if r[0] == 'p4'][0][5].replace('":"', '": "'), state['projects']
+                    page.click('.sheet-x'); page.wait_for_timeout(300)
+                    assert 'Rien dans' in page.inner_text('#qt-list'), 'filtre Maison vide'
+                    page.click('.qfil [data-v=date]'); page.wait_for_timeout(300)
+                    titles = page.eval_on_selector_all('#qt-list .qv-list .qc-t', 'e => e.map(x => x.textContent)')
+                    assert sorted(titles) == ['Aller au ciné', 'Changer les rideaux'], titles
+                    page.click('.qfil [data-v=all]'); page.wait_for_timeout(300)
                 assert page.is_visible('.qhero'), 'onglet Quêtes'; page.click('.tabbar [data-tab=home]'); page.wait_for_timeout(300)
                 # ---- Voyages ----
                 assert page.is_visible('#trip-next'), 'pas de compte à rebours sur l\'accueil'
