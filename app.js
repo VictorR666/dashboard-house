@@ -6,7 +6,9 @@
   var COL={projects:'projects',routines:'routines',shop:'shopping'};
   var S={projects:[],routines:[],shop:[],courses:[],voyages:[]};
   var GROUPS=['Kimchi','Plantes','Maison'];
-  var PRIO={high:'Urgent',med:'Pas urgent',low:'Optionnel'}, PW={high:3,med:2,low:1};
+  var PRIO={high:'Urgent',med:'Pas urgent',low:'Idée'}, PW={high:3,med:2,low:1}, PEMO={high:'🔥',med:'😴',low:'💡'};
+  /* Urgence d'une quête : juste un émoji ; un appui ouvre un petit menu (🔥 Urgent, 😴 Pas urgent, 💡 Idée) */
+  function prioBtn(o){var p=PRIO[o.prio]?o.prio:'med';return '<button type="button" class="prb '+p+'" data-act="prio-menu" data-id="'+esc(o.id)+'" aria-haspopup="menu" aria-label="Urgence : '+PRIO[p]+'" title="'+PRIO[p]+'">'+PEMO[p]+'</button>'}
   var NEXT={todo:'doing',doing:'done',done:'todo'};
   var loaded={};
   var cal={status:'loading',events:[]};
@@ -529,7 +531,7 @@
       return '<div class="row projrow'+(fin?' done':'')+'" role="button" tabindex="0" aria-haspopup="dialog" data-act="proj-open" data-id="'+esc(o.id)+'">'+
         (o.emoji?'<span class="em" aria-hidden="true">'+esc(o.emoji)+'</span>':'<span class="dot"></span>')+
         '<div class="main"><span class="t">'+esc(o.title)+'</span><span class="sub">'+sub+'</span></div>'+
-        '<select class="pr '+p+'" data-prio="'+esc(o.id)+'" aria-label="Urgence">'+['high','med','low'].map(function(k){return '<option value="'+k+'"'+(k===p?' selected':'')+'>'+PRIO[k]+'</option>'}).join('')+'</select></div>';
+        prioBtn(o)+'</div>';
     };
     var act=list.filter(function(o){return !isFin(o)}),fin=list.filter(isFin);
     $('l-todo').innerHTML=(act.length?act.map(rowH).join(''):(fin.length?'<p class="empty">Tout est terminé ✨</p>':empty('projects','Une idée ? Ajoute-la ci-dessus.')))+
@@ -556,7 +558,7 @@
       (ss.length?'<ul class="steps">'+ss.map(function(x,i){return '<li class="step'+(x.done?' done':'')+'"><button class="chk" data-act="ps" data-id="'+id+'" data-i="'+i+'" aria-label="Mini-quête : '+esc(x.t)+'">'+CHECK+'</button><span>'+esc(x.t)+'</span><button class="sx" data-act="sd" data-id="'+id+'" data-i="'+i+'" aria-label="Supprimer : '+esc(x.t)+'" title="Supprimer">×</button></li>'}).join('')+'</ul>':'<div class="sub">Pas encore de mini-quête.</div>')+
       '<form class="stepform" data-form="step" data-id="'+id+'"><input class="in" maxlength="120" data-stepinput required placeholder="Nouvelle mini-quête" aria-label="Nouvelle mini-quête"><button class="btn" type="submit">+</button></form>'+
       '<div class="lab">Catégorie</div>'+sg('cat',QCATS.map(function(c){return [c[0],c[1]+' '+c[2]]}),qCat(o))+
-      '<div class="lab">Urgence</div>'+sg('prio',[['high','Urgent'],['med','Pas urgent'],['low','Optionnel']],PRIO[o.prio]?o.prio:'med')+
+      '<div class="lab">Urgence</div>'+sg('prio',[['high','🔥 Urgent'],['med','😴 Pas urgent'],['low','💡 Idée']],PRIO[o.prio]?o.prio:'med')+
       '<div class="lab">Avancement</div>'+sg('status',[['todo','À faire'],['doing','En cours'],['done','Terminé']],st)+
       '<div class="lab">Liens et notes</div><textarea class="in notes" maxlength="2000" data-field="pnotes" rows="3" placeholder="" aria-label="Liens et notes">'+esc(o.notes||'')+'</textarea>'+
       (us.length?'<div class="nlinks">'+us.map(function(u){return '<a class="btn ghost" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">↗ '+esc(u.replace(/^https?:\/\/(www\.)?/,'').split('/')[0])+'</a>'}).join('')+'</div>':'')+
@@ -580,14 +582,14 @@
     return '<article class="qcard'+(fin?' done':'')+(o.main?' main':'')+'">'+
       (o.main?'<div class="qc-main">📌 Quête principale</div>':'')+
       '<div class="qc-h"><span class="em" aria-hidden="true">'+esc(o.emoji||'✨')+'</span><button class="qc-t" data-act="proj-open" data-id="'+id+'">'+esc(o.title)+'</button>'+'<button class="qc-pin'+(o.main?' on':'')+'" data-act="pmain" data-id="'+id+'" aria-pressed="'+!!o.main+'" aria-label="'+(o.main?'Retirer de la quête principale':'Mettre en quête principale')+'" title="'+(o.main?'Retirer de la quête principale':'Mettre en quête principale')+'">📌</button>'+
-      '<select class="pr '+p+'" data-prio="'+id+'" aria-label="Urgence">'+['high','med','low'].map(function(k){return '<option value="'+k+'"'+(k===p?' selected':'')+'>'+PRIO[k]+'</option>'}).join('')+'</select></div>'+
+      prioBtn(o)+'</div>'+
       (ss.length?'<div class="qc-prog"><div class="bar"><i style="width:'+pc+'%"></i></div><span>'+done+'/'+ss.length+'</span></div>':'')+
       (ss.length?'<ul class="steps">'+ss.map(function(x,i){return '<li class="step'+(x.done?' done':'')+'"><button class="chk" data-act="ps" data-id="'+id+'" data-i="'+i+'" aria-label="Mini-quête : '+esc(x.t)+'">'+CHECK+'</button><span>'+esc(x.t)+'</span><button class="sx" data-act="sd" data-id="'+id+'" data-i="'+i+'" aria-label="Supprimer : '+esc(x.t)+'" title="Supprimer">×</button></li>'}).join('')+'</ul>':'')+
       '<form class="stepform" data-form="step" data-id="'+id+'"><input class="in" maxlength="120" data-stepinput required placeholder="Nouvelle mini-quête" aria-label="Nouvelle mini-quête pour '+esc(o.title)+'"><button class="btn" type="submit">+</button></form>'+
-      '<div class="seg status">'+[['todo','À faire'],['doing','En cours'],['done','Terminé']].map(function(x){return '<button type="button" class="'+(st===x[0]?'on ':'')+x[0]+'" data-act="pset" data-id="'+id+'" data-f="status" data-v="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div>'+
       (note?'<p class="qc-note">'+esc(note)+'</p>':'')+
       (us.length?'<div class="nlinks">'+us.map(function(u){return '<a class="btn ghost" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">↗ '+esc(u.replace(/^https?:\/\/(www\.)?/,'').split('/')[0])+'</a>'}).join('')+'</div>':'')+
-      '<div class="qc-f"><button class="lnk" data-act="proj-open" data-id="'+id+'">Modifier…</button></div></article>';
+      '<div class="qc-f"><button class="lnk" data-act="proj-open" data-id="'+id+'">Modifier…</button>'+
+      (st==='done'?'<button class="lnk" data-act="pset" data-id="'+id+'" data-f="status" data-v="todo">'+UNDO+'Rouvrir</button>':fin?'':'<button class="qc-end" data-act="pset" data-id="'+id+'" data-f="status" data-v="done">✓ Terminer</button>')+'</div></article>';
   }
   /* Catégories de quêtes (filtres de l'onglet Quêtes). Sans catégorie choisie, on devine d'après le titre. */
   var QCATS=[['date','💕','Date'],['maison','🏠','Maison'],['afaire','📋','À faire'],['activite','🎨','Activités']],QCATL={};
@@ -1190,8 +1192,14 @@
   document.addEventListener('click',function(e){
     var ca=e.target.closest&&e.target.closest('a[data-close]');if(ca){setTimeout(function(){bilPop=null;renderSheet()},0);return}
     if(e.target.closest&&(e.target.closest('select.pr')||e.target.closest('a[href]')))return;
-    var b=e.target.closest('[data-act]');if(!b)return;
+    var b=e.target.closest('[data-act]'),pm=$('prm');
+    if(pm&&!(b&&b.getAttribute('data-act')==='prio-menu'&&pm.getAttribute('data-for')===b.getAttribute('data-id')))pm.remove();else if(pm){pm.remove();return}
+    if(!b)return;
     var a=b.getAttribute('data-act'),id=b.getAttribute('data-id'),it;
+    if(a==='prio-menu'){it=find('projects',id);if(!it)return;var cur=PRIO[it.prio]?it.prio:'med',m=document.createElement('div');m.id='prm';m.className='prm';m.setAttribute('role','menu');m.setAttribute('data-for',id);m.setAttribute('data-t',Date.now());
+      m.innerHTML=['high','med','low'].map(function(k){return '<button type="button" role="menuitemradio" aria-checked="'+(k===cur)+'" class="'+(k===cur?'on':'')+'" data-act="pset" data-f="prio" data-id="'+esc(id)+'" data-v="'+k+'"><span aria-hidden="true">'+PEMO[k]+'</span>'+PRIO[k]+'</button>'}).join('');
+      document.body.appendChild(m);var r=b.getBoundingClientRect(),w=m.offsetWidth,h=m.offsetHeight,x=Math.min(window.innerWidth-w-8,Math.max(8,r.right-w)),y=r.bottom+6;if(y+h>window.innerHeight-8)y=r.top-h-6;
+      m.style.left=x+'px';m.style.top=y+'px';var f0=m.querySelector('.on');if(f0)f0.focus({preventScroll:true});return}
     if(a==='pset'){var f=b.getAttribute('data-f'),v=b.getAttribute('data-v');if((f==='prio'&&PRIO[v])||(f==='status'&&NEXT[v])||(f==='cat'&&QCATL[v])){var o2={};o2[f]=v;if(f==='status'&&v==='done')updUndo('projects',id,o2,'Quête terminée');else upd('projects',id,o2)}}
     else if(a==='ps'){it=find('projects',id);if(it){var st=steps(it);var i=Number(b.getAttribute('data-i'));if(st[i]){st[i].done=!st[i].done;updUndo('projects',id,{steps:st},st[i].done?'Mini-quête validée ✓':'Mini-quête décochée')}}}
     else if(a==='proj-open'){iconOpen=false;projId=id;openId=null;confirmDel=null;renderSheet()}
@@ -1277,6 +1285,8 @@
       b.setAttribute('aria-expanded',open);b.textContent=p[0].indexOf('qadd')>=0||p[0].indexOf('qadd3')>=0?(open?'− Fermer':'+ Nouvelle'):(open?'−':'+')});
   }
   document.addEventListener('click',function(){setTimeout(syncPlus,0)});
+  window.addEventListener('scroll',function(){var pm=$('prm');if(pm&&Date.now()-(+pm.getAttribute('data-t')||0)>400)pm.remove()},true);
+  document.addEventListener('keydown',function(e){var pm=$('prm');if(pm&&e.key==='Escape')pm.remove()});
   document.addEventListener('submit',function(){setTimeout(syncPlus,0)});
   document.addEventListener('submit',function(e){
     var f=e.target;if(f.id==='login-form')return;e.preventDefault();

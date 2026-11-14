@@ -169,6 +169,19 @@ def main():
                     titles = page.eval_on_selector_all('#qt-list .qv-list .qc-t', 'e => e.map(x => x.textContent)')
                     assert sorted(titles) == ['Aller au ciné', 'Changer les rideaux'], titles
                     page.click('.qfil [data-v=all]'); page.wait_for_timeout(300)
+                    # urgence : émoji + petit menu ; bouton Terminer
+                    card = page.locator('#qt-list .qv-list .qcard', has_text='Aller au ciné')
+                    card.locator('.prb').click(); page.wait_for_timeout(200)
+                    assert page.is_visible('#prm'), 'menu urgence'
+                    page.screenshot(path=f'{OUT}/{name}-quetes-prio.png')
+                    page.click('#prm [data-v=high]'); page.wait_for_timeout(700)
+                    assert '"prio": "high"' in [r for r in state['projects'] if r[0] == 'p3'][0][5].replace('":"', '": "'), state['projects']
+                    assert not page.is_visible('#prm')
+                    assert card.locator('.prb').inner_text() == '🔥'
+                    assert page.locator('#qt-list .seg.status').count() == 0, 'plus de sélecteur de statut dans les cartes'
+                    card.locator('.qc-end').click(); page.wait_for_timeout(700)
+                    assert '"status": "done"' in [r for r in state['projects'] if r[0] == 'p3'][0][5].replace('":"', '": "')
+                    page.click('[data-act=undo-upd]'); page.wait_for_timeout(700)
                 assert page.is_visible('.qhero'), 'onglet Quêtes'; page.click('.tabbar [data-tab=home]'); page.wait_for_timeout(300)
                 # ---- Voyages ----
                 assert page.is_visible('#trip-next'), 'pas de compte à rebours sur l\'accueil'

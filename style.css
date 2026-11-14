@@ -1133,3 +1133,14 @@ body[data-tab="agenda"] .agtab{display:flex;flex-direction:column;gap:14px;max-w
 .qf span{font-size:17px;line-height:1.1}
 .qf.on{background:var(--lav);color:#fff;box-shadow:0 6px 14px rgba(141,123,240,.28)}
 .seg.cat{flex-wrap:wrap}
+
+/* v71 : urgence en émoji + menu, bouton Terminer */
+.prb{flex:none;width:34px;height:34px;border:0;border-radius:50%;display:grid;place-items:center;font-size:17px;line-height:1;cursor:pointer;margin-left:2px;padding:0}
+.prb.high{background:#FFE6E1}.prb.med{background:#F1EEFB}.prb.low{background:#FFF6D6}
+.prm{position:fixed;z-index:80;display:flex;flex-direction:column;gap:2px;min-width:170px;background:#fff;border-radius:16px;padding:6px;box-shadow:0 14px 34px rgba(60,40,140,.22),0 0 0 1px rgba(141,123,240,.12)}
+.prm button{display:flex;align-items:center;gap:10px;border:0;background:none;border-radius:11px;padding:9px 10px;font:inherit;font-size:14px;font-weight:800;color:var(--ink);text-align:left;cursor:pointer}
+.prm button span{font-size:17px;width:22px;text-align:center}
+.prm button.on{background:var(--lav-soft);color:var(--lav)}
+.qc-f{justify-content:space-between;align-items:center}
+.qc-f .lnk{display:inline-flex;align-items:center;gap:4px}
+.qc-end{border:0;border-radius:999px;background:var(--lav-soft);color:var(--lav);font:inherit;font-size:14px;font-weight:800;padding:7px 14px;cursor:pointer}
