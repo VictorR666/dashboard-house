@@ -1162,3 +1162,9 @@ body[data-tab="home"] .hbtns{display:flex}
 .ag-k b{font-size:12px;font-weight:900;color:var(--lav)}
 .ag-k.td b{color:#D9652F}
 .ag-none{margin:0 4px;font-size:14px;font-weight:700;color:var(--ink2)}
+/* v77 : carte météo + Kimchi plus compacte */
+.scene{min-height:168px;padding:14px 16px;gap:6px;border-radius:26px}
+.sc-temp{font-size:28px}
+.sc-txt{max-width:66%;padding-bottom:0}
+body[data-tab="home"][data-view="simple"] .sc-txt h2{font-size:17px}
+.sc-k{right:5%;bottom:12px;width:27%;max-width:112px}
