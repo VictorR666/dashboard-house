@@ -1310,7 +1310,9 @@
     if(f.id==='f-course'||f.id==='f-course2'){
       var ci2=f.querySelector('input'),pc=parseCourse(ci2.value);if(!pc.title)return;
       var dup=S.courses.filter(function(c){return nrm(c.title)===nrm(pc.title)})[0];
-      if(dup){upd('courses',dup.id,{done:false,qty:pc.qty||dup.qty})}else addDoc('courses',pc);
+      /* Un nouvel article (ou un article remis dans la liste) arrive en haut */
+      var ks=S.courses.filter(function(c){return !c.done&&c!==dup}).map(cKey),top=ks.length?Math.min.apply(null,ks)-1000:null;
+      if(dup){var dch={done:false,qty:pc.qty||dup.qty};if(top!==null)dch.ord=top;upd('courses',dup.id,dch)}else{if(top!==null)pc.ord=top;addDoc('courses',pc)}
       ci2.value='';ci2.focus();return;
     }
     if(f.getAttribute('data-form')==='tplitem'){var ti2=f.querySelector('input'),tv2=ti2.value.trim().slice(0,80);if(!tv2||!tplEdit)return;
