@@ -1144,3 +1144,7 @@ body[data-tab="agenda"] .agtab{display:flex;flex-direction:column;gap:14px;max-w
 .qc-f{justify-content:space-between;align-items:center}
 .qc-f .lnk{display:inline-flex;align-items:center;gap:4px}
 .qc-end{border:0;border-radius:999px;background:var(--lav-soft);color:var(--lav);font:inherit;font-size:14px;font-weight:800;padding:7px 14px;cursor:pointer}
+
+/* v72 : Missions maison — on célèbre ce qui est fait, sans « 0 sur 3 » */
+.sc-win{color:var(--g-ink)}
+.sc-paws{margin-right:5px;letter-spacing:1px}

@@ -406,19 +406,25 @@
     var t=function(n){return Math.round(n)+'°'};
     var wx=W&&typeof W.temp==='number'?'<div class="sc-wx"><span class="sc-wic">'+wIcon(W.cond,W.isDay)+'</span><span class="sc-temp">'+t(W.temp)+'</span><span class="sc-wl"><b>'+esc(W.label||'')+'</b>'+esc(W.city||'')+(typeof W.low==='number'?' · '+t(W.low)+' / '+t(W.high):'')+'</span></div>':'';
     var h='<section class="scene '+mood+'">'+sceneDeco(mood)+wx+'<div class="sc-txt"><h2>'+esc(title)+'</h2></div><img class="sc-k" src="assets/kimchi-anim.svg" alt="Kimchi"></section>';
-    /* En ce moment : quête principale, prochain événement, voyage, missions maison */
+    /* En ce moment : prochain événement, missions maison, quête principale, voyage */
     var rows='';
     var m=S.projects.filter(function(p){return p.main&&p.status!=='done'})[0];
     if(m){var ss=m.steps||[],dn=ss.filter(function(x){return x.done}).length,id=esc(m.id);
       rows+='<div class="sc-card"><button class="sc-row in" data-act="hub-go" data-v="quetes"><span class="sc-ic">📌</span><span class="sc-m"><span class="sc-t">'+esc(m.title)+'</span><span class="sc-s">Quête principale'+(ss.length?' · '+dn+'/'+ss.length:'')+'</span>'+(ss.length?'<span class="sc-bar"><i style="width:'+Math.round(dn/ss.length*100)+'%"></i></span>':'')+'</span><span class="sc-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span></button>'+
         (ss.length?'<ul class="sc-list">'+ss.map(function(x,i){return '<li class="tq-step'+(x.done?' done':'')+'"><button class="chk" data-act="ps" data-id="'+id+'" data-i="'+i+'" aria-label="'+(x.done?'Décocher : ':'Terminer : ')+esc(x.t)+'">'+CHECK+'</button><button class="tq-st" data-act="proj-open" data-id="'+id+'">'+esc(x.t)+'</button></li>'}).join('')+'</ul>':'')+'</div>'}
+    var qH=rows;rows='';
     if(cal.status==='ok'){var now=new Date(),e=cal.events.filter(function(x){return x&&HID.indexOf(x.id)<0}).map(function(x){return {e:x,i:evInfo(x)}}).filter(function(x){return x.i&&x.i.n>=0&&(x.i.n>0||x.i.allDay||x.i.d>now)})[0];
       if(e)rows+='<button class="sc-ev" data-act="hub-go" data-v="agenda"><span class="k2-evd"><b>'+e.i.d.getDate()+'</b>'+esc(e.i.d.toLocaleDateString('fr-FR',{month:'short'}).replace('.',''))+'</span><span class="k2-evm"><span class="k2-evt">'+esc(EVN[e.e.id]||e.e.summary||'Événement')+'</span><span class="k2-evs">'+esc(cap(e.i.n===0?"aujourd'hui":e.i.n===1?'demain':e.i.d.toLocaleDateString('fr-FR',{weekday:'long'})))+(e.i.allDay?'':' · '+e.i.d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}))+'</span></span></button>'}
+    var evH=rows;rows='';
     if(nt){var da=departAt(nt),cd=ts.k==='now'?'<span class="k2-now">🌴 En vacances · jour '+ts.day+' sur '+ts.tot+'</span>':ts.n===0?'<span class="k2-now">🎉 C\'est aujourd\'hui !</span>':da?'<span class="flap" role="timer" data-cd="'+da.d.getTime()+'">'+flapInner(da.d-Date.now())+'</span>':'<span class="k2-now">J-'+ts.n+'</span>';
       rows+='<button class="sc-trip" data-act="hub-go" data-v="voyage"><span class="sc-tl">'+esc(tEmo(nt)+' '+nt.title)+(ts.k==='soon'&&ts.n>0?' dans':'')+'</span>'+cd+'</button>'}
-    var mdn=S.routines.filter(function(r){return r.lastDone===iso(new Date())}).length,mt=due.length+mdn;
-    rows+='<div class="sc-card"><button class="sc-row in" data-act="hub-go" data-v="todo"><span class="sc-ic">🧹'+(due.length?'<b class="sc-badge">'+due.length+'</b>':'')+'</span><span class="sc-m"><span class="sc-t">Missions maison</span>'+(mt?'<span class="sc-s">Aujourd\'hui · '+mdn+'/'+mt+'</span><span class="sc-bar"><i style="width:'+Math.round(mdn/mt*100)+'%"></i></span>':'')+'</span><span class="sc-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span></button>'+
+    var trH=rows;rows='';
+    var mdn=S.routines.filter(function(r){return r.lastDone===iso(new Date())}).length;
+    rows+='<div class="sc-card"><button class="sc-row in" data-act="hub-go" data-v="todo"><span class="sc-ic">🧹'+(due.length?'<b class="sc-badge">'+due.length+'</b>':'')+'</span><span class="sc-m"><span class="sc-t">Missions maison</span>'+(mdn?'<span class="sc-s sc-win"><span class="sc-paws" aria-hidden="true">'+new Array(Math.min(mdn,5)+1).join('🐾')+'</span>'+mdn+(mdn>1?' faites':' faite')+' aujourd\'hui, bravo !</span>':due.length?'<span class="sc-s">'+due.length+(due.length>1?' petites choses':' petite chose')+', quand tu veux</span>':'')+'</span><span class="sc-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span></button>'+
       (due.length?'<ul class="sc-list">'+due.map(function(x){var r=x.r;return '<li class="sc-mi">'+careChk(r)+'<button class="tq-st" data-act="care-open" data-id="'+esc(r.id)+'">'+(r.emoji?esc(r.emoji)+' ':'')+esc(r.title)+'</button></li>'}).join('')+'</ul>':'<p class="sc-ok">Tout est fait ✨</p>')+'</div>';
+    /* Ordre : agenda, missions maison, quête principale, vacances ; la semaine du départ et pendant le voyage, les vacances remontent sous l'agenda */
+    var trUp=ts&&(ts.k==='now'||(ts.k==='soon'&&ts.n<=7));
+    rows=trUp?evH+trH+rows+qH:evH+rows+qH+trH;
     h+='<div class="sc-sec">En ce moment</div><div class="sc-rows">'+rows+'</div>';
     h+='<button class="viewbot" type="button" data-act="view-toggle">Passer à la vue détaillée</button>';
     el.innerHTML=h}
