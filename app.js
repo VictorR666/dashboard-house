@@ -402,7 +402,7 @@
     var due=dueList(),td=iso(new Date()),done=S.routines.filter(function(r){return r.lastDone===td}).length,nt=nextTrip(),ts=nt&&tripState(nt),mood=sceneMood();
     var hr=new Date().getHours(),c=W&&W.cond,night=/night/.test(mood);
     /* Une seule phrase, sur la météo */
-    var title=!W?'Kimchi regarde le ciel…':c==='storm'?'Orage dehors, on reste au chaud ⛈️':c==='rain'?'Il pleut, parfait pour rester au chaud ☔':c==='snow'?'Il neige ! Kimchi colle son nez à la vitre ❄️':c==='fog'?'Brouillard, tout est tout doux 🌫️':night?'Nuit calme, Kimchi dort 🌙':c==='cloudy'?'Ciel gris, Kimchi fait la sieste ☁️':hr>=18?'Belle fin de journée 🌇':c==='partly'?'Quelques éclaircies, Kimchi est de bonne humeur 🌤️':'Grand soleil, Kimchi est ravi ☀️';
+    var title=!W?'Kimchi regarde le ciel…':c==='storm'?'Orage dehors, on reste au chaud ⛈️':c==='rain'?'Il pleut, parfait pour rester au chaud ☔':c==='snow'?'Il neige ! Kimchi colle son nez à la vitre ❄️':c==='fog'?'Brouillard, tout est tout doux 🌫️':night?'Nuit calme, Kimchi dort 🌙':c==='cloudy'?'Ciel gris, Kimchi fait la sieste ☁️':hr>=18?'Belle fin de journée 🌇':c==='partly'?'Quelques éclaircies, Kimchi est de bonne humeur 🌤️':'Grand soleil, Kimchi est ravie ☀️';
     var t=function(n){return Math.round(n)+'°'};
     var wx=W&&typeof W.temp==='number'?'<div class="sc-wx"><span class="sc-wic">'+wIcon(W.cond,W.isDay)+'</span><span class="sc-temp">'+t(W.temp)+'</span><span class="sc-wl"><b>'+esc(W.label||'')+'</b>'+esc(W.city||'')+(typeof W.low==='number'?' · '+t(W.low)+' / '+t(W.high):'')+'</span></div>':'';
     var h='<section class="scene '+mood+'">'+sceneDeco(mood)+wx+'<div class="sc-txt"><h2>'+esc(title)+'</h2></div><img class="sc-k" src="assets/kimchi-anim.svg" alt="Kimchi"></section>';
