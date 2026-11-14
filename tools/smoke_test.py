@@ -99,6 +99,11 @@ def main():
                     page.click('.sc-ev'); page.wait_for_timeout(300)
                     assert page.get_attribute('body', 'data-tab') == 'agenda' and 'Vétérinaire' in page.inner_text('#agtab') and 'Départ · Lisbonne' in page.inner_text('#agtab'), 'onglet Agenda'
                     page.screenshot(path=f'{OUT}/{name}-agenda.png')
+                    txt = page.inner_text('#agtab').lower()
+                    assert 'cette semaine' in txt and 'semaine prochaine' in txt and "semaine d'après" in txt and 'lun.' in txt, 'agenda par semaines'
+                    page.click('.tabbar [data-tab=home]'); page.wait_for_timeout(300)
+                    page.click('.head .calb'); page.wait_for_timeout(300)
+                    assert page.get_attribute('body', 'data-tab') == 'agenda', 'bouton agenda en haut'
                     page.click('.tabbar [data-tab=home]'); page.wait_for_timeout(300)
                     page.click('.viewbot >> visible=true'); page.wait_for_timeout(300)
                 page.screenshot(path=f'{OUT}/{name}-accueil.png')

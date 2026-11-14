@@ -438,22 +438,23 @@
       if(a>=0&&a<=60)items.push({n:a,k:hPart(t.start),t:'Départ · '+t.title,em:tEmo(t),id:t.id,type:'trip'});
       if(b>=0&&b<=60&&b!==a)items.push({n:b,k:hPart(t.end),t:'Retour · '+t.title,em:'🏠',id:t.id,type:'trip'})});
     items.sort(function(x,y){return x.n-y.n||((x.k||'00:00')<(y.k||'00:00')?-1:1)});
-    var dayLab=function(n){var d=new Date(t0d);d.setDate(d.getDate()+n);var w=cap(d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}));return n===0?'Aujourd\'hui · '+w:n===1?'Demain · '+w:w};
-    /* Bandeau de la semaine : 7 jours, un point quand il se passe quelque chose */
-    var strip='<div class="ag-strip">';for(var n=0;n<7;n++){var d=new Date(t0d);d.setDate(d.getDate()+n);var c=items.filter(function(x){return x.n===n}).length;
-      strip+='<button class="ag-day'+(n===0?' today':'')+(agSel===n?' sel':'')+'" data-act="ag-day" data-v="'+n+'"><small>'+(n===0?'Auj.':cap(d.toLocaleDateString('fr-FR',{weekday:'short'}).replace('.','')))+'</small><b>'+d.getDate()+'</b><i>'+(c?Array(Math.min(c,3)+1).join('•'):'')+'</i></button>'}
-    strip+='</div>';
-    /* Regroupement : cette semaine jour par jour, puis par semaine */
-    var groups=[],cur=null;
-    items.forEach(function(x){var g=x.n<7?'d'+x.n:'w'+Math.floor((x.n+((new Date(t0d).getDay()+6)%7))/7);if(!cur||cur.g!==g){cur={g:g,n:x.n,items:[]};groups.push(cur)}cur.items.push(x)});
-    var wLab=function(n){var dow=(new Date(t0d).getDay()+6)%7,w=Math.floor((n+dow)/7);if(w===1)return 'Semaine prochaine';var d=new Date(t0d);d.setDate(d.getDate()-dow+7*w);return 'Semaine du '+d.toLocaleDateString('fr-FR',{day:'numeric',month:'long'})};
-    var body=groups.length?groups.map(function(g){return '<section class="ag-g" id="ag-'+g.g+'"><h3>'+esc(g.g.charAt(0)==='d'?dayLab(g.n):wLab(g.n))+'</h3>'+g.items.map(function(x){
-        var d=new Date(t0d);d.setDate(d.getDate()+x.n);var when=g.g.charAt(0)==='w'?cap(d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric'}).replace('.',''))+(x.k?' · '+x.k:''):(x.k||'Journée');
-        return x.type==='trip'?'<button class="ag-it trip" data-act="trip-open" data-id="'+esc(x.id)+'"><span class="ag-k">'+esc(when)+'</span><span class="ag-t">'+esc(x.em+' '+x.t)+'</span></button>'
-          :'<div class="ag-it" role="button" tabindex="0" data-act="ev-edit" data-id="'+esc(x.id)+'"><span class="ag-k">'+esc(when)+'</span><span class="ag-t">'+esc(x.t)+'</span><button class="evx" data-act="ev-hide" data-id="'+esc(x.id)+'" aria-label="Masquer" title="Masquer">×</button></div>'}).join('')+'</section>'}).join('')
-      :'<p class="empty">'+(cal.status==='ok'?'Rien de prévu pour les prochaines semaines. Profitez-en 🐾':cal.status==='loading'?'Chargement…':'L\'agenda ne répond pas pour le moment.')+'</p>';
+    /* Semaine par semaine, du lundi au dimanche : cette semaine, semaine prochaine, semaine d'après, puis les suivantes si besoin */
+    var dow=(new Date(t0d).getDay()+6)%7,wOf=function(n){return Math.floor((n+dow)/7)};
+    var monday=function(w){var d=new Date(t0d);d.setDate(d.getDate()-dow+7*w);return d};
+    var wName=function(w){return w===0?'Cette semaine':w===1?'Semaine prochaine':w===2?'Semaine d\'après':'Semaine du '+monday(w).toLocaleDateString('fr-FR',{day:'numeric',month:'long'})};
+    var wRange=function(w){var a=monday(w),b=new Date(a);b.setDate(b.getDate()+6);var f=function(d,m){return d.toLocaleDateString('fr-FR',m?{day:'numeric',month:'short'}:{day:'numeric'}).replace('.','')};
+      return 'lun. '+f(a,a.getMonth()!==b.getMonth())+' → dim. '+f(b,true)};
+    var maxW=items.length?wOf(items[items.length-1].n):0,body='';
+    for(var w=0;w<=Math.max(2,maxW);w++){var L=items.filter(function(x){return wOf(x.n)===w});if(w>2&&!L.length)continue;
+      body+='<section class="ag-g'+(w===0?' now':'')+'"><h3>'+esc(wName(w))+'<small>'+esc(wRange(w))+'</small></h3>'+(L.length?L.map(function(x){
+        var d=new Date(t0d);d.setDate(d.getDate()+x.n);var day=x.n===0?'Aujourd\'hui':x.n===1?'Demain':cap(d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric'}).replace('.',''));
+        var k='<span class="ag-k'+(x.n===0?' td':'')+'"><b>'+esc(day)+'</b>'+(x.k?esc(x.k):'Journée')+'</span>';
+        return x.type==='trip'?'<button class="ag-it trip" data-act="trip-open" data-id="'+esc(x.id)+'">'+k+'<span class="ag-t">'+esc(x.em+' '+x.t)+'</span></button>'
+          :'<div class="ag-it" role="button" tabindex="0" data-act="ev-edit" data-id="'+esc(x.id)+'">'+k+'<span class="ag-t">'+esc(x.t)+'</span><button class="evx" data-act="ev-hide" data-id="'+esc(x.id)+'" aria-label="Masquer" title="Masquer">×</button></div>'}).join('')
+        :'<p class="ag-none">'+(cal.status==='ok'?'Rien de prévu 🐾':cal.status==='loading'?'Chargement…':'—')+'</p>')+'</section>'}
+    if(cal.status!=='ok'&&cal.status!=='loading')body='<p class="empty">L\'agenda ne répond pas pour le moment.</p>'+body;
     var nHid=cal.status==='ok'?cal.events.filter(function(e){return e&&HID.indexOf(e.id)>=0}).length:0;
-    el.innerHTML=strip+'<div class="ag-list">'+body+'</div>'+(nHid?'<button class="lnk ag-hid" data-act="ag-hid">'+nHid+' événement'+(nHid>1?'s':'')+' masqué'+(nHid>1?'s':'')+' · tout réafficher</button>':'')+
+    el.innerHTML='<div class="ag-list">'+body+'</div>'+(nHid?'<button class="lnk ag-hid" data-act="ag-hid">'+nHid+' événement'+(nHid>1?'s':'')+' masqué'+(nHid>1?'s':'')+' · tout réafficher</button>':'')+
       '<a class="ag-gc" href="https://calendar.google.com/calendar/u/0/r/week" target="_blank" rel="noopener noreferrer">Ouvrir Google Agenda ↗</a>'}
   /* Petite fête quand on coche la dernière chose du jour */
   function celebrate(){[].forEach.call(document.querySelectorAll('.k2,.sc-k'),function(k){k.classList.remove('jump');void k.offsetWidth;k.classList.add('jump')});
