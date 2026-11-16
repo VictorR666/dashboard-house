@@ -6,8 +6,8 @@
   var COL={projects:'projects',routines:'routines',shop:'shopping'};
   var S={projects:[],routines:[],shop:[],courses:[],voyages:[]};
   var GROUPS=['Kimchi','Plantes','Maison'];
-  var PRIO={high:'Urgent',med:'Pas urgent',low:'Idée'}, PW={high:3,med:2,low:1}, PEMO={high:'🔥',med:'😴',low:'💡'};
-  /* Urgence d'une quête : juste un émoji ; un appui ouvre un petit menu (🔥 Urgent, 😴 Pas urgent, 💡 Idée) */
+  var PRIO={high:'Urgent',med:'Pas urgent',low:'Idée'}, PW={high:3,med:2,low:1}, PEMO={high:'🔥',med:'⏳',low:'💡'};
+  /* Urgence d'une quête : juste un émoji ; un appui ouvre un petit menu (🔥 Urgent, ⏳ Pas urgent, 💡 Idée) */
   function prioBtn(o){var p=PRIO[o.prio]?o.prio:'med';return '<button type="button" class="prb '+p+'" data-act="prio-menu" data-id="'+esc(o.id)+'" aria-haspopup="menu" aria-label="Urgence : '+PRIO[p]+'" title="'+PRIO[p]+'">'+PEMO[p]+'</button>'}
   var NEXT={todo:'doing',doing:'done',done:'todo'};
   var loaded={};
@@ -210,6 +210,27 @@
   function upd(key,id,data){var it=find(key,id);if(!it)return;Object.assign(it,data);render();return shWrite(key,it)}
   function fail(){$('banner').innerHTML='<div class="note">Enregistrement impossible. Recharge la page.</div>'}
   function steps(o){return (o.steps||[]).map(function(x){return {t:x.t,done:!!x.done}})}
+  /* Renommer une mini-quête : on touche son texte, il devient un champ. Entrée ou un clic ailleurs enregistre, Échap annule. */
+  function stepRen(b){
+    var id=b.getAttribute('data-id'),i=Number(b.getAttribute('data-i')),pr=find('projects',id);
+    if(!pr||!(pr.steps||[])[i])return;
+    var inp=document.createElement('input');
+    inp.className='in st-edit';inp.maxLength=120;inp.value=pr.steps[i].t;
+    inp.setAttribute('data-stepedit','');inp.setAttribute('data-id',id);inp.setAttribute('data-i',String(i));inp.setAttribute('data-orig',pr.steps[i].t);
+    inp.setAttribute('enterkeyhint','done');inp.setAttribute('aria-label','Renommer la mini-quête');
+    b.replaceWith(inp);inp.focus();inp.select();
+  }
+  function stepRenEnd(inp,save,late){
+    if(inp._end)return;inp._end=true;
+    var id=inp.getAttribute('data-id'),orig=inp.getAttribute('data-orig'),v=inp.value.trim().slice(0,120),pr=find('projects',id),i=Number(inp.getAttribute('data-i'));
+    if(save&&v&&v!==orig&&pr){
+      var st=steps(pr);
+      if(!st[i]||st[i].t!==orig)i=st.findIndex(function(x){return x.t===orig});
+      if(i>=0&&st[i]){st[i].t=v;pr.steps=st;shWrite('projects',pr)}
+    }
+    /* Clic ailleurs : on attend un peu avant de redessiner, pour ne pas avaler le clic sur l'autre bouton */
+    if(late)setTimeout(render,350);else{inp.blur();render()}
+  }
   function find(key,id){return S[key].find(function(x){return x.id===id})}
   function empty(key,txt){return '<p class="empty">'+(loaded[key]?txt:'Chargement…')+'</p>'}
 
@@ -571,10 +592,10 @@
       iconField(o.emoji,'data-field="pname"',o.title,'Titre de la quête','data-act="ppick" data-id="'+id+'"',QEMO,o.emoji)+
       '<div class="lab">Mini-quêtes'+(ss.length?' · '+done+'/'+ss.length:'')+'</div>'+
       (ss.length?'<div class="bar"><i style="width:'+pc+'%"></i></div>':'')+
-      (ss.length?'<ul class="steps">'+ss.map(function(x,i){return '<li class="step'+(x.done?' done':'')+'"><button class="chk" data-act="ps" data-id="'+id+'" data-i="'+i+'" aria-label="Mini-quête : '+esc(x.t)+'">'+CHECK+'</button><span>'+esc(x.t)+'</span><button class="sx" data-act="sd" data-id="'+id+'" data-i="'+i+'" aria-label="Supprimer : '+esc(x.t)+'" title="Supprimer">×</button></li>'}).join('')+'</ul>':'<div class="sub">Pas encore de mini-quête.</div>')+
+      (ss.length?'<ul class="steps">'+ss.map(function(x,i){return '<li class="step'+(x.done?' done':'')+'"><button class="chk" data-act="ps" data-id="'+id+'" data-i="'+i+'" aria-label="Mini-quête : '+esc(x.t)+'">'+CHECK+'</button><button type="button" class="st-t" data-act="step-ren" data-id="'+id+'" data-i="'+i+'" title="Toucher pour renommer">'+esc(x.t)+'</button><button class="sx" data-act="sd" data-id="'+id+'" data-i="'+i+'" aria-label="Supprimer : '+esc(x.t)+'" title="Supprimer">×</button></li>'}).join('')+'</ul>':'<div class="sub">Pas encore de mini-quête.</div>')+
       '<form class="stepform" data-form="step" data-id="'+id+'"><input class="in" maxlength="120" data-stepinput required placeholder="Nouvelle mini-quête" aria-label="Nouvelle mini-quête"><button class="btn" type="submit">+</button></form>'+
       '<div class="lab">Catégorie</div>'+sg('cat',QCATS.map(function(c){return [c[0],c[1]+' '+c[2]]}),qCat(o))+
-      '<div class="lab">Urgence</div>'+sg('prio',[['high','🔥 Urgent'],['med','😴 Pas urgent'],['low','💡 Idée']],PRIO[o.prio]?o.prio:'med')+
+      '<div class="lab">Urgence</div>'+sg('prio',[['high','🔥 Urgent'],['med','⏳ Pas urgent'],['low','💡 Idée']],PRIO[o.prio]?o.prio:'med')+
       '<div class="lab">Avancement</div>'+sg('status',[['todo','À faire'],['doing','En cours'],['done','Terminé']],st)+
       '<div class="lab">Liens et notes</div><textarea class="in notes" maxlength="2000" data-field="pnotes" rows="3" placeholder="" aria-label="Liens et notes">'+esc(o.notes||'')+'</textarea>'+
       (us.length?'<div class="nlinks">'+us.map(function(u){return '<a class="btn ghost" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">↗ '+esc(u.replace(/^https?:\/\/(www\.)?/,'').split('/')[0])+'</a>'}).join('')+'</div>':'')+
@@ -600,7 +621,7 @@
       '<div class="qc-h"><span class="em" aria-hidden="true">'+esc(o.emoji||'✨')+'</span><button class="qc-t" data-act="proj-open" data-id="'+id+'">'+esc(o.title)+'</button>'+'<button class="qc-pin'+(o.main?' on':'')+'" data-act="pmain" data-id="'+id+'" aria-pressed="'+!!o.main+'" aria-label="'+(o.main?'Retirer de la quête principale':'Mettre en quête principale')+'" title="'+(o.main?'Retirer de la quête principale':'Mettre en quête principale')+'">📌</button>'+
       prioBtn(o)+'</div>'+
       (ss.length?'<div class="qc-prog"><div class="bar"><i style="width:'+pc+'%"></i></div><span>'+done+'/'+ss.length+'</span></div>':'')+
-      (ss.length?'<ul class="steps">'+ss.map(function(x,i){return '<li class="step'+(x.done?' done':'')+'"><button class="chk" data-act="ps" data-id="'+id+'" data-i="'+i+'" aria-label="Mini-quête : '+esc(x.t)+'">'+CHECK+'</button><span>'+esc(x.t)+'</span><button class="sx" data-act="sd" data-id="'+id+'" data-i="'+i+'" aria-label="Supprimer : '+esc(x.t)+'" title="Supprimer">×</button></li>'}).join('')+'</ul>':'')+
+      (ss.length?'<ul class="steps">'+ss.map(function(x,i){return '<li class="step'+(x.done?' done':'')+'"><button class="chk" data-act="ps" data-id="'+id+'" data-i="'+i+'" aria-label="Mini-quête : '+esc(x.t)+'">'+CHECK+'</button><button type="button" class="st-t" data-act="step-ren" data-id="'+id+'" data-i="'+i+'" title="Toucher pour renommer">'+esc(x.t)+'</button><button class="sx" data-act="sd" data-id="'+id+'" data-i="'+i+'" aria-label="Supprimer : '+esc(x.t)+'" title="Supprimer">×</button></li>'}).join('')+'</ul>':'')+
       '<form class="stepform" data-form="step" data-id="'+id+'"><input class="in" maxlength="120" data-stepinput required placeholder="Nouvelle mini-quête" aria-label="Nouvelle mini-quête pour '+esc(o.title)+'"><button class="btn" type="submit">+</button></form>'+
       (note?'<p class="qc-note">'+esc(note)+'</p>':'')+
       (us.length?'<div class="nlinks">'+us.map(function(u){return '<a class="btn ghost" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">↗ '+esc(u.replace(/^https?:\/\/(www\.)?/,'').split('/')[0])+'</a>'}).join('')+'</div>':'')+
@@ -1199,7 +1220,7 @@
     var b=$('banner');if(!b)return;
     if(fromCache){var d=new Date(fromCache);b.innerHTML='<div class="note">Dernières données · '+esc(d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}))+'</div>'}
   }
-  function render(){renderCare();renderTodoAll();renderHub();renderQTab();renderAgenda();renderTodo();renderMain();renderShop();renderCourses();renderQView();renderTrips();renderTripNext();renderVView();renderSheet(true);cacheSave()}
+  function render(){var ae0=document.activeElement;if(ae0&&ae0.hasAttribute&&ae0.hasAttribute('data-stepedit'))return;renderCare();renderTodoAll();renderHub();renderQTab();renderAgenda();renderTodo();renderMain();renderShop();renderCourses();renderQView();renderTrips();renderTripNext();renderVView();renderSheet(true);cacheSave()}
 
   function clock(){var n=new Date();$('hello').textContent=n.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});$('today').textContent=n.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}
   clock();setInterval(clock,15000);
@@ -1217,6 +1238,7 @@
       document.body.appendChild(m);var r=b.getBoundingClientRect(),w=m.offsetWidth,h=m.offsetHeight,x=Math.min(window.innerWidth-w-8,Math.max(8,r.right-w)),y=r.bottom+6;if(y+h>window.innerHeight-8)y=r.top-h-6;
       m.style.left=x+'px';m.style.top=y+'px';var f0=m.querySelector('.on');if(f0)f0.focus({preventScroll:true});return}
     if(a==='pset'){var f=b.getAttribute('data-f'),v=b.getAttribute('data-v');if((f==='prio'&&PRIO[v])||(f==='status'&&NEXT[v])||(f==='cat'&&QCATL[v])){var o2={};o2[f]=v;if(f==='status'&&v==='done')updUndo('projects',id,o2,'Quête terminée');else upd('projects',id,o2)}}
+    else if(a==='step-ren'){stepRen(b)}
     else if(a==='ps'){it=find('projects',id);if(it){var st=steps(it);var i=Number(b.getAttribute('data-i'));if(st[i]){st[i].done=!st[i].done;updUndo('projects',id,{steps:st},st[i].done?'Mini-quête validée ✓':'Mini-quête décochée')}}}
     else if(a==='proj-open'){iconOpen=false;projId=id;openId=null;confirmDel=null;renderSheet()}
     else if(a==='pmain'){it=find('projects',id);if(it){if(it.main){upd('projects',id,{main:false})}else{S.projects.forEach(function(q){if(q.main&&q.id!==id)upd('projects',q.id,{main:false})});upd('projects',id,{main:true})}projId=null;renderSheet()}}
@@ -1379,6 +1401,12 @@
     else if(fld==='everyUnit'){upd('routines',id,{everyUnit:t.value==='sem'?'sem':'j'})}
     else if(fld==='everyN'){var n=parseInt(t.value,10);upd('routines',id,{everyN:n>0&&n<1000?n:null})}
   });
+  document.addEventListener('keydown',function(e){
+    var t=e.target;if(!(t&&t.hasAttribute&&t.hasAttribute('data-stepedit')))return;
+    if(e.key==='Enter'){e.preventDefault();e.stopPropagation();stepRenEnd(t,true,false)}
+    else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();stepRenEnd(t,false,false)}
+  },true);
+  document.addEventListener('focusout',function(e){var t=e.target;if(t&&t.hasAttribute&&t.hasAttribute('data-stepedit'))stepRenEnd(t,true,true)});
   document.addEventListener('focusout',function(e){
     var t=e.target;if(t&&t.closest&&t.closest('.sheet-card'))setTimeout(function(){renderSheet(true)},80);
   });

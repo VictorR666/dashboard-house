@@ -167,6 +167,20 @@ def main():
                     assert state['projects'][0][4] != before, 'étape non cochée'
                     page.click('[data-act=undo-upd]'); page.wait_for_timeout(700)
                     assert state['projects'][0][4] == before, 'annulation ratée'
+                    # renommer une mini-quête en touchant son texte (Échap annule, Entrée enregistre)
+                    orig_t = page.inner_text('#qt-list .qcard >> nth=0 >> .st-t >> nth=0')
+                    page.click('#qt-list .qcard >> nth=0 >> .st-t >> nth=0'); page.wait_for_timeout(200)
+                    assert page.is_visible('#qt-list .st-edit'), 'le texte doit devenir un champ'
+                    page.fill('#qt-list .st-edit', 'Abandonnée'); page.keyboard.press('Escape'); page.wait_for_timeout(500)
+                    assert 'Abandonnée' not in state['projects'][0][4] and orig_t in state['projects'][0][4], 'Échap doit annuler'
+                    assert page.is_visible('#qt-list .qcard >> nth=0'), 'Échap ne doit pas fermer la page'
+                    page.click('#qt-list .qcard >> nth=0 >> .st-t >> nth=0'); page.wait_for_timeout(200)
+                    page.fill('#qt-list .st-edit', 'Étape renommée'); page.keyboard.press('Enter'); page.wait_for_timeout(700)
+                    assert 'Étape renommée' in state['projects'][0][4] and orig_t not in state['projects'][0][4], state['projects'][0][4]
+                    assert page.inner_text('#qt-list .qcard >> nth=0 >> .st-t >> nth=0') == 'Étape renommée'
+                    page.click('#qt-list .qcard >> nth=0 >> .st-t >> nth=0'); page.wait_for_timeout(200)
+                    page.fill('#qt-list .st-edit', orig_t); page.keyboard.press('Enter'); page.wait_for_timeout(700)
+                    assert orig_t in state['projects'][0][4], 'retour au nom d\'origine'
                 page.screenshot(path=f'{OUT}/{name}-quetes.png')
                 if name == 'mobile':
                     # filtres par catégorie (devinées d'après le titre, puis choisies dans la quête)
