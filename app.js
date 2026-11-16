@@ -272,9 +272,10 @@
     var has=!!r.lastDone, d=has?-diff(r.lastDone):null, c='n', txt='À renseigner';
     if(has){
       txt=d<=0?"Aujourd'hui":d===1?'Hier':(d>=14&&d%7===0)?'Il y a '+(d/7)+' semaines':'Il y a '+d+' jours';
-      var g=Number(r.green),o=Number(r.orange),ev=everyDays(r);if(ev>0){o=ev;g=ev-(ev>=14?3:ev>=5?2:1)}
-      if(g>0){c=d<=g?'g':(o>0&&d<=o)?'o':(o>0?'r':'g')}
-    }
+      var g=Number(r.green),o=Number(r.orange),ev=everyDays(r);if(ev>0){o=ev;g=ev-(ev>=14?3:ev>=5?2:ev>=2?1:0)}
+      /* g=0 est valable : une tâche « tous les 1 jour » est à jour le jour même, à faire dès le lendemain */
+      if(g>0||ev>0){c=d<=g?'g':(o>0&&d<=o)?'o':(o>0?'r':'g')}
+    }else if(everyDays(r)>0){c='o';txt='Pas encore fait'} /* un rappel est réglé mais la tâche n'a jamais été faite : elle est à faire */
     if(r.forceColor&&/^[gorn]$/.test(r.forceColor))c=r.forceColor;
     if(r.customText)txt=String(r.customText).replace(/^\S+ (il y a)/i,function(){return 'Il y a'});
     return {c:c,txt:txt,snz:snoozed(r)};
@@ -292,23 +293,23 @@
       '<div class="main"><span class="t">'+esc(r.title)+'</span><span class="sub">'+esc(st.txt)+'</span>'+(st.snz?'<span class="sub snzl">💤 En pause jusqu\'au '+snzDate(r)+'</span>':'')+'</div></div>';
   }
   function snoozeHtml(r){
-    if(snoozed(r))return '<div class="thr snzrow">💤 En pause jusqu\'au <b>'+snzDate(r)+'</b> <button class="lnk" data-act="snooze-clear" data-id="'+esc(r.id)+'">Reprendre</button></div>';
-    return '<div class="thr snzrow">💤 Pause <input class="in" type="number" min="1" max="365" data-snzn value="7" aria-label="Nombre de jours de pause"> jours <button class="btn snzgo" data-act="snooze" data-id="'+esc(r.id)+'">OK</button></div>';
+    var id=esc(r.id);
+    if(snoozed(r))return '<div class="lab">Pause</div><div class="snzon"><span>💤 En pause jusqu\'au <b>'+snzDate(r)+'</b></span><button type="button" class="btn snzgo" data-act="snooze-clear" data-id="'+id+'">Reprendre</button></div>';
+    return '<div class="lab">Pause</div><div class="thr snzrow">Mettre en pause pour <input class="in" type="number" min="1" max="365" inputmode="numeric" data-snzn value="7" aria-label="Nombre de jours de pause"> jours <button type="button" class="btn snzgo" data-act="snooze" data-id="'+id+'">OK</button></div>';
   }
   function panelHtml(r){
     var st=careState(r),un=r.everyUnit==='sem'?'sem':'j';
     return '<div class="panel" data-id="'+esc(r.id)+'">'+
-      '<div class="ph">'+(r.emoji?'<span class="phem">'+esc(r.emoji)+'</span>':'')+'<div><div class="phn">'+esc(r.title)+'</div><div class="pstate">'+esc(st.txt)+'</div></div></div>'+
+      iconField(r.emoji,'data-field="name"',r.title,'Titre','data-act="pick-emoji" data-id="'+esc(r.id)+'"',EMO,r.emoji)+
+      '<div class="pstate">'+esc(st.txt)+'</div>'+
       '<button class="bigdone" data-act="done-today" data-id="'+esc(r.id)+'">✓ FAIT</button>'+
       '<div class="plinks"><button class="lnk" data-act="cal-toggle" data-id="'+esc(r.id)+'">📅 Fait une autre date</button>'+(r.hasPrev?'<button class="lnk" data-act="undo" data-id="'+esc(r.id)+'">'+UNDO+'Annuler</button>':'')+'</div>'+
       (calFor===r.id?calHtml(r):'')+
       '<hr class="sep">'+
       '<div class="lab">Rappel</div>'+
       '<div class="thr">Tous les <input class="in" type="number" min="1" max="999" data-field="everyN" value="'+esc(r.everyN||'')+'" aria-label="Fréquence"> <select class="in" data-field="everyUnit" aria-label="Unité"><option value="j"'+(un==='j'?' selected':'')+'>jours</option><option value="sem"'+(un==='sem'?' selected':'')+'>semaines</option></select></div>'+
-      snoozeHtml(r)+
       '<hr class="sep">'+
-      '<div class="lab">Icône et titre</div>'+
-      iconField(r.emoji,'data-field="name"',r.title,'Titre','data-act="pick-emoji" data-id="'+esc(r.id)+'"',EMO,r.emoji)+
+      snoozeHtml(r)+
       '<div class="prow"><button class="lnk del" data-act="del" data-id="'+esc(r.id)+'">Supprimer</button><button class="btn valid" data-act="sheet-close">Valider</button></div></div>';
   }
   function renderSheet(soft){
@@ -1421,6 +1422,7 @@
     if(e.key==='Escape'&&vOpen){vview(null,true);return}
     if((e.key==='Enter'||e.key===' ')&&t&&t.matches&&t.matches('[data-act="care-open"],[data-act="proj-open"],[data-act="ev-edit"],[data-act="v-item"]')){e.preventDefault();t.click()}
     else if(e.key==='Enter'&&t&&t.getAttribute&&(t.getAttribute('data-field')==='name'||t.getAttribute('data-trip')==='title')){t.blur()}
+    else if(e.key==='Enter'&&t&&t.hasAttribute&&t.hasAttribute('data-snzn')){e.preventDefault();var gb=t.parentNode.querySelector('.snzgo');if(gb)gb.click()}
   });
   window.addEventListener('offline',syncNote);
   window.addEventListener('online',function(){retryMs=3000;syncNote();flush();load()});

@@ -1183,9 +1183,15 @@ body[data-tab="home"][data-view="simple"] .sc-txt h2{font-size:17px}
 .row.snz{opacity:.78}
 .row .snzl,.ptile .pd{overflow-wrap:anywhere}
 /* v80 : pause sur une seule ligne */
-.snzrow{margin-top:10px}.snzrow b{color:var(--lav)}
+.snzrow b{color:var(--lav)}
 
 /* Mini-quête : le texte se touche pour le renommer */
 .step .st-t{flex:1;min-width:0;text-align:left;background:none;border:0;padding:3px 0;margin:0;font:inherit;color:inherit;line-height:1.35;overflow-wrap:anywhere;cursor:text;-webkit-tap-highlight-color:transparent}
 .step.done .st-t{text-decoration:line-through;color:var(--ink2)}
 .step .st-edit{flex:1;min-width:0;width:100%;padding:5px 9px;font-size:16px;font-weight:700}
+
+/* v82 : fiche d'une routine — icône + titre en haut, pause dans sa propre section */
+.panel .pstate{margin:6px 0 10px 2px;font-size:13px}
+.snzon{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;font-weight:700;color:var(--ink2)}
+.snzon b{color:var(--lav)}
+.snzrow .in{width:56px}

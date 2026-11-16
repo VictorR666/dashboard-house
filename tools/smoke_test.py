@@ -20,9 +20,9 @@ FAKE_CODE = 'code-de-test-123'
 
 # Données d'exemple, au format renvoyé par le script (lignes brutes du Sheet, sans l'en-tête)
 state = {
-    'routines': [['r1', 'Kimchi', '💊', 'Médicament', '01/11/2026', '30', 'jours', '{}'],
-                 ['r2', 'Plantes', '🪴', 'Monstera', '2026-11-10', '7', 'jours', '{}'],
-                 ['r3', 'Maison', '💧', 'Brita', '2026-09-01', '4', 'semaines', '{}']],
+    'routines': [['r1', 'Kimchi', '💊', 'Médicament', (datetime.date.today() - datetime.timedelta(days=15)).strftime('%d/%m/%Y'), '30', 'jours', '{}'],
+                 ['r2', 'Plantes', '🪴', 'Monstera', (datetime.date.today() - datetime.timedelta(days=1)).isoformat(), '7', 'jours', '{}'],
+                 ['r3', 'Maison', '💧', 'Brita', (datetime.date.today() - datetime.timedelta(days=60)).isoformat(), '4', 'semaines', '{}']],
     'shop': [['w1', '🎧', 'Casque', '120,00 €', 'Personne B', 'Bientôt', '', '', '', '{}']],
     'projects': [['p1', '🔧', 'Réparer robinet', 'oui', '✓ acheter joint\nchanger joint', '{"prio":"high"}'],
                  ['p2', '🍷', 'Vin chaud', '', 'acheter vin\nacheter épices', '{"notes":"Recette https://example.com"}'],
@@ -129,6 +129,29 @@ def main():
                     assert page.locator('#l-todoall .tarow').count() == 0, 'tâche en pause masquée de À faire'
                     page.click('[data-act=undo-upd]'); page.wait_for_timeout(800)
                     assert page.locator('#l-todoall .tarow').count() == 1, 'la pause annulée remet la tâche'
+                    # fiche d'une routine : icône + titre tout en haut, Rappel seul, Pause dans sa propre section
+                    page.click('#l-Maison .row .t'); page.wait_for_timeout(300)
+                    assert page.eval_on_selector('.sheet-card .panel', 'p => p.firstElementChild.classList.contains("ifield")'), 'icône et titre en haut'
+                    assert page.locator('.sheet-card [data-field=name]').count() == 1, "un seul champ de titre"
+                    assert page.locator('.sheet-card .lab').all_inner_texts() == ['Rappel', 'Pause'], page.locator('.sheet-card .lab').all_inner_texts()
+                    assert page.locator('.sheet-card .thr:not(.snzrow) [data-snzn]').count() == 0, 'la pause ne doit pas être dans Rappel'
+                    page.fill('[data-snzn]', '5'); page.keyboard.press('Enter'); page.wait_for_timeout(600)
+                    assert 'snoozeUntil' in state['routines'][2][7], 'Entrée dans le champ valide la pause'
+                    page.click('#l-Maison .row .t'); page.wait_for_timeout(300)
+                    assert page.is_visible('.sheet-card [data-act=snooze-clear]'), 'bouton Reprendre quand la tâche est en pause'
+                    page.click('.sheet-card [data-act=snooze-clear]'); page.wait_for_timeout(700)
+                    assert 'snoozeUntil' not in state['routines'][2][7] or '"snoozeUntil":null' in state['routines'][2][7], state['routines'][2]
+                    # une nouvelle tâche « tous les 1 jour » apparaît dans À faire (et les missions de l'accueil)
+                    nb = page.locator('#l-todoall .tarow').count()
+                    page.click('[data-act=care-add][data-group=Maison]'); page.wait_for_timeout(200)
+                    page.fill('form.care-add[data-group=Maison] input', 'Vider le lave-vaisselle'); page.keyboard.press('Enter'); page.wait_for_timeout(500)
+                    page.click('#l-Maison .row:has-text("Vider le lave-vaisselle") .t'); page.wait_for_timeout(300)
+                    page.fill('.sheet-card [data-field=everyN]', '1'); page.keyboard.press('Tab'); page.wait_for_timeout(500)
+                    page.click('.sheet-card [data-act=sheet-close].btn'); page.wait_for_timeout(500)
+                    assert page.locator('#l-todoall .tarow').count() == nb + 1, ('tâche tous les 1 jour dans À faire', nb)
+                    page.click('.tabbar [data-tab=home]'); page.wait_for_timeout(300)
+                    assert 'Vider le lave-vaisselle' in page.inner_text('#l-main') + page.inner_text('#hub3'), 'missions maison sur l\'accueil'
+                    page.evaluate("(()=>{const b=document.createElement('button');b.dataset.act='tab';b.dataset.tab='maison';document.body.appendChild(b);b.click();b.remove()})()"); page.wait_for_timeout(300)
                 page.click('.tabbar [data-tab=courses]'); page.wait_for_timeout(300)
                 if name == 'mobile':
                     assert page.is_visible('#c-title'), 'le champ d\'ajout doit être visible dans l\'onglet Courses'
