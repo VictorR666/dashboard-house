@@ -494,6 +494,24 @@ def main():
                     page.screenshot(path=f'{OUT}/{name}-voyages-apres.png')
                 ctx.close()
 
+            # Passage de minuit : une tâche quotidienne faite le soir doit être à refaire
+            # dès le lendemain, sans attendre 24 h.
+            ctx = browser.new_context(viewport={'width': 390, 'height': 844}, is_mobile=True, has_touch=True)
+            page = ctx.new_page(); page.route('https://script.google.com/**', handle)
+            soir = datetime.datetime.combine(datetime.date.today(), datetime.time(19, 30))
+            page.clock.install(time=soir)
+            state['routines'].append(['q1', 'Maison', '🗑️', 'Sortir les poubelles', '', '1', 'jours', '{}'])
+            page.goto(f'http://localhost:{PORT}/#setup={FAKE_API}')
+            page.fill('#login-code', FAKE_CODE); page.click('#login-go'); page.wait_for_timeout(1500)
+            page.evaluate("(()=>{const b=document.createElement('button');b.dataset.act='tab';b.dataset.tab='maison';document.body.appendChild(b);b.click();b.remove()})()")
+            page.wait_for_timeout(400)
+            page.click('#l-Maison .row:has-text("Sortir les poubelles") .care-chk'); page.wait_for_timeout(900)
+            assert 'Sortir les poubelles' not in page.inner_text('#l-todoall'), 'faite le soir : plus à faire'
+            page.clock.fast_forward('04:40:00')        # on passe minuit (00:10)
+            page.wait_for_timeout(1200)
+            assert 'Sortir les poubelles' in page.inner_text('#l-todoall'), 'le lendemain : de nouveau à faire sans attendre 24 h'
+            ctx.close()
+
             # Sécurité : un lien #setup= ne doit pas rediriger l'app vers un autre script
             # en gardant le code d'accès (il serait envoyé à ce script).
             OTHER = 'https://script.google.com/macros/s/AKfycbAUTREautreAUTRE0987654321/exec'

@@ -311,8 +311,8 @@
     var has=!!r.lastDone, d=has?-diff(r.lastDone):null, c='n', txt='À renseigner';
     if(has){
       txt=d<=0?"Aujourd'hui":d===1?'Hier':(d>=14&&d%7===0)?'Il y a '+(d/7)+' semaines':'Il y a '+d+' jours';
-      var g=Number(r.green),o=Number(r.orange),ev=everyDays(r);if(ev>0){o=ev;g=ev-(ev>=14?3:ev>=5?2:ev>=2?1:0)}
-      /* g=0 est valable : une tâche « tous les 1 jour » est à jour le jour même, à faire dès le lendemain */
+      var g=Number(r.green),o=Number(r.orange),ev=everyDays(r);if(ev>0){o=ev;g=ev-(ev>=14?3:ev>=5?2:1)}
+      /* g=0 est valable : « tous les 1 jour » est à jour le jour même (d=0) et à faire dès le lendemain (d=1) */
       if(g>0||ev>0){c=d<=g?'g':(o>0&&d<=o)?'o':(o>0?'r':'g')}
     }else if(everyDays(r)>0){c='o';txt=''} /* un rappel est réglé mais la tâche n'a jamais été faite : elle est à faire, sans rien afficher */
     if(r.forceColor&&/^[gorn]$/.test(r.forceColor))c=r.forceColor;
@@ -1555,7 +1555,13 @@
   });
   function tick(){renderCare();renderTodoAll();renderSheet(true)}
   setInterval(tick,600000);
-  document.addEventListener('visibilitychange',function(){if(!document.hidden){tick();load()}});
+  /* Tout est calculé en jours calendaires : une tâche faite à 19 h est à refaire dès minuit,
+     pas 24 h plus tard. Encore faut-il redessiner quand le jour change, sinon l'écran garde
+     l'état de la veille tant qu'on ne touche à rien. */
+  var curDay=iso(new Date());
+  function dayWatch(){var d=iso(new Date());if(d===curDay)return false;curDay=d;render();return true}
+  setInterval(dayWatch,30000);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden){if(!dayWatch())tick();load()}});
   document.addEventListener('keydown',function(e){
     var t=e.target;
     if(e.key==='Escape'&&(openId||projId||wishOpen||evEdit||tEdit||tplMgr||tplEdit||bilPop||agOpen)){tEdit=null;tplMgr=false;tplEdit=null;bilPop=null;agOpen=false;evEdit=null;wishOpen=null;projId=null;openId=null;calFor=null;confirmDel=null;renderSheet();return}
