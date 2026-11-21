@@ -164,6 +164,19 @@ def main():
                     assert page.locator('#l-todoall .tarow').count() == 0, 'tâche en pause masquée de À faire'
                     page.click('[data-act=undo-upd]'); page.wait_for_timeout(800)
                     assert page.locator('#l-todoall .tarow').count() == 1, 'la pause annulée remet la tâche'
+                    # historique : page dédiée, jours faits marqués, on peut en ajouter et en retirer
+                    page.click('#l-Kimchi .row .t'); page.wait_for_timeout(300)
+                    page.click('.sheet-card [data-act=hist-open]'); page.wait_for_timeout(400)
+                    assert page.is_visible('.hpage') and 'Historique' in page.inner_text('.hpage .qp-tt')
+                    marked = page.locator('.hcal .cd.sel').count()
+                    page.click(f'.hcal [data-date="{_d(-3)}"]'); page.wait_for_timeout(800)
+                    assert _d(-3) in state['routines'][0][7], 'jour ajouté à l\'historique'
+                    assert page.locator('.hcal .cd.sel').count() == marked + 1
+                    page.click(f'.hcal [data-date="{_d(-3)}"]'); page.wait_for_timeout(800)
+                    assert _d(-3) not in state['routines'][0][7], 'jour retiré de l\'historique'
+                    page.click('.hpage [data-act=hist-close]'); page.wait_for_timeout(400)
+                    assert page.is_visible('.sheet-card .panel') and not page.is_visible('.hpage'), 'retour sur la fiche'
+                    page.click('.sheet-x'); page.wait_for_timeout(300)
                     # fiche d'une routine : icône + titre tout en haut, Rappel seul, Pause dans sa propre section
                     page.click('#l-Maison .row .t'); page.wait_for_timeout(300)
                     assert page.eval_on_selector('.sheet-card .panel', 'p => p.firstElementChild.classList.contains("ifield")'), 'icône et titre en haut'

@@ -250,7 +250,7 @@
     var m=String(v).match(/^(\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic})*)\s*([\s\S]*)$/u);
     return m?{emoji:m[1],title:m[2].trim().slice(0,80)}:{emoji:'',title:String(v).trim().slice(0,80)};
   }
-  var calFor=null,calMonth=null;
+  var histFor=null,histM=null;   /* page d'historique d'une routine */
   /* Période d'une quête : un seul sélecteur. Le premier jour touché est le début,
      un second jour plus tard devient la fin. Toucher un jour avant le début recommence. */
   var qCal=null,qCalM=null;
@@ -280,19 +280,47 @@
     return h+'</div></div>';
   }
   function qCalHtml(o){return rangeCal(o.qfrom,o.quntil,qCalM,'qcal',o.id)}
-  function calHtml(r){
-    var m=calMonth,y=m.getFullYear(),mo=m.getMonth();
-    var startDow=(new Date(y,mo,1).getDay()+6)%7,days=new Date(y,mo+1,0).getDate(),today=iso(new Date()),sel=r.lastDone||'';
+  /* Historique d'une routine : les dates où elle a été faite, de la plus récente à la plus
+     ancienne, dans la colonne technique. Avant cette version on ne gardait que la dernière
+     et la précédente : elles servent de point de départ. */
+  var HIST_MAX=180;
+  function histOf(r){
+    var h=(Array.isArray(r.hist)?r.hist:[]).map(nDate).filter(Boolean);
+    if(!h.length)h=[r.lastDone,r.prevDone].map(nDate).filter(Boolean);
+    var seen={},out=[];
+    h.sort().reverse().forEach(function(d){if(!seen[d]){seen[d]=1;out.push(d)}});
+    return out.slice(0,HIST_MAX);
+  }
+  function histStat(h){
+    if(!h.length)return '';
+    var n=h.length,txt=n+' fois';
+    if(n>=3){var span=Math.round((parse(h[0])-parse(h[n-1]))/864e5),avg=Math.round(span/(n-1));
+      if(avg>0)txt+=' · tous les '+avg+' jour'+(avg>1?'s':'')+' en moyenne'}
+    return txt;
+  }
+  function histCal(r){
+    var h=histOf(r),on={};h.forEach(function(d){on[d]=1});
+    var m=histM,y=m.getFullYear(),mo=m.getMonth();
+    var startDow=(new Date(y,mo,1).getDay()+6)%7,days=new Date(y,mo+1,0).getDate(),today=iso(new Date());
     var nowM=new Date(),isLast=(y>nowM.getFullYear()||(y===nowM.getFullYear()&&mo>=nowM.getMonth()));
-    var h='<div class="cal"><div class="cal-h"><button class="lnk" data-act="cal-prev" aria-label="Mois précédent">‹</button><b>'+esc(cap(m.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})))+'</b><button class="lnk" data-act="cal-next" aria-label="Mois suivant"'+(isLast?' disabled':'')+'>›</button></div><div class="cal-g">';
-    ['L','M','M','J','V','S','D'].forEach(function(d){h+='<i>'+d+'</i>'});
-    for(var k=0;k<startDow;k++)h+='<span></span>';
+    var out='<div class="cal hcal"><div class="cal-h"><button type="button" class="lnk" data-act="hist-prev" aria-label="Mois précédent">‹</button><b>'+esc(cap(m.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})))+'</b><button type="button" class="lnk" data-act="hist-next" aria-label="Mois suivant"'+(isLast?' disabled':'')+'>›</button></div><div class="cal-g">';
+    ['L','M','M','J','V','S','D'].forEach(function(d){out+='<i>'+d+'</i>'});
+    for(var k=0;k<startDow;k++)out+='<span></span>';
     for(var d=1;d<=days;d++){
       var di=y+'-'+pad(mo+1)+'-'+pad(d);
-      h+='<button class="cd'+(di===sel?' sel':'')+(di===today?' today':'')+'" data-act="cal-pick" data-id="'+esc(r.id)+'" data-date="'+di+'"'+(di>today?' disabled':'')+'>'+d+'</button>';
+      out+='<button type="button" class="cd'+(on[di]?' sel':'')+(di===today?' today':'')+'" data-act="hist-pick" data-id="'+esc(r.id)+'" data-date="'+di+'"'+(di>today?' disabled':'')+' aria-pressed="'+!!on[di]+'" aria-label="'+esc(fmtDay(di,{weekday:'long',day:'numeric',month:'long'}))+(on[di]?' : fait':'')+'">'+d+'</button>';
     }
-    return h+'</div></div>';
+    return out+'</div></div>';
   }
+  function histPage(r){
+    var h=histOf(r),st=histStat(h);
+    return '<div class="panel qpage hpage">'+
+      '<header class="qp-head"><button class="sheet-x" type="button" data-act="hist-close" aria-label="Retour">‹</button><span class="qp-tt">Historique</span></header>'+
+      '<section class="qp-box"><div class="hp-t"><span class="em" aria-hidden="true">'+esc(r.emoji||'🔁')+'</span><b>'+esc(r.title)+'</b></div>'+
+      (st?'<div class="hp-s">'+esc(st)+'</div>':'')+
+      histCal(r)+'</section></div>';
+  }
+
   function everyDays(r){var n=Number(r.everyN);if(!(n>0))return 0;return r.everyUnit==='sem'?n*7:n}
   var iconOpen=false;
   var AUTO=[[/vin|biere|apero|cocktail|cidre/,'🍷'],[/noel|sapin/,'🎄'],[/cadeau|anniv|surprise|fete/,'🎁'],[/kimchi|chou|cuisin|recette|repas|gateau|pizza|soupe|manger|diner|dejeuner|four\b/,'🍳'],[/joint|bricol|repar|perceu|visser|monter|plomb|robinet|serrure|colle/,'🔧'],[/peintur|peindre|deco|cadre|tableau|mur\b/,'🎨'],[/douche|bain|toilett/,'🛁'],[/linge|lessive|drap/,'🧺'],[/menage|nettoy|aspir|vitre|poussiere|balai|serpill/,'🧹'],[/plante|arros|rempot|jardin|fleur|monstera|lierre|pachira/,'🪴'],[/medic|veto|croquette|promen|laisse|chien|chat\b/,'💊'],[/brita|filtre|eau\b/,'💧'],[/voyage|vacances|vol\b|avion|week-?end|billet|hotel|train/,'✈️'],[/livre|lire|roman|bd\b/,'📚'],[/film|serie|cine|netflix/,'🎬'],[/musique|concert|guitare|piano/,'🎵'],[/sport|courir|gym|velo|yoga|piscine/,'🏃'],[/casque|ecouteur|enceinte|audio/,'🎧'],[/telephone|iphone|portable/,'📱'],[/ordi|clavier|ecran|souris|laptop/,'💻'],[/chaussure|basket|botte/,'👟'],[/pull|veste|manteau|robe|chemise|pantalon|vetement/,'👕'],[/canape|meuble|lampe|etagere|table|chaise|lit\b|armoire/,'🛋️'],[/impot|admin|facture|dossier|assurance|banque|papier|contrat/,'🗂️'],[/docteur|medecin|dentiste|rdv|sante|ordonnance/,'🩺'],[/voiture|garage|permis|pneu/,'🚗'],[/course|supermarche/,'🛒'],[/photo|album/,'📷'],[/jeu\b|jeux|console|switch|jouer/,'🎮'],[/ranger|tri\b|trier|rangement|cave|grenier/,'📦']];
@@ -324,7 +352,7 @@
     return '<button class="chk care-chk'+(on?' on':'')+'" data-act="care-chk" data-id="'+esc(r.id)+'" aria-pressed="'+on+'" aria-label="'+(r.lastDone===iso(new Date())?'Annuler, pas encore fait : ':on?'À jour, refait aujourd\'hui : ':'Fait aujourd\'hui : ')+esc(r.title)+'">'+CHECK+'</button>'}
   function careToggle(id){var r=find('routines',id);if(!r)return;
     if(r.lastDone===iso(new Date())&&r.hasPrev){undoDate(id);toastMsg('Remis comme avant');return}
-    var before=dueList().length;var pv=snap('routines',id,['lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText','snoozeUntil']);setDate(id,iso(new Date()));offerUndo('routines',id,pv,'Marqué comme fait ✓');if(before>0&&!dueList().length)celebrate()}
+    var before=dueList().length;var pv=snap('routines',id,['hist','lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText','snoozeUntil']);setDate(id,iso(new Date()));offerUndo('routines',id,pv,'Marqué comme fait ✓');if(before>0&&!dueList().length)celebrate()}
   function careRow(r){
     var st=careState(r);
     return '<div class="row '+st.c+(st.snz?' snz':'')+' care" role="button" tabindex="0" aria-haspopup="dialog" data-act="care-open" data-id="'+esc(r.id)+'">'+careChk(r)+
@@ -346,8 +374,7 @@
       iconField(r.emoji,'data-field="name"',r.title,'Titre','data-act="pick-emoji" data-id="'+esc(r.id)+'"',EMO,r.emoji)+
       (r.lastDone&&r.lastDone!==iso(new Date())?'<div class="pstate">'+esc(st.txt)+'</div>':'')+
       (r.lastDone===iso(new Date())?'<button class="btn ghost donetoday" data-act="care-chk" data-id="'+esc(r.id)+'">✓ Fait aujourd\'hui</button>':'<button class="bigdone" data-act="done-today" data-id="'+esc(r.id)+'">✓ FAIT</button>')+
-      '<div class="plinks"><button class="lnk" data-act="cal-toggle" data-id="'+esc(r.id)+'">📅 Fait une autre date</button>'+(r.hasPrev?'<button class="lnk" data-act="undo" data-id="'+esc(r.id)+'">'+UNDO+'Annuler</button>':'')+'</div>'+
-      (calFor===r.id?calHtml(r):'')+
+      '<div class="plinks"><button class="lnk" data-act="hist-open" data-id="'+esc(r.id)+'">📅 Historique</button>'+(r.hasPrev?'<button class="lnk" data-act="undo" data-id="'+esc(r.id)+'">'+UNDO+'Annuler</button>':'')+'</div>'+
       '<hr class="sep">'+
       '<div class="lab">Rappel</div>'+
       '<div class="thr">Tous les <input class="in" type="number" min="1" max="999" data-field="everyN" value="'+esc(r.everyN||'')+'" aria-label="Fréquence"> <select class="in" data-field="everyUnit" aria-label="Unité"><option value="j"'+(un==='j'?' selected':'')+'>jours</option><option value="sem"'+(un==='sem'?' selected':'')+'>semaines</option></select></div>'+
@@ -386,6 +413,9 @@
     if(tEdit){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card wide" role="dialog" aria-modal="true" aria-label="'+esc(VT[tEdit.type]||'Voyage')+'"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">×</button>'+tPanel()+'</div>';sh.hidden=false;return}
     if(wishOpen){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card wide" role="dialog" aria-modal="true" aria-label="Envie"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">×</button>'+wishPanel()+'</div>';sh.hidden=false;return}
     var r=openId?find('routines',openId):null,pj=projId?find('projects',projId):null;
+    if(histFor){var hr=find('routines',histFor);
+      if(hr){sh.classList.add('pagemode');sh.innerHTML='<div class="sheet-card page" role="dialog" aria-modal="true" aria-label="Historique">'+histPage(hr)+'</div>';sh.hidden=false;return}
+      histFor=null}
     if(!r&&!pj){sh.hidden=true;sh.innerHTML='';return}
     var lbl=r?r.title:pj.title;
     sh.classList.toggle('pagemode',!r);
@@ -559,11 +589,13 @@
       :'<p class="empty">'+(loaded.routines?'Tout est à jour ✨':'Chargement…')+'</p>'}
   function setDate(id,val){
     var r=find('routines',id);if(!r)return;
-    upd('routines',id,{lastDone:val||null,hasPrev:true,prevDone:r.lastDone||null,prevForce:r.forceColor||null,prevCustom:r.customText||null,forceColor:null,customText:null,snoozeUntil:null});
+    var h=histOf(r);if(val&&h.indexOf(val)<0){h.push(val);h.sort().reverse()}
+    upd('routines',id,{hist:h.slice(0,HIST_MAX),lastDone:val||null,hasPrev:true,prevDone:r.lastDone||null,prevForce:r.forceColor||null,prevCustom:r.customText||null,forceColor:null,customText:null,snoozeUntil:null});
   }
   function undoDate(id){
     var r=find('routines',id);if(!r)return;
-    upd('routines',id,{lastDone:r.prevDone||null,forceColor:r.prevForce||null,customText:r.prevCustom||null,hasPrev:false});
+    var last=r.lastDone,h=histOf(r).filter(function(d){return d!==last});
+    upd('routines',id,{hist:h,lastDone:r.prevDone||null,forceColor:r.prevForce||null,customText:r.prevCustom||null,hasPrev:false});
   }
   function delDoc(key,id){S[key]=S[key].filter(function(x){return x.id!==id});render();return shDel(key,id)}
   var lastDel=null,toastT=null;
@@ -1374,7 +1406,7 @@
     else if(a==='undo-del'){restoreDel()}
     else if(a==='undo-upd'){undoUpd()}
     else if(a==='pick-emoji'){iconOpen=false;upd('routines',id,{emoji:b.getAttribute('data-e'),autoIcon:false});renderSheet()}
-    else if(a==='care-open'){iconOpen=false;projId=null;openId=id;calFor=null;confirmDel=null;snzOther=false;grpEdit=null;renderSheet()}
+    else if(a==='care-open'){iconOpen=false;projId=null;openId=id;histFor=null;confirmDel=null;snzOther=false;grpEdit=null;renderSheet()}
     else if(a==='grp-new'||a==='grp-edit'){iconOpen=false;projId=null;openId=null;tEdit=null;wishOpen=null;evEdit=null;tplMgr=false;tplEdit=null;bilPop=null;agOpen=false;
       grpEdit=a==='grp-new'?{id:'new',name:'',emoji:'📦'}:{id:b.getAttribute('data-id'),name:b.getAttribute('data-name')||'',emoji:b.getAttribute('data-e')||'📦',oldName:b.getAttribute('data-name')||''};renderSheet()}
     else if(a==='grp-emo'){if(grpEdit){grpEdit.emoji=b.getAttribute('data-e');iconOpen=false;renderSheet()}}
@@ -1394,37 +1426,41 @@
       if(pv&&pq){upd('projects',id,{steps:steps(pq).concat([{t:pv,done:false}])})}
       projId=null;confirmDel=null;renderSheet()}
     else if(vClick(a,b,id)){}
-    else if(a==='sheet-close'){iconOpen=false;tEdit=null;tplMgr=false;tplEdit=null;bilPop=null;grpEdit=null;qCal=null;if(evEdit){evEdit=null;renderSheet();return}agOpen=false;evEdit=null;wishOpen=null;projId=null;openId=null;calFor=null;confirmDel=null;renderSheet()}
+    else if(a==='sheet-close'){iconOpen=false;tEdit=null;tplMgr=false;tplEdit=null;bilPop=null;grpEdit=null;qCal=null;if(evEdit){evEdit=null;renderSheet();return}agOpen=false;evEdit=null;wishOpen=null;projId=null;openId=null;histFor=null;confirmDel=null;renderSheet()}
     else if(a==='care-add'){var csec2=b.closest('section'),cf=csec2&&csec2.querySelector('form.care-add');if(cf){cf.hidden=!cf.hidden;if(!cf.hidden)cf.querySelector('input').focus()}}
     else if(a==='care-chk'){careToggle(id)}
     else if(a==='hub-go'){hubGo(b.getAttribute('data-v'))}
     else if(a==='view-set'){setView(b.getAttribute('data-v'))}
     else if(a==='view-toggle'){setView(VIEW==='simple'?'detail':'simple')}
     else if(a==='ag-detail'){agOpen=false;renderSheet();setView('detail');setTimeout(function(){var c=document.querySelector('.s-cal');if(c)c.scrollIntoView({block:'start'})},60)}
-    else if(a==='ta-done'){var pv2=snap('routines',id,['lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText','snoozeUntil']);setDate(id,iso(new Date()));offerUndo('routines',id,pv2,'Marqué comme fait ✓')}
-    else if(a==='done-today'){var pv=snap('routines',id,['lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText','snoozeUntil']);openId=null;calFor=null;setDate(id,iso(new Date()));renderSheet();offerUndo('routines',id,pv,'Marqué comme fait ✓')}
+    else if(a==='ta-done'){var pv2=snap('routines',id,['hist','lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText','snoozeUntil']);setDate(id,iso(new Date()));offerUndo('routines',id,pv2,'Marqué comme fait ✓')}
+    else if(a==='done-today'){var pv=snap('routines',id,['hist','lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText','snoozeUntil']);openId=null;histFor=null;setDate(id,iso(new Date()));renderSheet();offerUndo('routines',id,pv,'Marqué comme fait ✓')}
     else if(a==='snooze'){var n=parseInt(b.getAttribute('data-n')||(function(){var i=document.querySelector('[data-snzn]');return i?i.value:''})(),10);
       if(!(n>0&&n<=365)){toastMsg('Entre un nombre de jours');return}
-      var pvs=snap('routines',id,['snoozeUntil']),dd=new Date();dd.setDate(dd.getDate()+n);openId=null;calFor=null;upd('routines',id,{snoozeUntil:iso(dd)});renderSheet();offerUndo('routines',id,pvs,'En pause pour '+n+' jour'+(n>1?'s':'')+' 💤')}
-    else if(a==='snooze-clear'){var pvc=snap('routines',id,['snoozeUntil']);openId=null;calFor=null;upd('routines',id,{snoozeUntil:null});renderSheet();offerUndo('routines',id,pvc,'La tâche est de retour ✓')}
+      var pvs=snap('routines',id,['snoozeUntil']),dd=new Date();dd.setDate(dd.getDate()+n);openId=null;histFor=null;upd('routines',id,{snoozeUntil:iso(dd)});renderSheet();offerUndo('routines',id,pvs,'En pause pour '+n+' jour'+(n>1?'s':'')+' 💤')}
+    else if(a==='snooze-clear'){var pvc=snap('routines',id,['snoozeUntil']);openId=null;histFor=null;upd('routines',id,{snoozeUntil:null});renderSheet();offerUndo('routines',id,pvc,'La tâche est de retour ✓')}
     else if(a==='snz-other'){snzOther=!snzOther;renderSheet();if(snzOther){var sni=document.querySelector('.sheet-card [data-snzn]');if(sni){sni.focus();sni.select()}}}
-    else if(a==='undo'){openId=null;calFor=null;undoDate(id);renderSheet()}
-    else if(a==='del'){var rg=(find('routines',id)||{}).group;openId=null;calFor=null;confirmDel=null;renderSheet();delUndo('routines',id,rg==='Plantes'?'Plante supprimée':rg==='Kimchi'?'Tâche de Kimchi supprimée':'Tâche maison supprimée')}
+    else if(a==='undo'){openId=null;histFor=null;undoDate(id);renderSheet()}
+    else if(a==='del'){var rg=(find('routines',id)||{}).group;openId=null;histFor=null;confirmDel=null;renderSheet();delUndo('routines',id,rg==='Plantes'?'Plante supprimée':rg==='Kimchi'?'Tâche de Kimchi supprimée':'Tâche maison supprimée')}
     else if(a==='wishq-toggle'){var fw=$('f-wish');fw.hidden=!fw.hidden;if(!fw.hidden)$('w-title').focus()}
     else if(a==='add-detail'){
       var fm=b.closest('form'),inp=fm&&fm.querySelector('input'),val=inp?inp.value:'',sq=splitEmoji(val),nid=null;
-      iconOpen=false;confirmDel=null;calFor=null;openId=null;projId=null;
+      iconOpen=false;confirmDel=null;histFor=null;openId=null;projId=null;
       if(fm.id==='f-wish'){wishOpen='new';wd={title:val.trim().slice(0,80),emoji:sq.emoji||'',budget:'',urgency:'med',who:'couple',link:'',note:''};inp.value='';fm.hidden=true;renderSheet()}
       else if(!sq.title&&!sq.emoji){inp.focus()}
       else if(fm.id==='f-add'){nid=addDoc('projects',newProj(sq));inp.value='';fm.hidden=true;projId=nid;renderSheet()}
       else{nid=addDoc('routines',newCare(fm.getAttribute('data-group'),sq));inp.value='';fm.hidden=true;openId=nid;renderSheet()}
     }
-    else if(a==='cal-toggle'){
-      if(calFor===id){calFor=null}else{calFor=id;var rr=find('routines',id),bd=rr&&rr.lastDone?parse(rr.lastDone):new Date();calMonth=new Date(bd.getFullYear(),bd.getMonth(),1)}
+    else if(a==='hist-open'){histFor=id;var rr=find('routines',id),bd=rr&&rr.lastDone?parse(rr.lastDone):new Date();histM=new Date(bd.getFullYear(),bd.getMonth(),1);
       renderSheet()}
-    else if(a==='cal-prev'){calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()-1,1);renderSheet()}
-    else if(a==='cal-next'){calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+1,1);renderSheet()}
-    else if(a==='cal-pick'){var dd=b.getAttribute('data-date');openId=null;calFor=null;setDate(id,dd);renderSheet()}
+    else if(a==='hist-close'){histFor=null;renderSheet()}
+    else if(a==='hist-prev'){histM=new Date(histM.getFullYear(),histM.getMonth()-1,1);renderSheet()}
+    else if(a==='hist-next'){histM=new Date(histM.getFullYear(),histM.getMonth()+1,1);renderSheet()}
+    else if(a==='hist-pick'){var hd=b.getAttribute('data-date'),hr2=find('routines',id);if(hr2){
+      var hh=histOf(hr2),was=hh.indexOf(hd)>=0;
+      hh=was?hh.filter(function(d){return d!==hd}):hh.concat([hd]).sort().reverse();
+      upd('routines',id,{hist:hh.slice(0,HIST_MAX),lastDone:hh[0]||null,hasPrev:false});
+      renderSheet();toastMsg(was?'Retiré de l\'historique':'Ajouté à l\'historique')}}
     else if(a==='wish-open'){it=find('shop',id);if(it){wishOpen=id;wd=Object.assign({budget:'',urgency:'med',who:'couple',link:'',note:''},it);projId=null;openId=null;renderSheet()}}
     else if(a==='wf-set'){var wf=b.getAttribute('data-f');if(wf==='who'||wf==='urgency'||wf==='emoji'){wd[wf]=b.getAttribute('data-v');if(wf==='emoji'){wd.manual=true;iconOpen=false}renderSheet()}}
     else if(a==='wf-save'){wishSave()}
@@ -1564,7 +1600,7 @@
   document.addEventListener('visibilitychange',function(){if(!document.hidden){if(!dayWatch())tick();load()}});
   document.addEventListener('keydown',function(e){
     var t=e.target;
-    if(e.key==='Escape'&&(openId||projId||wishOpen||evEdit||tEdit||tplMgr||tplEdit||bilPop||agOpen)){tEdit=null;tplMgr=false;tplEdit=null;bilPop=null;agOpen=false;evEdit=null;wishOpen=null;projId=null;openId=null;calFor=null;confirmDel=null;renderSheet();return}
+    if(e.key==='Escape'&&(openId||projId||wishOpen||evEdit||tEdit||tplMgr||tplEdit||bilPop||agOpen)){tEdit=null;tplMgr=false;tplEdit=null;bilPop=null;agOpen=false;evEdit=null;wishOpen=null;projId=null;openId=null;histFor=null;confirmDel=null;renderSheet();return}
     if(e.key==='Escape'&&cOpen){cview(false,true);return}
     if(e.key==='Escape'&&vOpen){vview(null,true);return}
     if((e.key==='Enter'||e.key===' ')&&t&&t.matches&&t.matches('[data-act="care-open"],[data-act="proj-open"],[data-act="ev-edit"],[data-act="v-item"]')){e.preventDefault();t.click()}

@@ -1255,3 +1255,18 @@ body[data-tab="maison"] .addgrp{display:flex}
 .vi-hr span{font-size:12px;font-weight:900;color:var(--o-ink);text-transform:uppercase;letter-spacing:.04em}
 .vi-hr .in{width:100%;min-width:0;background:rgba(255,255,255,.85);border-radius:12px;-webkit-appearance:none;appearance:none;min-height:40px;padding:6px 8px}
 .vinfo .cal{background:rgba(255,255,255,.85)}
+
+/* v100 : page d'historique d'une routine */
+.hpage .qp-box{gap:12px}
+.hp-t{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:900}
+.hp-t .em{font-size:22px}
+.hp-s{font-size:13px;font-weight:800;color:var(--ink2);margin-top:-4px}
+.hcal{background:transparent;padding:0}
+.hcal .cd{aspect-ratio:1;font-size:14px;font-weight:800}
+.hcal .cd.sel{background:var(--lav);color:#fff;border-radius:50%}
+.hcal .cd.today:not(.sel){box-shadow:inset 0 0 0 2px var(--lav);border-radius:50%}
+.hcal .cd:disabled{opacity:.3}
+.hcal .cal-h{margin-bottom:6px}
+.hcal .cal-h .lnk{min-width:44px;min-height:40px;font-size:24px;color:var(--lav)}
+.hcal .cal-h .lnk:disabled{opacity:.25}
+.hcal .cal-h b{font-size:16px}
