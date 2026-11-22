@@ -980,6 +980,55 @@
     if(l)out.push(l+' hébergement'+(l>1?'s':''));if(ac)out.push(ac+' activité'+(ac>1?'s':''));
     var v=packOf(t.id);if(v&&pcount(v.items))out.push('🧳 '+v.items.filter(function(x){return !x.h&&x.done}).length+'/'+pcount(v.items));
     return out.join(' · ')}
+  /* Un trajet est souvent déjà dans l'agenda : on le repère pour proposer le voyage.
+     On ne dispose que du titre et de l'heure de début de chaque événement. */
+  var TRIP_RE=/(^|[\s(\[-])(train|tgv|ouigo|inoui|intercit|eurostar|thalys|ter\b|vol\b|avion|flight|ferry|bateau|navette|bus\b|blablacar|🚆|🚄|🚅|🚂|✈|🛫|🛬|⛴|🚢|🚌)/i;
+  var TRIP_EMO=/vol\b|avion|flight|✈|🛫|🛬/i;
+  function tripDest(title){
+    var t=String(title||'').replace(/[🚆🚄🚅🚂✈️✈🛫🛬⛴🚢🚌]/g,' ').replace(/\s+/g,' ').trim();
+    var m=t.match(/(?:→|->|–|—|\u2192|\bvers\b|\bpour\b|\ba destination de\b|>)\s*([^,;(]{2,40})/i);
+    if(!m)m=t.match(/\b(?:aller|retour|depart|départ)\s+(?:a|à|pour|vers)\s+([^,;(]{2,40})/i);
+    var d=m?m[1]:'';
+    if(!d){ /* sinon : le dernier mot capitalisé qui n'est pas un mode de transport */
+      var w=t.split(/[\s,;:()\[\]-]+/).filter(function(x){return x.length>2&&!TRIP_RE.test(x)&&/^[A-ZÀ-Ý]/.test(x)});
+      d=w.length?w[w.length-1]:'';
+    }
+    return d.replace(/\s+/g,' ').trim().slice(0,40);
+  }
+  function tripGuess(){
+    if(cal.status!=='ok'||V_OLD)return null;
+    var skip=(lsGet('maison-trip-skip')||'').split(',');
+    var evs=cal.events.filter(function(e){
+      if(!e||e.status==='cancelled'||HID.indexOf(e.id)>=0)return false;
+      var i=evInfo(e);if(!i||i.n<0||i.allDay)return false;
+      return TRIP_RE.test(EVN[e.id]||e.summary||'');
+    }).map(function(e){return {e:e,d:evInfo(e).d}}).sort(function(a,b){return a.d-b.d});
+    for(var k=0;k<evs.length;k++){
+      var go=evs[k];if(skip.indexOf(go.e.id)>=0)continue;
+      var back=null;
+      for(var j=k+1;j<evs.length;j++){var gap=(evs[j].d-go.d)/864e5;if(gap>0.4&&gap<=30){back=evs[j];break}}
+      var dest=tripDest(EVN[go.e.id]||go.e.summary)||(back?tripDest(EVN[back.e.id]||back.e.summary):'');
+      if(!dest)continue;
+      /* déjà enregistré ? (même destination, ou un voyage qui part le même jour) */
+      var gd=iso(go.d),known=trips().some(function(t){
+        var a=dPart(t.start),z=dPart(t.end)||a;
+        /* déjà enregistré : même destination, ou un trajet qui tombe pendant ce voyage (le retour) */
+        return nrm(t.title)===nrm(dest)||(a&&gd>=a&&gd<=z);
+      });
+      if(known)continue;
+      return {id:go.e.id,dest:dest,start:go.d,end:back?back.d:null,
+        emoji:TRIP_EMO.test((go.e.summary||'')+' '+(back?back.e.summary:''))?'✈️':'🚆'};
+    }
+    return null;
+  }
+  function tripGuessHtml(){
+    var g=tripGuess();if(!g)return '';
+    var dd=fmtDay(iso(g.start),{day:'numeric',month:'short'})+(g.end?' → '+fmtDay(iso(g.end),{day:'numeric',month:'short'}):'');
+    return '<div class="tguess"><span class="tg-em" aria-hidden="true">'+esc(g.emoji)+'</span>'+
+      '<span class="tg-main"><b>'+esc(g.dest)+'</b><small>📅 '+esc(dd)+'</small></span>'+
+      '<button type="button" class="btn tg-go" data-act="tguess-add" data-id="'+esc(g.id)+'">Créer</button>'+
+      '<button type="button" class="sx" data-act="tguess-skip" data-id="'+esc(g.id)+'" aria-label="Ignorer">×</button></div>';
+  }
   function renderTrips(){var el=$('l-voyages');if(!el)return;
     if(V_OLD){el.innerHTML='<p class="empty">Presque prêt ! Il reste à publier la nouvelle version du script Google pour enregistrer les voyages.</p>';return}
     var all=trips().map(function(t){return {t:t,st:tripState(t)}}),R={now:0,soon:1,nodate:2};
@@ -991,7 +1040,7 @@
         '<span class="tt-b">'+esc(tripBadge(x.st))+'</span></button>'};
     var nt=nextTrip(),hero='';
     if(nt){var hs=tripState(nt);hero='<button class="thero '+hs.k+'" data-act="trip-open" data-id="'+esc(nt.id)+'"><span class="th-k">'+(hs.k==='now'?'Voyage en cours':'Prochain départ')+'</span><span class="th-t">'+esc(tEmo(nt)+' '+nt.title)+'</span>'+countdownHtml(nt)+'</button>'}
-    el.innerHTML=hero+(up.length?'<div class="trips">'+up.map(tile).join('')+'</div>':empty('voyages','Aucun voyage prévu.<br>Ajoute ton prochain départ avec « + Nouveau ».'))+
+    el.innerHTML=hero+tripGuessHtml()+(up.length?'<div class="trips">'+up.map(tile).join('')+'</div>':empty('voyages','Aucun voyage prévu.<br>Ajoute ton prochain départ avec « + Nouveau ».'))+
       (past.length?'<button type="button" class="lnk donetog" data-act="trips-past" aria-expanded="'+showPast+'">'+(showPast?'▾':'▸')+' Voyages passés ('+past.length+')</button>'+(showPast?'<div class="trips">'+past.map(tile).join('')+'</div>':''):'')}
 
   /* Page d'un voyage (plein écran) */
@@ -1104,13 +1153,15 @@
   function vMain(t){var h='';
     var sD=dPart(t.start),eD=dPart(t.end);
     var dtxt=sD&&eD?fmtDay(sD,{day:'numeric',month:'short'})+' → '+fmtDay(eD,{day:'numeric',month:'short'}):sD?fmtDay(sD,{day:'numeric',month:'short'}):'';
-    var hr=function(lab,p,v){return '<label class="vi-hr"><span>'+lab+'</span><input class="in" type="time" data-trip="'+p+'T" value="'+esc(hPart(v))+'" aria-label="'+lab+' : heure"></label>'};
+    var leg=function(em,lab,p,v,day){return '<label class="vi-leg'+(day?'':' off')+'"><span class="vl-em" aria-hidden="true">'+em+'</span><span class="vl-n">'+lab+'</span>'+
+      '<span class="vl-d">'+(day?esc(fmtDay(day,{weekday:'short',day:'numeric',month:'short'})):'—')+'</span>'+
+      '<input class="in vl-t" type="time" data-trip="'+p+'T" value="'+esc(hPart(v))+'"'+(day?'':' disabled')+' aria-label="Heure du '+lab.toLowerCase()+'"></label>'};
     h+='<section class="vinfo"><div class="vi-row"><button type="button" class="ibtn'+(vEmoOpen?' open':'')+'" data-act="trip-emo-tog" aria-label="Changer l\'icône">'+esc(tEmo(t))+'</button>'+
       '<input class="in vi-title" maxlength="80" data-trip="title" value="'+esc(t.title)+'" aria-label="Destination" placeholder="Destination"></div>'+
       (vEmoOpen?'<div class="emos pop">'+TRIPEMO.map(function(e){return '<button type="button" class="emo'+(t.emoji===e?' on':'')+'" data-act="trip-emo" data-e="'+e+'" aria-label="Icône '+e+'">'+e+'</button>'}).join('')+'</div>':'')+
       '<div class="qdrow"><button type="button" class="in qdbtn'+(vCal?' open':'')+(dtxt?' set':'')+'" data-act="vcal" data-id="'+esc(t.id)+'" aria-expanded="'+!!vCal+'">'+(dtxt||'Choisir les dates')+'</button></div>'+
       (vCal?rangeCal(sD,eD,vCalM,'vcal',t.id):'')+
-      '<div class="vi-hrs">'+hr('🚆 Départ','start',t.start)+hr('🏠 Retour','end',t.end)+'</div>'+
+      '<div class="vi-legs">'+leg('🚆','Départ','start',t.start,sD)+leg('🏠','Retour','end',t.end,eD)+'</div>'+
       '</section>';
     var H=kids(t.id,'logement').sort(byStart);
     h+=vSecH('🛏️','Hébergement','logement')+(H.length?H.map(vStay).join(''):'<p class="vempty">Pas encore d\'hébergement.</p>');
@@ -1214,6 +1265,12 @@
   /* Gestion des clics de la partie Voyages. Renvoie true si le clic a été traité. */
   function vClick(a,b,id){var it,t;
     if(a==='trip-open'){if(id){vEmoOpen=false;vDelConfirm=false;vBilEdit=false;if(TAB!=='voyage')setTab('voyage');vview(id,true)}}
+    else if(a==='tguess-skip'){var sk=(lsGet('maison-trip-skip')||'').split(',').filter(Boolean);sk.push(id);lsSet('maison-trip-skip',sk.slice(-40).join(','));renderTrips()}
+    else if(a==='tguess-add'){var g=tripGuess();if(g&&g.id===id){
+      var ni=addDoc('voyages',{trip:'',type:'voyage',title:g.dest,emoji:g.emoji,
+        start:iso(g.start)+' '+pad(g.start.getHours())+':'+pad(g.start.getMinutes()),
+        end:g.end?iso(g.end)+' '+pad(g.end.getHours())+':'+pad(g.end.getMinutes()):'',done:false});
+      renderTrips();if(ni)vview(ni,true);toastMsg('Voyage créé depuis l\'agenda')}}
     else if(a==='trip-new'){if(V_OLD){toastMsg('Publie d\'abord la nouvelle version du script Google');return true}var nid=addDoc('voyages',{type:'voyage',trip:'',title:'Nouveau voyage',emoji:'🚆',start:'',end:'',done:false});
       vNew=nid;vEmoOpen=false;vDelConfirm=false;vBilEdit=false;setTab('voyage');vview(nid,true);
       setTimeout(function(){var ti=document.querySelector('#vv-body [data-trip="title"]');if(ti){ti.focus();ti.select()}},60)}

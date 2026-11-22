@@ -55,7 +55,9 @@ def handle(route):
         r = {'ok': True, 'sheets': state, 'settings': {'hiddenEvents': [], 'eventNames': {}},
              'people': {'p1': 'Personne A', 'p2': 'Personne B'},
              'weather': {'city': 'Paris', 'temp': 7.2, 'cond': 'partly', 'label': 'Éclaircies', 'isDay': True, 'low': 4, 'high': 9},
-             'events': [{'id': 'e1', 'summary': 'Vétérinaire', 'start': {'dateTime': (datetime.date.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%dT18:00:00Z')}}]}
+             'events': [{'id': 'e1', 'summary': 'Vétérinaire', 'start': {'dateTime': (datetime.date.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%dT18:00:00Z')}},
+                        {'id': 'e2', 'summary': 'Train Paris → Bordeaux', 'start': {'dateTime': (datetime.date.today() + datetime.timedelta(days=26)).strftime('%Y-%m-%dT09:12:00')}},
+                        {'id': 'e3', 'summary': 'Train Bordeaux → Paris', 'start': {'dateTime': (datetime.date.today() + datetime.timedelta(days=29)).strftime('%Y-%m-%dT17:40:00')}}]}
     elif body['a'] == 'put':
         rows = state[body['t']]
         for i, x in enumerate(rows):
@@ -461,6 +463,22 @@ def main():
                     assert r and r[0][2] == 'Hébergement' and '"hk": "ami"' in r[0][11].replace('":"', '": "'), r
                     assert '🏡' in page.inner_text('#vv-body'), 'icône maison pour « chez quelqu\'un »'
                     assert page.is_visible('.vtodo .qc-prog'), 'barre de progression des trucs à faire'
+                    if name == 'mobile':
+                        page.click('[data-act=vview-close]'); page.wait_for_timeout(500)
+                        # un trajet déjà dans l'agenda : l'app propose le voyage
+                        g = page.locator('.tguess')
+                        assert g.count() == 1 and 'Bordeaux' in g.inner_text(), g.inner_text() if g.count() else 'pas de proposition'
+                        page.click('.tguess [data-act=tguess-add]'); page.wait_for_timeout(1200)
+                        bx = [r for r in state['voyages'] if r[3] == 'Bordeaux']
+                        assert bx and bx[0][4].endswith('09:12') and bx[0][5].endswith('17:40'), bx
+                        assert page.locator('.tguess').count() == 0, 'la proposition disparaît une fois le voyage créé'
+                        assert page.is_visible('#vview'), 'le voyage créé s\'ouvre'
+                        assert 'Bordeaux' in page.inner_text('#vv-title')
+                        # les heures sont lisibles, une ligne par trajet
+                        assert page.locator('#vv-body .vi-leg').count() == 2
+                        assert 'Départ' in page.inner_text('#vv-body .vi-leg >> nth=0')
+                        page.click('[data-act=vview-close]'); page.wait_for_timeout(400)
+                        page.click('.ttile >> nth=0'); page.wait_for_timeout(500)
                     page.click('.vt-when [data-v=apres]'); page.fill('#vt-in', 'Développer les photos'); page.keyboard.press('Enter'); page.wait_for_timeout(800)
                     r = [r for r in state['voyages'] if r[3] == 'Développer les photos']
                     assert r and r[0][2] == 'Activité' and '"when": "apres"' in r[0][11].replace('":"', '": "'), r
