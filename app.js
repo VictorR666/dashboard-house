@@ -263,10 +263,10 @@
   }
   /* Calendrier de période, partagé par les quêtes et les voyages : on touche le premier
      jour, puis un second plus tard pour la fin. `act` préfixe les gestes (qcal, vcal). */
-  function rangeCal(a,b,m,act,id){
+  function rangeCal(a,b,m,act,id,hint){
     var y=m.getFullYear(),mo=m.getMonth(),startDow=(new Date(y,mo,1).getDay()+6)%7,days=new Date(y,mo+1,0).getDate(),today=iso(new Date());
     a=a||'';b=b||'';id=esc(id);
-    var h='<div class="cal qcal"><div class="cal-h"><button type="button" class="lnk" data-act="'+act+'-prev" aria-label="Mois précédent">‹</button><b>'+esc(cap(m.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})))+'</b><button type="button" class="lnk" data-act="'+act+'-next" aria-label="Mois suivant">›</button></div><div class="cal-g">';
+    var h='<div class="cal qcal">'+(hint?'<div class="cal-t">'+hint+'</div>':'')+'<div class="cal-h"><button type="button" class="lnk" data-act="'+act+'-prev" aria-label="Mois précédent">‹</button><b>'+esc(cap(m.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})))+'</b><button type="button" class="lnk" data-act="'+act+'-next" aria-label="Mois suivant">›</button></div><div class="cal-g">';
     ['L','M','M','J','V','S','D'].forEach(function(d){h+='<i>'+d+'</i>'});
     for(var k=0;k<startDow;k++)h+='<span></span>';
     for(var d=1;d<=days;d++){
@@ -1152,16 +1152,20 @@
     return h+'</section>'}
   function vMain(t){var h='';
     var sD=dPart(t.start),eD=dPart(t.end);
-    var dtxt=sD&&eD?fmtDay(sD,{day:'numeric',month:'short'})+' → '+fmtDay(eD,{day:'numeric',month:'short'}):sD?fmtDay(sD,{day:'numeric',month:'short'}):'';
-    var leg=function(em,lab,p,v,day){return '<label class="vi-leg'+(day?'':' off')+'"><span class="vl-em" aria-hidden="true">'+em+'</span><span class="vl-n">'+lab+'</span>'+
-      '<span class="vl-d">'+(day?esc(fmtDay(day,{weekday:'short',day:'numeric',month:'short'})):'—')+'</span>'+
-      '<input class="in vl-t" type="time" data-trip="'+p+'T" value="'+esc(hPart(v))+'"'+(day?'':' disabled')+' aria-label="Heure du '+lab.toLowerCase()+'"></label>'};
+    /* Un bloc par trajet, comme un billet de train : date et heure sont deux champs
+       distincts et visibles ; la date ouvre le calendrier (aller, puis retour). */
+    var leg=function(lab,aria,p,v,day,step){var op=vCal&&vCalStep===step,
+      /* retour le jour même : le dire plutôt que répéter la date de l'aller */
+      dtx=day?(step===1&&day===sD?'Même jour':cap(fmtDay(day,{weekday:'short',day:'numeric',month:'short'}))):'Choisir';
+      return '<div class="vleg'+(day?'':' off')+'"><span class="vg-n"><i aria-hidden="true"></i>'+lab+'</span><div class="vg-f">'+
+        '<button type="button" class="vf vfd'+(op?' open':'')+(day?' set':'')+'" data-act="vcal" data-step="'+step+'" aria-expanded="'+op+'"><small>Date</small><b>'+esc(dtx)+'</b></button>'+
+        '<label class="vf vft'+(day?'':' off')+'"><small>Heure</small><input class="vt-i" type="time" data-trip="'+p+'T" value="'+esc(hPart(v))+'"'+(day?'':' disabled')+' aria-label="Heure '+aria+'"></label>'+
+        '</div></div>'};
     h+='<section class="vinfo"><div class="vi-row"><button type="button" class="ibtn'+(vEmoOpen?' open':'')+'" data-act="trip-emo-tog" aria-label="Changer l\'icône">'+esc(tEmo(t))+'</button>'+
       '<input class="in vi-title" maxlength="80" data-trip="title" value="'+esc(t.title)+'" aria-label="Destination" placeholder="Destination"></div>'+
       (vEmoOpen?'<div class="emos pop">'+TRIPEMO.map(function(e){return '<button type="button" class="emo'+(t.emoji===e?' on':'')+'" data-act="trip-emo" data-e="'+e+'" aria-label="Icône '+e+'">'+e+'</button>'}).join('')+'</div>':'')+
-      '<div class="qdrow"><button type="button" class="in qdbtn'+(vCal?' open':'')+(dtxt?' set':'')+'" data-act="vcal" data-id="'+esc(t.id)+'" aria-expanded="'+!!vCal+'">'+(dtxt||'Choisir les dates')+'</button></div>'+
-      (vCal?rangeCal(sD,eD,vCalM,'vcal',t.id):'')+
-      '<div class="vi-legs">'+leg('🚆','Départ','start',t.start,sD)+leg('🏠','Retour','end',t.end,eD)+'</div>'+
+      '<div class="vtrip">'+leg('Aller','de l\'aller','start',t.start,sD,0)+leg('Retour','du retour','end',t.end,eD,1)+'</div>'+
+      (vCal?rangeCal(sD,eD,vCalM,'vcal',t.id,vCalStep===1?'Et le retour, c\'est quand&nbsp;?':'Quel jour on part&nbsp;?'):'')+
       '</section>';
     var H=kids(t.id,'logement').sort(byStart);
     h+=vSecH('🛏️','Hébergement','logement')+(H.length?H.map(vStay).join(''):'<p class="vempty">Pas encore d\'hébergement.</p>');
@@ -1431,14 +1435,20 @@
       document.body.appendChild(m);var r=b.getBoundingClientRect(),w=m.offsetWidth,h=m.offsetHeight,x=Math.min(window.innerWidth-w-8,Math.max(8,r.right-w)),y=r.bottom+6;if(y+h>window.innerHeight-8)y=r.top-h-6;
       m.style.left=x+'px';m.style.top=y+'px';var f0=m.querySelector('.on');if(f0)f0.focus({preventScroll:true});return}
     if(a==='pset'){var f=b.getAttribute('data-f'),v=b.getAttribute('data-v');if((f==='prio'&&PRIO[v])||(f==='status'&&NEXT[v])||(f==='cat'&&QCATL[v])){var o2={};o2[f]=v;if(f==='status'&&v==='done')updUndo('projects',id,o2,'Quête terminée');else upd('projects',id,o2)}}
-    else if(a==='vcal'){var vt=vOpen&&find('voyages',vOpen);if(vCal)vCal=false;else{vCal=true;vCalStep=0;var vb=vt&&dPart(vt.start)?parse(dPart(vt.start)):new Date();vCalM=new Date(vb.getFullYear(),vb.getMonth(),1)}vPaint()}
+    else if(a==='vcal'){var vt=vOpen&&find('voyages',vOpen),vst=b.getAttribute('data-step')==='1'?1:0,vs0=vt?dPart(vt.start):'';
+      if(!vs0)vst=0;                                       /* sans aller, le retour n'a pas de sens */
+      if(vCal&&vCalStep===vst)vCal=false;                   /* le même champ : on referme */
+      else{vCal=true;vCalStep=vst;var vb=(vst===1?(vt&&dPart(vt.end))||vs0:vs0);vb=vb?parse(vb):new Date();vCalM=new Date(vb.getFullYear(),vb.getMonth(),1)}
+      vPaint()}
     else if(a==='vcal-prev'){vCalM=new Date(vCalM.getFullYear(),vCalM.getMonth()-1,1);vPaint()}
     else if(a==='vcal-next'){vCalM=new Date(vCalM.getFullYear(),vCalM.getMonth()+1,1);vPaint()}
     else if(a==='vcal-pick'){var vd=b.getAttribute('data-date'),vtr=vOpen&&find('voyages',vOpen);if(vtr){
       var vs=dPart(vtr.start);
       /* enregistrer le départ cale aussi le retour sur ce jour : on suit donc l'étape nous-mêmes */
       if(vCalStep===1&&vs&&vd>=vs){vCal=false;vCalStep=0;tripField('endD',vd)}   /* second jour : le retour */
-      else{vCalStep=1;tripField('startD',vd)}                                     /* premier jour : le départ */
+      else{var ve=dPart(vtr.end),keep=ve&&ve>vd;                                  /* premier jour : l'aller */
+        tripField('startD',vd);
+        if(keep){vCal=false;vCalStep=0}else vCalStep=1}                           /* retour déjà posé : on s'arrête là */
       vPaint()}}
     else if(a==='qcal'){if(qCal===id)qCal=null;else{qCal=id;var qo=find('projects',id),qb=qo&&qo.qfrom?parse(qo.qfrom):new Date();qCalM=new Date(qb.getFullYear(),qb.getMonth(),1)}renderSheet()}
     else if(a==='qcal-prev'){qCalM=new Date(qCalM.getFullYear(),qCalM.getMonth()-1,1);renderSheet()}

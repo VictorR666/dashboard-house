@@ -432,20 +432,32 @@ def main():
                 page.screenshot(path=f'{OUT}/{name}-voyages.png')
                 page.click('.ttile >> nth=0'); page.wait_for_timeout(400)
                 txt = page.inner_text('#vv-body')
-                assert 'Transports' not in txt and 'Programme' not in txt and 'Aller' not in txt, txt
+                assert 'Transports' not in txt and 'Programme' not in txt, txt
+                assert 'aller' in txt.lower() and 'retour' in txt.lower(), txt
                 assert page.input_value('[data-trip=startT]') == '08:35'
                 page.screenshot(path=f'{OUT}/{name}-voyage.png')
                 if name == 'mobile':
                     # départ et retour dans le même calendrier
                     assert page.locator('[data-trip=startD]').count() == 0, 'plus de champs date séparés'
-                    page.click('#vv-body [data-act=vcal]'); page.wait_for_timeout(300)
+                    assert page.locator('#vv-body .vleg').count() == 2
+                    assert 'aller' in page.inner_text('#vv-body .vleg >> nth=0').lower()
+                    assert 'retour' in page.inner_text('#vv-body .vleg >> nth=1').lower()
+                    page.click('#vv-body .vleg >> nth=0 >> [data-act=vcal]'); page.wait_for_timeout(300)
+                    assert 'part' in page.inner_text('#vv-body .cal-t'), page.inner_text('#vv-body .cal-t')
                     _pick(_vcal(page), _d(9)); page.wait_for_timeout(700)
                     assert [r for r in state['voyages'] if r[0] == 'v1'][0][4].startswith(_d(9)), state['voyages'][0]
                     assert page.is_visible('#vv-body .qcal'), 'le calendrier reste ouvert pour le retour'
                     _pick(_vcal(page), _d(12)); page.wait_for_timeout(700)
                     assert [r for r in state['voyages'] if r[0] == 'v1'][0][5].startswith(_d(12)), state['voyages'][0]
                     assert not page.is_visible('#vv-body .qcal'), 'le calendrier se referme une fois le retour choisi'
-                    assert '→' in page.inner_text('#vv-body .qdbtn')
+                    jours = page.inner_text('#vv-body .vtrip')
+                    assert page.locator('#vv-body .vfd.set').count() == 2 and 'Choisir' not in jours, jours
+                    assert page.locator('#vv-body .vft.off').count() == 0, jours
+                    # le champ date du retour ouvre le calendrier directement sur le retour
+                    page.click('#vv-body .vleg >> nth=1 >> [data-act=vcal]'); page.wait_for_timeout(300)
+                    assert 'retour' in page.inner_text('#vv-body .cal-t'), page.inner_text('#vv-body .cal-t')
+                    page.click('#vv-body .vleg >> nth=1 >> [data-act=vcal]'); page.wait_for_timeout(300)
+                    assert not page.is_visible('#vv-body .qcal'), 'retoucher le champ referme le calendrier'
                     page.fill('[data-trip=endT]', '19:05'); page.locator('[data-trip=endT]').dispatch_event('change'); page.wait_for_timeout(800)
                     assert [r for r in state['voyages'] if r[0] == 'v1'][0][5] == _d(12) + ' 19:05', state['voyages'][0]
                     page.click('#vv-bil'); page.wait_for_timeout(200)
@@ -475,8 +487,8 @@ def main():
                         assert page.is_visible('#vview'), 'le voyage créé s\'ouvre'
                         assert 'Bordeaux' in page.inner_text('#vv-title')
                         # les heures sont lisibles, une ligne par trajet
-                        assert page.locator('#vv-body .vi-leg').count() == 2
-                        assert 'Départ' in page.inner_text('#vv-body .vi-leg >> nth=0')
+                        assert page.locator('#vv-body .vleg').count() == 2
+                        assert 'aller' in page.inner_text('#vv-body .vleg >> nth=0').lower()
                         page.click('[data-act=vview-close]'); page.wait_for_timeout(400)
                         page.click('.ttile >> nth=0'); page.wait_for_timeout(500)
                     page.click('.vt-when [data-v=apres]'); page.fill('#vt-in', 'Développer les photos'); page.keyboard.press('Enter'); page.wait_for_timeout(800)
@@ -514,7 +526,8 @@ def main():
                     page.click('[data-act=vview-close]'); page.wait_for_timeout(300)
                     page.click('[data-act=trip-new]'); page.wait_for_timeout(500)
                     page.fill('[data-trip=title]', 'Rome')
-                    page.click('#vv-body [data-act=vcal]'); page.wait_for_timeout(300)
+                    assert page.locator('#vv-body .vft.off').count() == 2, 'sans date, pas d\'heure \u00e0 saisir'
+                    page.click('#vv-body .vleg >> nth=0 >> [data-act=vcal]'); page.wait_for_timeout(300)
                     _pick(_vcal(page), _d(20)); page.wait_for_timeout(600)   # la date d'abord, l'heure ensuite
                     page.fill('[data-trip=startT]', '07:15'); page.locator('[data-trip=startT]').dispatch_event('change'); page.wait_for_timeout(600)
                     page.screenshot(path=f'{OUT}/{name}-voyage-nouveau.png')
