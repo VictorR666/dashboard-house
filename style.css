@@ -1301,3 +1301,9 @@ body[data-tab="maison"] .addgrp{display:flex}
 .tarow.done .t{text-decoration:line-through;color:var(--ink2);font-weight:700}
 .tarow.done .sub{color:var(--ink2)}
 .tarow.done .chk{background:var(--g-dot);border-color:var(--g-dot);color:#fff}
+
+/* v104 : ranger l'accueil — appui long sur un bloc puis glisser */
+.hbk{display:flex;flex-direction:column;gap:10px}
+.hbk.hdrag{position:relative;z-index:5;transition:none;scale:1.02;filter:drop-shadow(0 14px 30px rgba(91,72,180,.34))}
+.hdragging .hbk:not(.hdrag){transition:transform .15s}
+.hdragging{touch-action:none}

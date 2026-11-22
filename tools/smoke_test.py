@@ -125,6 +125,26 @@ def main():
                 page.screenshot(path=f'{OUT}/{name}-accueil-simple.png') if name == 'mobile' else None
                 if name == 'mobile':
                     assert page.is_visible('.scene') and page.is_visible('.sc-trip'), 'vue simple (scène météo)'
+                    # ranger l'accueil soi-même : appui long sur un bloc, puis glisser vers le haut
+                    hb = lambda: page.locator('#hub3 .sc-rows .hbk').evaluate_all('es=>es.map(e=>e.dataset.hb)')
+                    avant = hb()
+                    assert len(avant) >= 3, avant
+                    src = page.locator('#hub3 .sc-rows .hbk').nth(len(avant) - 1).bounding_box()
+                    dst = page.locator('#hub3 .sc-rows .hbk').nth(0).bounding_box()
+                    x, y = src['x'] + src['width'] / 2, src['y'] + 12
+                    page.mouse.move(x, y)
+                    page.mouse.down(); page.wait_for_timeout(500)      # l'appui long arme le glisser
+                    assert page.locator('#hub3 .hbk.hdrag').count() == 1, 'le bloc se soulève'
+                    while y > dst['y'] + 6:
+                        y -= 20; page.mouse.move(x, y); page.wait_for_timeout(40)
+                    page.screenshot(path=f'{OUT}/{name}-accueil-rangement.png')
+                    page.mouse.up(); page.wait_for_timeout(500)
+                    apres = hb()
+                    assert apres[0] == avant[-1] and apres != avant, (avant, apres)
+                    assert page.evaluate("localStorage.getItem('maison-home-ord')").split(',')[0] == apres[0]
+                    page.reload(); page.wait_for_timeout(1800)
+                    assert hb() == apres, ('l\'ordre choisi tient au rechargement', hb(), apres)
+                    page.screenshot(path=f'{OUT}/{name}-accueil-range.png')
                     page.click('.sc-ev'); page.wait_for_timeout(300)
                     assert page.get_attribute('body', 'data-tab') == 'agenda' and 'Vétérinaire' in page.inner_text('#agtab') and 'Départ · Lisbonne' in page.inner_text('#agtab'), 'onglet Agenda'
                     page.screenshot(path=f'{OUT}/{name}-agenda.png')

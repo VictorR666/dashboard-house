@@ -529,12 +529,68 @@
     var mdn=S.routines.filter(function(r){return r.lastDone===iso(new Date())}).length;
     rows+='<div class="sc-card"><button class="sc-row in" data-act="hub-go" data-v="todo"><span class="sc-ic">🧹'+(due.length?'<b class="sc-badge">'+due.length+'</b>':'')+'</span><span class="sc-m"><span class="sc-t">Missions maison</span>'+(mdn?'<span class="sc-s sc-win"><span class="sc-paws" aria-hidden="true">'+new Array(Math.min(mdn,5)+1).join('🐾')+'</span>'+mdn+(mdn>1?' faites':' faite')+' aujourd\'hui, bravo !</span>':due.length?'<span class="sc-s">'+due.length+(due.length>1?' petites choses':' petite chose')+', quand tu veux</span>':'')+'</span><span class="sc-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span></button>'+
       (due.length?'<ul class="sc-list">'+due.map(function(x){var r=x.r;return '<li class="sc-mi">'+careChk(r)+'<button class="tq-st" data-act="care-open" data-id="'+esc(r.id)+'">'+(r.emoji?esc(r.emoji)+' ':'')+esc(r.title)+'</button></li>'}).join('')+'</ul>':'<p class="sc-ok">Tout est fait ✨</p>')+'</div>';
-    /* Ordre : agenda, missions maison, quête principale, vacances ; la semaine du départ et pendant le voyage, les vacances remontent sous l'agenda */
-    var trUp=ts&&(ts.k==='now'||(ts.k==='soon'&&ts.n<=7));
-    rows=trUp?evH+trH+rows+qH:evH+rows+qH+trH;
+    /* Ordre par défaut : agenda, missions maison, quête principale, vacances ; la semaine du
+       départ et pendant le voyage, les vacances remontent sous l'agenda. Dès que Victor a rangé
+       l'accueil lui-même (appui long), c'est son ordre qui compte : on ne déplace plus rien. */
+    var trUp=ts&&(ts.k==='now'||(ts.k==='soon'&&ts.n<=7)),B={ev:evH,care:rows,quest:qH,trip:trH};
+    rows=(homeOrd()||(trUp?['ev','trip','care','quest']:HOME_DEF)).map(function(k){
+      return B[k]?'<div class="hbk" data-hb="'+k+'">'+B[k]+'</div>':''}).join('');
     h+='<div class="sc-sec">En ce moment</div><div class="sc-rows">'+rows+'</div>';
     h+='<button class="viewbot" type="button" data-act="view-toggle">Passer à la vue détaillée</button>';
     el.innerHTML=h}
+  /* Ranger l'accueil soi-même : appui long sur un bloc puis glisser, comme la liste de courses.
+     L'ordre reste sur l'appareil (chacun range son écran), dans `maison-home-ord`. */
+  var HOME_DEF=['ev','care','quest','trip'],LS_HORD='maison-home-ord';
+  function homeOrd(){var t=(lsGet(LS_HORD)||'').split(',');
+    var a=t.filter(function(k,i){return HOME_DEF.indexOf(k)>=0&&t.indexOf(k)===i});
+    if(!a.length)return null;
+    HOME_DEF.forEach(function(k){if(a.indexOf(k)<0)a.push(k)});return a}
+  var hDrag=null,hNoClick=0;
+  (function(){
+    var pend=null,HOLD=350;
+    function begin(b,y){var list=b.parentElement,r=b.getBoundingClientRect();
+      hDrag={b:b,list:list,y:y,y0:y,top0:r.top,sc:scrollerOf(b),raf:0};
+      b.classList.add('hdrag');list.classList.add('hdragging');
+      try{if(navigator.vibrate)navigator.vibrate(12)}catch(e){}
+      var sel=window.getSelection&&window.getSelection();if(sel&&sel.removeAllRanges)sel.removeAllRanges();
+      frame()}
+    function frame(){
+      if(!hDrag)return;var d=hDrag,b=d.b,y=d.y;
+      var vh=window.innerHeight,sp=y<90?-Math.ceil((90-y)/6):y>vh-110?Math.ceil((y-(vh-110))/6):0;
+      if(sp){if(d.sc)d.sc.scrollTop+=sp;else window.scrollBy(0,sp);d.top0-=sp}
+      var mid,moved=true;
+      while(moved){moved=false;
+        var nx=b.nextElementSibling,pv=b.previousElementSibling;
+        if(nx){var rn=nx.getBoundingClientRect();mid=rn.top+rn.height/2;if(rn.height&&y>mid){d.list.insertBefore(b,nx.nextSibling);moved=true;continue}}
+        if(pv){var rp=pv.getBoundingClientRect();mid=rp.top+rp.height/2;if(rp.height&&y<mid){d.list.insertBefore(b,pv);moved=true}}}
+      b.style.transform='';var lay=b.getBoundingClientRect().top;
+      b.style.transform='translateY('+(d.top0+(y-d.y0)-lay)+'px)';
+      d.raf=requestAnimationFrame(frame)}
+    function finish(){
+      var d=hDrag;if(!d)return;cancelAnimationFrame(d.raf);hDrag=null;hNoClick=Date.now()+500;
+      d.b.classList.remove('hdrag');d.list.classList.remove('hdragging');d.b.style.transform='';
+      var vis=[].slice.call(d.list.children).map(function(x){return x.getAttribute('data-hb')}).filter(Boolean),i=0;
+      /* un bloc absent aujourd'hui (pas d'événement, pas de voyage) garde sa place dans l'ordre */
+      var ks=(homeOrd()||HOME_DEF).map(function(k){return vis.indexOf(k)>=0?vis[i++]:k});
+      lsSet(LS_HORD,ks.join(','));renderHub3()}
+    function cancelPend(){if(pend){clearTimeout(pend.t);pend=null}}
+    function start(e,x,y){var b=e.target.closest&&e.target.closest('.hbk');
+      if(!b||!b.parentElement||!b.parentElement.classList.contains('sc-rows'))return;
+      if(b.parentElement.children.length<2)return;
+      cancelPend();pend={b:b,x:x,y:y,t:setTimeout(function(){var p=pend;pend=null;if(p)begin(p.b,p.y)},HOLD)}}
+    function move(x,y,e){
+      if(hDrag){hDrag.y=y;if(e&&e.cancelable)e.preventDefault();return}
+      if(pend&&(Math.abs(x-pend.x)>8||Math.abs(y-pend.y)>8))cancelPend()}
+    document.addEventListener('touchstart',function(e){if(e.touches.length!==1){cancelPend();return}var t=e.touches[0];start(e,t.clientX,t.clientY)},{passive:true});
+    document.addEventListener('touchmove',function(e){var t=e.touches[0];if(t)move(t.clientX,t.clientY,e)},{passive:false});
+    document.addEventListener('touchend',function(){cancelPend();finish()});
+    document.addEventListener('touchcancel',function(){cancelPend();finish()});
+    document.addEventListener('mousedown',function(e){if(e.button===0)start(e,e.clientX,e.clientY)});
+    document.addEventListener('mousemove',function(e){move(e.clientX,e.clientY,e)});
+    document.addEventListener('mouseup',function(){cancelPend();finish()});
+    document.addEventListener('contextmenu',function(e){if(hDrag||(e.target.closest&&e.target.closest('.sc-rows .hbk')))e.preventDefault()});
+    document.addEventListener('click',function(e){if(Date.now()<hNoClick&&e.target.closest&&e.target.closest('.hbk')){e.preventDefault();e.stopPropagation()}},true);
+  })();
   /* ---- Onglet Agenda : ce qui va se passer dans les prochains jours et semaines ---- */
   var agSel=null;
   function renderAgenda(){var el=$('agtab');if(!el||TAB!=='agenda')return;
@@ -788,16 +844,17 @@
     el.innerHTML=h;
     if(cOpen){var cl=$('cv-list'),ae=document.activeElement;if(cl&&!(ae&&cl.contains(ae)&&ae.tagName==='INPUT'))cl.innerHTML=h}
   }
+  /* Conteneur qui défile autour d'un élément, pour faire défiler pendant un glisser */
+  function scrollerOf(el){for(var p=el.parentElement;p&&p!==document.body;p=p.parentElement){var o=getComputedStyle(p).overflowY;if((o==='auto'||o==='scroll')&&p.scrollHeight>p.clientHeight)return p}return null}
   /* Réordonner la liste de courses : appui long sur un article puis glisser */
   var cDrag=null,cDirty=false,cNoClick=0;
   (function(){
     var pend=null,HOLD=350;
     function rowsOf(list){return [].slice.call(list.querySelectorAll('.crow:not(.done)'))}
     function secOf(r){for(var q=r.previousElementSibling;q;q=q.previousElementSibling)if(q.classList&&q.classList.contains('csec'))return q.getAttribute('data-sec')==='exc'?'exc':'std';return 'std'}
-    function scroller(el){for(var p=el.parentElement;p&&p!==document.body;p=p.parentElement){var o=getComputedStyle(p).overflowY;if((o==='auto'||o==='scroll')&&p.scrollHeight>p.clientHeight)return p}return null}
     function begin(row,y){
       var list=row.parentElement,r=row.getBoundingClientRect();
-      cDrag={row:row,list:list,y:y,y0:y,top0:r.top,sc:scroller(row),raf:0};
+      cDrag={row:row,list:list,y:y,y0:y,top0:r.top,sc:scrollerOf(row),raf:0};
       row.classList.add('cdrag');list.classList.add('cdragging');
       try{if(navigator.vibrate)navigator.vibrate(12)}catch(e){}
       var sel=window.getSelection&&window.getSelection();if(sel&&sel.removeAllRanges)sel.removeAllRanges();
