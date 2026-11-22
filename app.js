@@ -583,10 +583,16 @@
     var R={r:0,o:1},GL={Kimchi:'Kimchi',Plantes:'Plantes',Maison:'Maison'};
     var L=S.routines.map(function(r){return {r:r,st:careState(r)}}).filter(isDue)
       .sort(function(a,b){if(R[a.st.c]!==R[b.st.c])return R[a.st.c]-R[b.st.c];return (a.r.lastDone||'')<(b.r.lastDone||'')?-1:1});
-    var td=iso(new Date()),dn=S.routines.filter(function(r){return r.lastDone===td}).length,c=$('ta-count');if(c)c.textContent=dn?dn+'/'+(L.length+dn):'';   /* jamais « 0/N » */
-    el.innerHTML=L.length?L.map(function(x){var r=x.r;return '<div class="tarow '+x.st.c+'">'+careChk(r)+
-      '<div class="main" role="button" tabindex="0" data-act="care-open" data-id="'+esc(r.id)+'"><span class="t">'+(r.emoji?esc(r.emoji)+' ':'')+esc(r.title)+'</span><span class="sub">'+esc((GL[r.group]||r.group||'Maison')+(x.st.txt?' · '+x.st.txt:''))+'</span></div></div>'}).join('')
-      :'<p class="empty">'+(loaded.routines?'Tout est à jour ✨':'Chargement…')+'</p>'}
+    var td=iso(new Date()),D=S.routines.filter(function(r){return !r.grp&&r.lastDone===td}),dn=D.length,c=$('ta-count');if(c)c.textContent=dn?dn+'/'+(L.length+dn):'';   /* jamais « 0/N » */
+    var trow=function(r,cl,sub){return '<div class="tarow '+cl+'">'+careChk(r)+
+      '<div class="main" role="button" tabindex="0" data-act="care-open" data-id="'+esc(r.id)+'"><span class="t">'+(r.emoji?esc(r.emoji)+' ':'')+esc(r.title)+'</span><span class="sub">'+esc(sub)+'</span></div></div>'};
+    var gl=function(r){return GL[r.group]||r.group||'Maison'};
+    var h=L.length?L.map(function(x){return trow(x.r,x.st.c,gl(x.r)+(x.st.txt?' · '+x.st.txt:''))}).join('')
+      :'<p class="empty">'+(loaded.routines?'Tout est à jour ✨':'Chargement…')+'</p>';
+    /* Fait aujourd'hui : la tâche reste barrée en bas de la liste jusqu'à minuit, le temps
+       de voir ce qui a été fait et de pouvoir se décocher ; elle disparaît seule le lendemain. */
+    h+=D.sort(function(a,b){return gl(a)+a.title<gl(b)+b.title?-1:1}).map(function(r){return trow(r,'done',gl(r))}).join('');
+    el.innerHTML=h}
   function setDate(id,val){
     var r=find('routines',id);if(!r)return;
     var h=histOf(r);if(val&&h.indexOf(val)<0){h.push(val);h.sort().reverse()}

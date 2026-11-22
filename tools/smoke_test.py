@@ -143,7 +143,15 @@ def main():
                     page.click('#l-todoall [data-act=care-chk]'); page.wait_for_timeout(800)
                     assert state['routines'][2][4] == time.strftime('%Y-%m-%d'), state['routines'][2]
                     assert 'Tout est à jour' in page.inner_text('#l-todoall')
+                    # faite aujourd'hui : elle reste barrée dans « À faire » jusqu'à minuit
+                    assert page.locator('#l-todoall .tarow.done').count() == 1, 'la tâche faite reste listée'
+                    assert 'Brita' in page.inner_text('#l-todoall .tarow.done')
+                    assert 'line-through' in page.eval_on_selector(
+                        '#l-todoall .tarow.done .t', 'e=>getComputedStyle(e).textDecorationLine')
+                    assert page.locator('#l-todoall .tarow.done .chk.on').count() == 1, 'son rond reste coché'
+                    page.screenshot(path=f'{OUT}/{name}-routines-faite.png')
                     page.click('[data-act=undo-upd]'); page.wait_for_timeout(800)
+                    assert page.locator('#l-todoall .tarow.done').count() == 0, 'annuler la retire des faites'
                     # le rond d'une carte de routine coche directement, et le texte ouvre la fiche
                     page.click('#l-Kimchi [data-act=care-chk]'); page.wait_for_timeout(800)
                     assert state['routines'][0][4] == time.strftime('%Y-%m-%d'), state['routines'][0]
@@ -550,10 +558,13 @@ def main():
             page.evaluate("(()=>{const b=document.createElement('button');b.dataset.act='tab';b.dataset.tab='maison';document.body.appendChild(b);b.click();b.remove()})()")
             page.wait_for_timeout(400)
             page.click('#l-Maison .row:has-text("Sortir les poubelles") .care-chk'); page.wait_for_timeout(900)
-            assert 'Sortir les poubelles' not in page.inner_text('#l-todoall'), 'faite le soir : plus à faire'
+            pb = 'Sortir les poubelles'
+            due = lambda: page.locator(f'#l-todoall .tarow:not(.done):has-text("{pb}")').count()
+            fait = lambda: page.locator(f'#l-todoall .tarow.done:has-text("{pb}")').count()
+            assert due() == 0 and fait() == 1, 'faite le soir : barrée, plus à faire'
             page.clock.fast_forward('04:40:00')        # on passe minuit (00:10)
             page.wait_for_timeout(1200)
-            assert 'Sortir les poubelles' in page.inner_text('#l-todoall'), 'le lendemain : de nouveau à faire sans attendre 24 h'
+            assert due() == 1 and fait() == 0, 'le lendemain : de nouveau à faire, et plus dans les faites'
             ctx.close()
 
             # Sécurité : un lien #setup= ne doit pas rediriger l'app vers un autre script

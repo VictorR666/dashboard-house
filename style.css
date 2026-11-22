@@ -1295,3 +1295,9 @@ body[data-tab="maison"] .addgrp{display:flex}
 .vft.off small{opacity:.45}
 .vft:focus-within{box-shadow:inset 0 0 0 2px var(--lav)}
 .cal-t{font-size:14px;font-weight:900;color:var(--ink);padding:1px 4px 8px}
+
+/* v103 : une routine faite aujourd'hui reste barrée dans « À faire » jusqu'à minuit */
+.tarow.done{background:var(--n-bg)}
+.tarow.done .t{text-decoration:line-through;color:var(--ink2);font-weight:700}
+.tarow.done .sub{color:var(--ink2)}
+.tarow.done .chk{background:var(--g-dot);border-color:var(--g-dot);color:#fff}
