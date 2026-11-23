@@ -145,6 +145,12 @@ def main():
                     page.reload(); page.wait_for_timeout(1800)
                     assert hb() == apres, ('l\'ordre choisi tient au rechargement', hb(), apres)
                     page.screenshot(path=f'{OUT}/{name}-accueil-range.png')
+                    # un bouton de remise à zéro, visible seulement quand l'accueil a été rangé
+                    assert page.locator('#hub3 .hreset').count() == 1, 'bouton d\'origine présent'
+                    page.click('#hub3 .hreset'); page.wait_for_timeout(500)
+                    assert hb() == avant, ('retour à l\'ordre d\'origine', hb(), avant)
+                    assert page.locator('#hub3 .hreset').count() == 0, 'le bouton disparaît une fois remis'
+                    assert not page.evaluate("localStorage.getItem('maison-home-ord')")
                     page.click('.sc-ev'); page.wait_for_timeout(300)
                     assert page.get_attribute('body', 'data-tab') == 'agenda' and 'Vétérinaire' in page.inner_text('#agtab') and 'Départ · Lisbonne' in page.inner_text('#agtab'), 'onglet Agenda'
                     page.screenshot(path=f'{OUT}/{name}-agenda.png')

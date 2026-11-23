@@ -536,6 +536,8 @@
     rows=(homeOrd()||(trUp?['ev','trip','care','quest']:HOME_DEF)).map(function(k){
       return B[k]?'<div class="hbk" data-hb="'+k+'">'+B[k]+'</div>':''}).join('');
     h+='<div class="sc-sec">En ce moment</div><div class="sc-rows">'+rows+'</div>';
+    /* n'apparaît qu'une fois l'accueil rangé à la main : rien à montrer tant qu'il n'y a rien à défaire */
+    if(homeOrd())h+='<button class="hreset" type="button" data-act="home-reset">Remettre l\'ordre d\'origine</button>';
     h+='<button class="viewbot" type="button" data-act="view-toggle">Passer à la vue détaillée</button>';
     el.innerHTML=h}
   /* Ranger l'accueil soi-même : appui long sur un bloc puis glisser, comme la liste de courses.
@@ -1562,6 +1564,7 @@
     else if(a==='hub-go'){hubGo(b.getAttribute('data-v'))}
     else if(a==='view-set'){setView(b.getAttribute('data-v'))}
     else if(a==='view-toggle'){setView(VIEW==='simple'?'detail':'simple')}
+    else if(a==='home-reset'){lsSet(LS_HORD,null);renderHub3();toastMsg('Ordre d\'origine remis')}
     else if(a==='ag-detail'){agOpen=false;renderSheet();setView('detail');setTimeout(function(){var c=document.querySelector('.s-cal');if(c)c.scrollIntoView({block:'start'})},60)}
     else if(a==='ta-done'){var pv2=snap('routines',id,['hist','lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText','snoozeUntil']);setDate(id,iso(new Date()));offerUndo('routines',id,pv2,'Marqué comme fait ✓')}
     else if(a==='done-today'){var pv=snap('routines',id,['hist','lastDone','hasPrev','prevDone','prevForce','prevCustom','forceColor','customText','snoozeUntil']);openId=null;histFor=null;setDate(id,iso(new Date()));renderSheet();offerUndo('routines',id,pv,'Marqué comme fait ✓')}

@@ -1307,3 +1307,7 @@ body[data-tab="maison"] .addgrp{display:flex}
 .hbk.hdrag{position:relative;z-index:5;transition:none;scale:1.02;filter:drop-shadow(0 14px 30px rgba(91,72,180,.34))}
 .hdragging .hbk:not(.hdrag){transition:transform .15s}
 .hdragging{touch-action:none}
+
+/* v105 : revenir à l'ordre d'origine de l'accueil (visible seulement s'il a été rangé) */
+.hreset{display:block;align-self:center;margin:12px auto 0;border:0;background:none;padding:6px 10px;font:inherit;font-size:12px;font-weight:800;color:var(--ink2);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.hreset+.viewbot{margin-top:4px}
