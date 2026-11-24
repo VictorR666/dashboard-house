@@ -1311,3 +1311,19 @@ body[data-tab="maison"] .addgrp{display:flex}
 /* v105 : revenir à l'ordre d'origine de l'accueil (visible seulement s'il a été rangé) */
 .hreset{display:block;align-self:center;margin:12px auto 0;border:0;background:none;padding:6px 10px;font:inherit;font-size:12px;font-weight:800;color:var(--ink2);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .hreset+.viewbot{margin-top:4px}
+
+/* v106 : importer un billet PDF — bouton, feuille de validation, détails du trajet */
+.bimport{display:flex;align-items:center;justify-content:center;gap:8px;margin:10px 0 2px;padding:11px 14px;border-radius:16px;background:var(--n-bg);box-shadow:inset 0 0 0 1.5px rgba(141,123,240,.25);font-size:14px;font-weight:800;color:var(--ink2);cursor:pointer}
+.bimport.busy{opacity:.6;cursor:default}
+.im-f{display:flex;flex-direction:column;gap:3px;min-width:0}
+.im-f small{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.07em;color:var(--ink2);opacity:.85}
+.im-f .in{min-height:42px;padding:6px 10px;font-size:15px;font-weight:800;-webkit-appearance:none;appearance:none}
+.im-seg{margin-top:12px;padding:11px 12px;border-radius:16px;background:var(--n-bg)}
+.im-seg.off{opacity:.6}
+.im-n{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.07em;color:var(--ink2);margin-bottom:7px}
+.im-g3{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.im-g3 .im-f:first-child{grid-column:1/-1}
+.im-g2{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}
+.im-tr{margin-top:7px;font-size:12px;font-weight:800;color:var(--ink2)}
+.im-no{margin:0;font-size:13px;color:var(--ink2)}
+.vl-tk{display:block;margin-top:5px;font-size:11.5px;font-weight:700;color:var(--ink2);line-height:1.35}

@@ -395,8 +395,8 @@
     var sh=$('sheet');if(!sh)return;guardSheet();
     /* un doigt est posé sur la fiche : on ne la reconstruit pas sous lui, l'appui serait perdu */
     if(soft&&sheetPressed)return;
-    if(!(projId&&!openId&&!grpEdit&&!evEdit&&!agOpen&&!bilPop&&!tplMgr&&!tplEdit&&!tEdit&&!wishOpen))sh.classList.remove('pagemode');
-    if(soft&&(wishOpen||evEdit||tEdit||tplMgr||tplEdit||bilPop||agOpen||grpEdit))return;
+    if(!(projId&&!openId&&!grpEdit&&!evEdit&&!agOpen&&!bilPop&&!tplMgr&&!tplEdit&&!tEdit&&!wishOpen&&!impOpen))sh.classList.remove('pagemode');
+    if(soft&&(wishOpen||evEdit||tEdit||tplMgr||tplEdit||bilPop||agOpen||grpEdit||impOpen))return;
     var ae=document.activeElement,refocus=false;
     if(ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA')&&sh.contains(ae)){
       if(soft&&ae.value)return;
@@ -408,6 +408,7 @@
       sh.hidden=false;var gqi=sh.querySelector('[data-grp]');if(gqi&&grpEdit.id==='new')gqi.focus();return}
     if(evEdit){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card" role="dialog" aria-modal="true" aria-label="Renommer"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">×</button><div class="panel"><div class="pj-title">Renommer l\'événement</div><div class="lab">Nom affiché</div><input class="in" maxlength="80" data-evn value="'+esc(evEdit.v)+'" aria-label="Nom affiché"><div class="hint">Nom d\'origine : '+esc(evEdit.orig)+'<br>Le changement ne modifie que le dashboard, pas Google Agenda.</div><div class="prow"><button class="lnk" data-act="ev-reset">Nom d\'origine</button><button class="btn valid" data-act="ev-save">Valider</button></div></div></div>';sh.hidden=false;var ei=sh.querySelector('[data-evn]');if(ei){ei.focus();ei.select()}return}
     if(agOpen&&!evEdit){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card wide" role="dialog" aria-modal="true" aria-label="Agenda"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">×</button>'+agendaPanel()+'</div>';sh.hidden=false;return}
+    if(impOpen){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card" role="dialog" aria-modal="true" aria-label="Billet"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">\u00d7</button>'+impPanel()+'</div>';sh.hidden=false;return}
     if(bilPop){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card" role="dialog" aria-modal="true" aria-label="Billets"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">×</button>'+bilPanel()+'</div>';sh.hidden=false;return}
     if(tplMgr||tplEdit){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card wide" role="dialog" aria-modal="true" aria-label="Listes types"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">×</button>'+tplPanel()+'</div>';sh.hidden=false;return}
     if(tEdit){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card wide" role="dialog" aria-modal="true" aria-label="'+esc(VT[tEdit.type]||'Voyage')+'"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">×</button>'+tPanel()+'</div>';sh.hidden=false;return}
@@ -1060,6 +1061,302 @@
     }
     return d.replace(/\s+/g,' ').trim().slice(0,40);
   }
+  /* ================= Importer un billet =================
+     Le PDF est lu ENTIÈREMENT sur l'appareil : rien n'est envoyé au script, à Google
+     ni ailleurs, et le fichier n'est jamais enregistré. On en tire les dates, les
+     heures, les gares et les numéros de train, puis on fait valider avant de créer. */
+  /* ---- Lire le texte d'un PDF, sans bibliothèque et sans rien envoyer : tout se passe
+     dans le navigateur. Gère les flux compressés, les objets compressés (PDF 1.5+) et
+     les polices sous-ensemble via leur table ToUnicode. ---- */
+  var PDF=(function(){
+    function lat1(u8){var s='',i,n=u8.length;for(i=0;i<n;i+=8192)s+=String.fromCharCode.apply(null,u8.subarray(i,Math.min(i+8192,n)));return s}
+    function bytes(s){var u=new Uint8Array(s.length),i;for(i=0;i<s.length;i++)u[i]=s.charCodeAt(i)&255;return u}
+    function inf(u8,raw){try{
+        var ds=new DecompressionStream(raw?'deflate-raw':'deflate');
+        var st=new Blob([u8]).stream().pipeThrough(ds);
+        return new Response(st).arrayBuffer().then(function(b){return new Uint8Array(b)})
+      }catch(e){return Promise.reject(e)}}
+    function unzip(u8){return inf(u8,false).catch(function(){return inf(u8,true)}).catch(function(){return null})}
+  
+    /* Tous les « n 0 obj … endobj » du fichier, flux compris */
+    function objects(s){
+      var re=/(\d+)\s+\d+\s+obj\b/g,m,out=[];
+      while((m=re.exec(s))){
+        var st=m.index+m[0].length,end=s.indexOf('endobj',st);if(end<0)end=s.length;
+        var body=s.slice(st,end),k=body.search(/\bstream\r?\n/),dict=k<0?body:body.slice(0,k),data=null;
+        if(k>=0){var b=k+body.slice(k).match(/\bstream\r?\n/)[0].length,e=body.indexOf('endstream',b);
+          data=body.slice(b,e<0?body.length:e).replace(/[\r\n \t]+$/,'')}   /* sinon le décompresseur refuse */
+        out.push({num:+m[1],dict:dict,raw:data});
+        re.lastIndex=end}
+      return out}
+  
+    function deflated(o){return /\/FlateDecode/.test(o.dict)}
+    /* Certains générateurs encodent le flux en ASCII avant de le compresser */
+    function a85(s){s=s.replace(/\s+/g,'').replace(/^<~/,'');var e=s.indexOf('~>');if(e>=0)s=s.slice(0,e);
+      var o=[],i=0;while(i<s.length){
+        if(s[i]==='z'){o.push(0,0,0,0);i++;continue}
+        var g=s.substr(i,5),n=g.length;if(n<2)break;
+        while(g.length<5)g+='u';
+        var v=0,j;for(j=0;j<5;j++)v=v*85+(g.charCodeAt(j)-33);
+        var b=[(v>>>24)&255,(v>>>16)&255,(v>>>8)&255,v&255];
+        for(j=0;j<n-1;j++)o.push(b[j]);i+=n}
+      return new Uint8Array(o)}
+    function ahex(s){s=s.replace(/[^0-9a-fA-F>]/g,'');var e=s.indexOf('>');if(e>=0)s=s.slice(0,e);
+      if(s.length%2)s+='0';var o=new Uint8Array(s.length/2),i;
+      for(i=0;i<o.length;i++)o[i]=parseInt(s.substr(i*2,2),16);return o}
+    function pre(o,u8){
+      if(/\/ASCII85Decode/.test(o.dict))return a85(lat1(u8));
+      if(/\/ASCIIHexDecode/.test(o.dict))return ahex(lat1(u8));
+      return u8}
+  
+    /* Les objets rangés dans un flux d'objets (PDF 1.5+) : on les remet à plat */
+    function expand(objs,txt){
+      var add=[];objs.forEach(function(o){
+        if(!/\/ObjStm/.test(o.dict)||!o.data)return;
+        var n=+(o.dict.match(/\/N\s+(\d+)/)||[])[1]||0,first=+(o.dict.match(/\/First\s+(\d+)/)||[])[1]||0;
+        var head=txt(o.data).slice(0,first).trim().split(/\s+/),body=txt(o.data);
+        for(var i=0;i<n;i++){var num=+head[2*i],off=+head[2*i+1];if(isNaN(num)||isNaN(off))continue;
+          var nx=(i+1<n?+head[2*i+3]:body.length-first);
+          add.push({num:num,dict:body.slice(first+off,first+nx),raw:null,data:null})}});
+      return objs.concat(add)}
+  
+    /* Table ToUnicode : code affiché -> vrai caractère */
+    function cmap(src){
+      var m={},r,wide=false;
+      var cs=/begincodespacerange([\s\S]*?)endcodespacerange/.exec(src);
+      if(cs&&/<([0-9a-fA-F]{4,})>/.test(cs[1]))wide=(RegExp.$1.length>=4);
+      var rc=/beginbfchar([\s\S]*?)endbfchar/g;
+      while((r=rc.exec(src))){var p=/<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>/g,q;
+        while((q=p.exec(r[1])))m[parseInt(q[1],16)]=hex2str(q[2])}
+      var rr=/beginbfrange([\s\S]*?)endbfrange/g;
+      while((r=rr.exec(src))){
+        var p2=/<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>\s*(<([0-9a-fA-F]+)>|\[([\s\S]*?)\])/g,q2;
+        while((q2=p2.exec(r[1]))){
+          var a=parseInt(q2[1],16),b=parseInt(q2[2],16);
+          if(q2[4]!==undefined){var base=parseInt(q2[4],16);
+            for(var c=a;c<=b&&c-a<65536;c++)m[c]=String.fromCharCode(base+(c-a))}
+          else{var lst=q2[5].match(/<([0-9a-fA-F]+)>/g)||[];
+            lst.forEach(function(h,i){m[a+i]=hex2str(h.slice(1,-1))})}}}
+      return{m:m,wide:wide}}
+    function hex2str(h){var s='',i;if(h.length%2)h+='0';
+      for(i=0;i+3<h.length+1;i+=4)s+=String.fromCharCode(parseInt(h.substr(i,4),16));
+      if(h.length<4)s=String.fromCharCode(parseInt(h,16));return s}
+  
+    /* Opérateurs de texte d'un flux de contenu */
+    function text(src,fonts){
+      var out='',cur=null,sz=10,re=/\/([A-Za-z0-9#+._-]+)\s+([\d.]+)\s+Tf|\[((?:[^\]\\]|\\.)*)\]\s*TJ|\(((?:[^()\\]|\\.|\([^)]*\))*)\)\s*(Tj|')|<([0-9a-fA-F\s]*)>\s*(Tj|')|(-?[\d.]+)\s+(-?[\d.]+)\s+(Td|TD)|(T\*|Tm|ET|BT)/g,m;
+      while((m=re.exec(src))){
+        if(m[1]!==undefined){cur=fonts[m[1]]||null;sz=+m[2]||10;continue}
+        /* un Td qui ne change pas de hauteur reste sur la même ligne : certains générateurs
+           placent chaque lettre avec son propre Td, et tout finirait coupé */
+        if(m[10]!==undefined){if(Math.abs(+m[9])>0.6)out+='\n';else if(+m[8]>sz*1.4)out+=' ';continue}
+        if(m[11]!==undefined){out+='\n';continue}
+        if(m[3]!==undefined){
+          var p=/\(((?:[^()\\]|\\.|\([^)]*\))*)\)|(-?[\d.]+)/g,q;
+          while((q=p.exec(m[3]))){
+            if(q[1]!==undefined)out+=dec(q[1],cur);
+            else if(+q[2]<-120)out+=' '}
+          continue}
+        if(m[4]!==undefined){out+=dec(m[4],cur);if(m[5]==="'")out+='\n';continue}
+        if(m[6]!==undefined){out+=decHex(m[6],cur);if(m[7]==="'")out+='\n'}}
+      return out}
+  
+    function unesc(s){return s.replace(/\\([nrtbf()\\]|[0-7]{1,3})/g,function(a,c){
+      if(c==='n')return'\n';if(c==='r')return'\r';if(c==='t')return'\t';
+      if(c==='b'||c==='f')return' ';if(c==='('||c===')'||c==='\\')return c;
+      return String.fromCharCode(parseInt(c,8))})}
+    /* WinAnsi : les quelques codes qui ne sont pas du Latin-1 */
+    var WA={128:'\u20ac',130:'\u201a',131:'\u0192',132:'\u201e',133:'\u2026',134:'\u2020',135:'\u2021',136:'\u02c6',
+      137:'\u2030',138:'\u0160',139:'\u2039',140:'\u0152',142:'\u017d',145:'\u2018',146:'\u2019',147:'\u201c',
+      148:'\u201d',149:'\u2022',150:'\u2013',151:'\u2014',152:'\u02dc',153:'\u2122',154:'\u0161',155:'\u203a',
+      156:'\u0153',158:'\u017e',159:'\u0178'};
+    function fromCodes(a,f){var o='',i,c;
+      for(i=0;i<a.length;i++){c=a[i];
+        if(f&&f.m[c]!==undefined)o+=f.m[c];
+        else if(f&&f.wide)continue;                    /* police sous-ensemble sans table : illisible */
+        else o+=(WA[c]||String.fromCharCode(c))}
+      return o}
+    function codes(s,wide){var a=[],i;
+      if(wide){for(i=0;i+1<s.length;i+=2)a.push((s.charCodeAt(i)<<8)|s.charCodeAt(i+1))}
+      else for(i=0;i<s.length;i++)a.push(s.charCodeAt(i)&255);
+      return a}
+    function dec(s,f){return fromCodes(codes(unesc(s),f&&f.wide),f)}
+    function decHex(h,f){h=h.replace(/\s+/g,'');var w=f&&f.wide,st=w?4:2,a=[],i;
+      for(i=0;i+st<=h.length;i+=st)a.push(parseInt(h.substr(i,st),16)||0);
+      return fromCodes(a,f)}
+  
+    /* Point d'entrée : un ArrayBuffer -> le texte du billet */
+    function read(buf){
+      var u8=new Uint8Array(buf),s=lat1(u8),objs=objects(s);
+      return Promise.all(objs.map(function(o){
+        if(!o.raw)return Promise.resolve(null);
+        var d=pre(o,bytes(o.raw));
+        if(!deflated(o))return Promise.resolve(d);
+        return unzip(d)})).then(function(datas){
+        objs.forEach(function(o,i){o.data=datas[i]});
+        var all=expand(objs,lat1),byNum={};
+        all.forEach(function(o){if(byNum[o.num]===undefined)byNum[o.num]=o});
+        /* polices : nom de ressource -> table ToUnicode */
+        var fonts={};
+        all.forEach(function(o){
+          var fm=/\/Font\s*<<([\s\S]*?)>>/.exec(o.dict);
+          if(!fm){var fr=/\/Font\s+(\d+)\s+\d+\s+R/.exec(o.dict);   /* dictionnaire des polices à part */
+            if(fr&&byNum[+fr[1]])fm=[0,byNum[+fr[1]].dict]}
+          if(!fm)return;
+          var p=/\/([A-Za-z0-9#+._-]+)\s+(\d+)\s+\d+\s+R/g,q;
+          while((q=p.exec(fm[1]))){
+            var fo=byNum[+q[2]];if(!fo)continue;
+            var tu=/\/ToUnicode\s+(\d+)\s+\d+\s+R/.exec(fo.dict);if(!tu)continue;
+            var to=byNum[+tu[1]];if(!to||!to.data)continue;
+            fonts[q[1]]=cmap(lat1(to.data))}});
+        var txt='';
+        all.forEach(function(o){
+          if(!o.data)return;var c=lat1(o.data);
+          if(!/BT[\s\S]*?(Tj|TJ|')/.test(c))return;
+          txt+=text(c,fonts)+'\n'});
+        return txt.replace(/[ \t]+/g,' ').replace(/\n{2,}/g,'\n').trim()})}
+    return{read:read}
+  })();
+  /* ---- Comprendre un billet : dates, heures, gares, aller et retour ---- */
+  var BIL=(function(){
+    function noAcc(s){return s.normalize?s.normalize('NFD').replace(/[̀-ͯ]/g,''):s}
+    var MOIS={jan:1,fev:2,mar:3,avr:4,mai:5,may:5,jun:6,jui:7,aou:8,aug:8,sep:9,oct:10,nov:11,dec:12};
+    function moisOf(w){w=noAcc(w).toLowerCase().replace(/\.$/,'');
+      var k4=w.slice(0,4);if(k4==='juin')return 6;if(k4==='juil')return 7;
+      return MOIS[w.slice(0,3)]||0}
+    function pad(n){return(n<10?'0':'')+n}
+    function mkDate(y,m,d){return(m<1||m>12||d<1||d>31)?null:y+'-'+pad(m)+'-'+pad(d)}
+    /* Année absente : on prend celle qui place la date dans les mois à venir */
+    function guessY(m,d){var y=new Date().getFullYear(),a=new Date(y,m-1,d,12);
+      var lim=new Date();lim.setHours(0,0,0,0);lim.setDate(lim.getDate()-2);
+      return a<lim?y+1:y}
+    function findDate(s){
+      var m=/(\d{4})-(\d{2})-(\d{2})/.exec(s);
+      if(m)return mkDate(+m[1],+m[2],+m[3]);
+      m=/\b(\d{1,2})[\/.](\d{1,2})[\/.](\d{2,4})\b/.exec(s);
+      if(m){var y=+m[3];if(y<100)y+=2000;return mkDate(y,+m[2],+m[1])}
+      m=/\b(\d{1,2})\s*(?:er)?\s+([A-Za-zÀ-ÿ]{3,10})\.?\s*(\d{4})?/.exec(s);
+      if(m){var mo=moisOf(m[2]);if(mo)return mkDate(m[3]?+m[3]:guessY(mo,+m[1]),mo,+m[1])}
+      return null}
+    var RE_H=/\b([0-2]?\d)\s*[h:]\s*([0-5]\d)\b/g;
+    function times(s){var m,o=[];RE_H.lastIndex=0;
+      while((m=RE_H.exec(s))){var h=+m[1];if(h<24)o.push(pad(h)+':'+m[2])}
+      return o}
+    function noH(s){return s.replace(/\b[0-2]?\d\s*[h:]\s*[0-5]\d\b/g,'')}
+  
+    var TRAIN=/\b(TGV|OUIGO|INOUI|INTERCIT[EÉ]S?|TER|EUROSTAR|THALYS|LYRIA|ICE|RENFE|AVE|IZY|NOMAD|VOL|FLIGHT)\b/i;
+    var HORSJEU=/^(aller|retour|voyage|billet|dossier|passager|voiture|place|classe|tarif|prix|total|train|trajet|confirmation|reference|bagage|siege|quai|duree|correspondance|echange|conditions)\b/i;
+    var MARQUE=/^(ouigo|tgv|ter|sncf|inoui|eurostar|thalys|trainline|oui\.sncf)$/i;
+    /* Une gare : une ligne surtout en majuscules, qui ne parle ni de train ni de place */
+    function isStation(l){var t=l.trim();
+      if(t.length<3||t.length>48)return false;
+      if(/\d{2}\s*[h:]\s*\d{2}/.test(t))return false;
+      if(HORSJEU.test(noAcc(t)))return false;
+      if(MARQUE.test(t))return false;
+      if(TRAIN.test(t)&&/\d/.test(t))return false;
+      if(/\d{3}/.test(t))return false;
+      var L=t.replace(/[^A-Za-zÀ-ÿ]/g,'');
+      if(L.length<3)return false;
+      return L===L.toUpperCase()}
+  
+    var PETIT=/^(et|de|du|des|le|la|les|sur|sous|en|aux|au|d')$/;
+    function titleCase(s){return s.toLowerCase()
+      .replace(/(^|[\s'-])([a-zà-ÿ])/g,function(a,b,c){return b+c.toUpperCase()})
+      .replace(/\s+/g,' ').trim()
+      /* « 1 Et 2 » se lit mal : les petits mots restent en minuscules, sauf en tête */
+      .replace(/(?!^)\b([A-Z][a-z']*)\b/g,function(w){return PETIT.test(w.toLowerCase())?w.toLowerCase():w})}
+    var ART=/^(la|le|les|l')$/i;
+    /* La ville d'une gare : « BORDEAUX ST JEAN » -> Bordeaux, « AIX EN PROVENCE TGV » -> Aix en Provence */
+    function city(st){if(!st)return'';
+      var t=titleCase(st).split(' '),o=[t[0]],i=1;
+      if(ART.test(t[0])&&t[1]){o.push(t[1]);i=2}
+      while(i+1<t.length&&/^(en|sur|sous|aux|d')$/i.test(t[i])){o.push(t[i].toLowerCase(),t[i+1]);i+=2}
+      return o.join(' ')}
+  
+    /* Un segment de billet -> un trajet */
+    function leg(lines){
+      var date=null,ts=[],st=[],tr=null,i,l;
+      for(i=0;i<lines.length;i++){l=lines[i];
+        if(!date)date=findDate(l);
+        if(!tr){var t=/\b((?:TGV|OUIGO|INOUI|INTERCIT[EÉ]S|TER|EUROSTAR|THALYS|LYRIA|ICE|RENFE|AVE|VOL|FLIGHT)(?:\s+[A-Z]+)*\s*\d{1,5})\b/i.exec(l);
+          if(t)tr=t[1].replace(/\s+/g,' ').trim()}
+        var lab=/^\s*(départ(?:ure)?|departure|depart|arrivée?|arrival|de|from|à|a|to)\s*[:\-]\s*(.+)$/i.exec(l);
+        if(lab){var rest=lab[2],h=times(rest);if(h.length)ts=ts.concat(h);
+          var nm=noH(rest).replace(/[,;]\s*$/,'').replace(/\s+(à|a|at)\s*$/i,'').replace(/\s{2,}/g,' ').trim();
+          nm=nm.replace(/^\d{1,2}\s+[A-Za-zÀ-ÿ]{3,10}\.?\s*\d{0,4}\s*/,'');   /* une date collée devant */
+          if(nm.length>2&&!TRAIN.test(nm)&&!/^\d+$/.test(nm))st.push(nm);continue}
+        var h2=times(l);if(h2.length)ts=ts.concat(h2);
+        var nl=noH(l).trim();
+        if(isStation(nl))st.push(nl)}
+      if(!date&&!ts.length)return null;
+      return{date:date,dep:ts[0]||'',arr:ts.length>1?ts[ts.length-1]:'',
+        from:st.length?titleCase(st[0]):'',to:st.length>1?titleCase(st[st.length-1]):'',train:tr||''}}
+  
+    function parse(txt){
+      var lines=String(txt||'').split('\n').map(function(l){return l.replace(/\s+/g,' ').trim()}).filter(Boolean);
+      var cuts=[],i;
+      for(i=0;i<lines.length;i++){var n=noAcc(lines[i]).toLowerCase();
+        if(/(^|\b)(trajet |voyage )?aller\b/.test(n)&&!/retour/.test(n))cuts.push([i,'go']);
+        else if(/(^|\b)(trajet |voyage )?retour\b/.test(n))cuts.push([i,'back'])}
+      var segs=[];
+      if(cuts.length){for(i=0;i<cuts.length;i++)
+        segs.push({k:cuts[i][1],l:lines.slice(cuts[i][0],i+1<cuts.length?cuts[i+1][0]:lines.length)})}
+      else{var cur=[],seen=null;        /* sans étiquette : on coupe au changement de date */
+        lines.forEach(function(l){var d=findDate(l);
+          if(d&&seen&&d!==seen&&cur.length){segs.push({k:null,l:cur});cur=[]}
+          if(d)seen=d;cur.push(l)});
+        if(cur.length)segs.push({k:null,l:cur})}
+      var legs=segs.map(function(s){var g=leg(s.l);if(g)g.k=s.k;return g})
+        .filter(function(g){return g&&(g.date||g.dep)});
+      var go=null,back=null;
+      legs.forEach(function(g){if(g.k==='go'&&!go)go=g;else if(g.k==='back'&&!back)back=g});
+      if(!go)go=legs[0]||null;
+      if(!back&&legs.length>1&&legs[legs.length-1]!==go)back=legs[legs.length-1];
+      if(back&&go&&back.date&&go.date&&back.date<go.date){var t2=go;go=back;back=t2}
+      return{go:go,back:back,dest:go?(city(go.to)||city(back&&back.from)||''):''}}
+    return{parse:parse,findDate:findDate,city:city}
+  })();
+
+  var impOpen=null,impBusy=false;
+  function impField(k,lab,v,ty){return '<label class="im-f"><small>'+lab+'</small><input class="in" type="'+(ty||'text')+'" data-imp="'+k+'" value="'+esc(v||'')+'"'+(ty==='text'||!ty?' maxlength="60"':'')+'></label>'}
+  function impSeg(k,lab,g){
+    if(!g)return '<div class="im-seg off"><div class="im-n">'+lab+'</div><p class="im-no">Rien trouvé sur le billet</p></div>';
+    return '<div class="im-seg"><div class="im-n">'+lab+'</div>'+
+      '<div class="im-g3">'+impField(k+'.date','Date',g.date,'date')+impField(k+'.dep','Départ',g.dep,'time')+impField(k+'.arr','Arrivée',g.arr,'time')+'</div>'+
+      '<div class="im-g2">'+impField(k+'.from','De',g.from)+impField(k+'.to','À',g.to)+'</div>'+
+      (g.train?'<div class="im-tr">'+esc(g.train)+'</div>':'')+'</div>'}
+  function impPanel(){var b=impOpen;
+    if(b.err)return '<div class="panel"><div class="pj-title">Billet illisible</div><p class="im-no">'+esc(b.err)+'</p>'+
+      '<div class="prow"><button class="btn valid" data-act="sheet-close">Fermer</button></div></div>';
+    return '<div class="panel"><div class="pj-title">Ce que dit le billet</div>'+
+      impField('dest','Destination',b.dest)+impSeg('go','Aller',b.go)+impSeg('back','Retour',b.back)+
+      '<div class="prow"><button class="lnk" data-act="sheet-close">Annuler</button>'+
+      '<button class="btn valid" data-act="imp-create">Créer le voyage</button></div></div>'}
+  function impSet(k,v){var a=k.split('.');
+    if(a.length===1){impOpen[a[0]]=v;return}
+    if(!impOpen[a[0]])impOpen[a[0]]={};
+    impOpen[a[0]][a[1]]=v}
+  function impBtn(){return '<label class="bimport'+(impBusy?' busy':'')+'">'+
+    '<input type="file" accept="application/pdf,.pdf" data-billet hidden'+(impBusy?' disabled':'')+'>'+
+    (impBusy?'Lecture du billet\u2026':'\ud83d\udcc4 Importer un billet (PDF)')+'</label>'}
+  function impRead(file){
+    if(!file)return;
+    if(!/\.pdf$/i.test(file.name||'')&&file.type!=='application/pdf'){
+      impOpen={err:'Seuls les PDF peuvent être lus : une photo ou une capture d\'écran ne contient pas de texte.'};renderSheet();return}
+    impBusy=true;renderTrips();
+    file.arrayBuffer().then(PDF.read).then(function(txt){
+      impBusy=false;renderTrips();
+      if(!txt||txt.replace(/\s/g,'').length<20){
+        impOpen={err:'Aucun texte dans ce PDF : c\'est sans doute une image scannée.'};renderSheet();return}
+      var b=BIL.parse(txt);
+      if(!b.go){impOpen={err:'Ni date ni horaire trouvés dans ce billet.'};renderSheet();return}
+      impOpen=b;renderSheet()
+    }).catch(function(){impBusy=false;renderTrips();
+      impOpen={err:'Ce PDF n\'a pas pu être ouvert.'};renderSheet()})}
+  function impTk(g){if(!g)return null;
+    var o={};['arr','from','to','train'].forEach(function(k){if(g[k])o[k]=g[k]});
+    return Object.keys(o).length?o:null}
+
   function tripGuess(){
     if(cal.status!=='ok'||V_OLD)return null;
     var skip=(lsGet('maison-trip-skip')||'').split(',');
@@ -1105,7 +1402,7 @@
         '<span class="tt-b">'+esc(tripBadge(x.st))+'</span></button>'};
     var nt=nextTrip(),hero='';
     if(nt){var hs=tripState(nt);hero='<button class="thero '+hs.k+'" data-act="trip-open" data-id="'+esc(nt.id)+'"><span class="th-k">'+(hs.k==='now'?'Voyage en cours':'Prochain départ')+'</span><span class="th-t">'+esc(tEmo(nt)+' '+nt.title)+'</span>'+countdownHtml(nt)+'</button>'}
-    el.innerHTML=hero+tripGuessHtml()+(up.length?'<div class="trips">'+up.map(tile).join('')+'</div>':empty('voyages','Aucun voyage prévu.<br>Ajoute ton prochain départ avec « + Nouveau ».'))+
+    el.innerHTML=hero+tripGuessHtml()+impBtn()+(up.length?'<div class="trips">'+up.map(tile).join('')+'</div>':empty('voyages','Aucun voyage prévu.<br>Ajoute ton prochain départ avec « + Nouveau ».'))+
       (past.length?'<button type="button" class="lnk donetog" data-act="trips-past" aria-expanded="'+showPast+'">'+(showPast?'▾':'▸')+' Voyages passés ('+past.length+')</button>'+(showPast?'<div class="trips">'+past.map(tile).join('')+'</div>':''):'')}
 
   /* Page d'un voyage (plein écran) */
@@ -1215,6 +1512,11 @@
     h+='<form class="vt-add" id="f-vtodo"><div class="vt-when" role="radiogroup" aria-label="Quand">'+WHEN.map(function(g){return '<button type="button" class="vtw'+(w===g[0]?' on':'')+'" role="radio" aria-checked="'+(w===g[0])+'" data-act="vt-when" data-v="'+g[0]+'">'+g[1]+'</button>'}).join('')+'</div>'+
       '<div class="vt-row"><input class="in" id="vt-in" maxlength="120" autocomplete="off" placeholder="Ajouter…" aria-label="Nouveau truc à faire"><button class="btn">OK</button></div></form>';
     return h+'</section>'}
+  /* Ce que le billet importé disait de ce trajet : gares, arrivée, numéro de train */
+  function tkLine(t,step){var d=t.tk&&t.tk[step===1?'back':'go'];if(!d)return'';
+    var p=[];if(d.from&&d.to)p.push(d.from+' \u2192 '+d.to);
+    if(d.arr)p.push('arrivée '+d.arr);if(d.train)p.push(d.train);
+    return p.length?'<small class="vl-tk">'+esc(p.join(' \u00b7 '))+'</small>':''}
   function vMain(t){var h='';
     var sD=dPart(t.start),eD=dPart(t.end);
     /* Un bloc par trajet, comme un billet de train : date et heure sont deux champs
@@ -1225,7 +1527,7 @@
       return '<div class="vleg'+(day?'':' off')+'"><span class="vg-n"><i aria-hidden="true"></i>'+lab+'</span><div class="vg-f">'+
         '<button type="button" class="vf vfd'+(op?' open':'')+(day?' set':'')+'" data-act="vcal" data-step="'+step+'" aria-expanded="'+op+'"><small>Date</small><b>'+esc(dtx)+'</b></button>'+
         '<label class="vf vft'+(day?'':' off')+'"><small>Heure</small><input class="vt-i" type="time" data-trip="'+p+'T" value="'+esc(hPart(v))+'"'+(day?'':' disabled')+' aria-label="Heure '+aria+'"></label>'+
-        '</div></div>'};
+        '</div>'+tkLine(t,step)+'</div>'};
     h+='<section class="vinfo"><div class="vi-row"><button type="button" class="ibtn'+(vEmoOpen?' open':'')+'" data-act="trip-emo-tog" aria-label="Changer l\'icône">'+esc(tEmo(t))+'</button>'+
       '<input class="in vi-title" maxlength="80" data-trip="title" value="'+esc(t.title)+'" aria-label="Destination" placeholder="Destination"></div>'+
       (vEmoOpen?'<div class="emos pop">'+TRIPEMO.map(function(e){return '<button type="button" class="emo'+(t.emoji===e?' on':'')+'" data-act="trip-emo" data-e="'+e+'" aria-label="Icône '+e+'">'+e+'</button>'}).join('')+'</div>':'')+
@@ -1343,6 +1645,14 @@
     else if(a==='trip-new'){if(V_OLD){toastMsg('Publie d\'abord la nouvelle version du script Google');return true}var nid=addDoc('voyages',{type:'voyage',trip:'',title:'Nouveau voyage',emoji:'🚆',start:'',end:'',done:false});
       vNew=nid;vEmoOpen=false;vDelConfirm=false;vBilEdit=false;setTab('voyage');vview(nid,true);
       setTimeout(function(){var ti=document.querySelector('#vv-body [data-trip="title"]');if(ti){ti.focus();ti.select()}},60)}
+    else if(a==='imp-create'){var ib=impOpen;if(!ib||ib.err)return true;
+      if(V_OLD){toastMsg('Publie d\'abord la nouvelle version du script Google');return true}
+      var g=ib.go||{},bk=ib.back||{};
+      var mk=function(x){return x.date?x.date+(x.dep?' '+x.dep:''):''};
+      var tk={};if(impTk(g))tk.go=impTk(g);if(bk.date&&impTk(bk))tk.back=impTk(bk);
+      var ni=addDoc('voyages',{type:'voyage',trip:'',title:ib.dest||'Voyage',emoji:'\ud83d\ude86',
+        start:mk(g),end:mk(bk),done:false,tk:Object.keys(tk).length?tk:null});
+      impOpen=null;renderTrips();if(ni)vview(ni,true);toastMsg('Voyage créé depuis le billet')}
     else if(a==='trips-past'){showPast=!showPast;renderTrips()}
     else if(a==='vview-close'){vCal=false;vCalStep=0;vview(null,true)}
     else if(a==='trip-ok'){var tt=vOpen&&find('voyages',vOpen);if(tt){
@@ -1558,7 +1868,7 @@
       if(pv&&pq){upd('projects',id,{steps:steps(pq).concat([{t:pv,done:false}])})}
       projId=null;confirmDel=null;renderSheet()}
     else if(vClick(a,b,id)){}
-    else if(a==='sheet-close'){iconOpen=false;tEdit=null;tplMgr=false;tplEdit=null;bilPop=null;grpEdit=null;qCal=null;if(evEdit){evEdit=null;renderSheet();return}agOpen=false;evEdit=null;wishOpen=null;projId=null;openId=null;histFor=null;confirmDel=null;renderSheet()}
+    else if(a==='sheet-close'){iconOpen=false;impOpen=null;tEdit=null;tplMgr=false;tplEdit=null;bilPop=null;grpEdit=null;qCal=null;if(evEdit){evEdit=null;renderSheet();return}agOpen=false;evEdit=null;wishOpen=null;projId=null;openId=null;histFor=null;confirmDel=null;renderSheet()}
     else if(a==='care-add'){var csec2=b.closest('section'),cf=csec2&&csec2.querySelector('form.care-add');if(cf){cf.hidden=!cf.hidden;if(!cf.hidden)cf.querySelector('input').focus()}}
     else if(a==='care-chk'){careToggle(id)}
     else if(a==='hub-go'){hubGo(b.getAttribute('data-v'))}
@@ -1683,6 +1993,7 @@
     }
   });
   document.addEventListener('input',function(e){
+    var imf0=e.target.getAttribute&&e.target.getAttribute('data-imp');if(imf0&&impOpen){impSet(imf0,e.target.value);return}
     if(grpEdit&&e.target.getAttribute&&e.target.getAttribute('data-grp')==='name'){grpEdit.name=e.target.value;return}
     if(evEdit&&e.target.hasAttribute&&e.target.hasAttribute('data-evn')){evEdit.v=e.target.value;return}
     if(tplEdit&&e.target.getAttribute&&e.target.getAttribute('data-tpl')==='title'){tplEdit.title=e.target.value;return}
@@ -1694,6 +2005,8 @@
   document.addEventListener('keydown',function(e){var t=e.target;if(e.key==='Enter'&&bilPop&&t&&t.hasAttribute&&t.hasAttribute('data-bil')){e.preventDefault();bilSave();return}if(e.key==='Enter'&&tEdit&&t&&t.tagName==='INPUT'&&t.hasAttribute('data-tf')){e.preventDefault();tEdit.d[t.getAttribute('data-tf')]=t.value;tSave();return}if(e.key==='Enter'&&evEdit&&t&&t.hasAttribute&&t.hasAttribute('data-evn')){e.preventDefault();evSave(false);return}if(e.key==='Enter'&&wishOpen&&t&&t.getAttribute&&t.getAttribute('data-wf')){e.preventDefault();wishSave()}});
   document.addEventListener('change',function(e){
     var t=e.target;
+    if(t.hasAttribute&&t.hasAttribute('data-billet')){var f=t.files&&t.files[0];t.value='';impRead(f);return}
+    var imf=t.getAttribute&&t.getAttribute('data-imp');if(imf&&impOpen){impSet(imf,t.value);return}
     var trf=t.getAttribute&&t.getAttribute('data-trip');if(trf){tripField(trf,t.value);return}
     if(t.hasAttribute&&t.hasAttribute('data-pack-copy')){var pcv=t.value;t.blur();packCopy(pcv);return}
     var tf2=t.getAttribute&&t.getAttribute('data-tf');if(tf2&&tEdit){tEdit.d[tf2]=t.value;return}

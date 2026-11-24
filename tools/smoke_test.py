@@ -33,6 +33,8 @@ state = {
 }
 # Voyages d'exemple, datés par rapport à aujourd'hui (un voyage dans 3 jours, un voyage passé)
 _d = lambda n: (datetime.date.today() + datetime.timedelta(days=n)).isoformat()
+# Une date ecrite comme sur un billet francais : 25/11/2026
+_fr_date = lambda iso: '%s/%s/%s' % (iso[8:10], iso[5:7], iso[0:4])
 state['voyages'] = [
     ['v1', '', 'Voyage', 'Lisbonne', _d(3) + ' 08:35', _d(7) + ' 18:40', '', '', '', '', '', '{"emoji":"🏖️"}'],
     ['t1', 'v1', 'Trajet', 'Paris → Lisbonne', _d(3) + ' 08:35', _d(3) + ' 10:05', 'Orly 3', 'ABC123', 'https://example.com/billet', '', '', '{"mode":"avion","num":"TP433","seat":"14C"}'],
@@ -100,6 +102,35 @@ def _pick(page, day):
         act = getattr(page, 'act', 'qcal')
         page.click('.sheet-card [data-act=%s-%s]' % (act, 'next' if want > cur else 'prev')); page.wait_for_timeout(120)
     raise AssertionError(f'jour {day} introuvable dans le calendrier')
+
+
+
+def _billet_pdf(path, lignes):
+    """Un PDF minimal, texte non compresse : sert de faux billet de train."""
+    flux = "BT /F1 11 Tf 1 0 0 1 56 780 Tm 15 TL\n"
+    for l in lignes:
+        flux += "(" + l.replace("\\", r"\\").replace("(", r"\(").replace(")", r"\)") + ") Tj T*\n"
+    flux += "ET"
+    objs = [
+        "<< /Type /Catalog /Pages 2 0 R >>",
+        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] "
+        "/Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>",
+        "<< /Length %d >>\nstream\n%s\nendstream" % (len(flux), flux),
+        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
+    ]
+    out, offs = "%PDF-1.4\n", []
+    for i, o in enumerate(objs, 1):
+        offs.append(len(out.encode('latin-1')))
+        out += "%d 0 obj\n%s\nendobj\n" % (i, o)
+    xref = len(out.encode('latin-1'))
+    out += "xref\n0 %d\n0000000000 65535 f \n" % (len(objs) + 1)
+    for o in offs:
+        out += "%010d 00000 n \n" % o
+    out += "trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (len(objs) + 1, xref)
+    with open(path, 'wb') as f:
+        f.write(out.encode('latin-1'))
+    return path
 
 
 def main():
@@ -523,6 +554,39 @@ def main():
                         # les heures sont lisibles, une ligne par trajet
                         assert page.locator('#vv-body .vleg').count() == 2
                         assert 'aller' in page.inner_text('#vv-body .vleg >> nth=0').lower()
+                        page.click('[data-act=vview-close]'); page.wait_for_timeout(400)
+                        # importer un billet PDF : tout est lu sur l'appareil, puis on valide
+                        da, dr = _fr_date(_d(40)), _fr_date(_d(44))
+                        pdf = _billet_pdf(f'{OUT}/billet.pdf', [
+                            'Confirmation de voyage', 'Dossier : ZZTOP9',
+                            'ALLER', da,
+                            'PARIS MONTPARNASSE 1 ET 2 06h52',
+                            'QUIMPER 11h04',
+                            'TGV INOUI 8611 - Voiture 7 - Place 21',
+                            'RETOUR', dr,
+                            'QUIMPER 17h20', 'PARIS MONTPARNASSE 1 ET 2 21h35',
+                            'TGV INOUI 8686 - Voiture 2 - Place 55'])
+                        page.set_input_files('[data-billet]', pdf); page.wait_for_timeout(1800)
+                        assert page.is_visible('.sheet-card'), 'la feuille de validation s\'ouvre'
+                        txt = page.inner_text('.sheet-card')
+                        assert 'billet' in txt.lower(), txt
+                        assert page.input_value('[data-imp=dest]') == 'Quimper', page.input_value('[data-imp=dest]')
+                        assert page.input_value('[data-imp="go.date"]') == _d(40)
+                        assert page.input_value('[data-imp="go.dep"]') == '06:52'
+                        assert page.input_value('[data-imp="go.arr"]') == '11:04'
+                        assert page.input_value('[data-imp="back.date"]') == _d(44)
+                        assert page.input_value('[data-imp="back.dep"]') == '17:20'
+                        assert 'TGV INOUI 8611' in txt
+                        page.screenshot(path=f'{OUT}/{name}-billet-lu.png')
+                        page.click('[data-act=imp-create]'); page.wait_for_timeout(1400)
+                        q = [r for r in state['voyages'] if r[3] == 'Quimper']
+                        assert q, [r[3] for r in state['voyages']]
+                        assert q[0][4] == f'{_d(40)} 06:52' and q[0][5] == f'{_d(44)} 17:20', q[0][4:6]
+                        assert '8611' in q[0][11] and '11:04' in q[0][11], q[0][11]
+                        assert page.is_visible('#vview') and 'Quimper' in page.inner_text('#vv-title')
+                        tk = page.inner_text('#vv-body .vl-tk >> nth=0')
+                        assert 'Quimper' in tk and '11:04' in tk and '8611' in tk, tk
+                        page.screenshot(path=f'{OUT}/{name}-billet-voyage.png')
                         page.click('[data-act=vview-close]'); page.wait_for_timeout(400)
                         page.click('.ttile >> nth=0'); page.wait_for_timeout(500)
                     page.click('.vt-when [data-v=apres]'); page.fill('#vt-in', 'Développer les photos'); page.keyboard.press('Enter'); page.wait_for_timeout(800)
