@@ -8,7 +8,8 @@ Le test sert l'app en local, se connecte avec un faux code, parcourt les onglets
 ajoute des articles de courses, ouvre la page des quêtes, puis enregistre des captures
 dans tools/out/. Il échoue si la page affiche une erreur JavaScript.
 """
-import datetime, json, os, subprocess, sys, time
+import datetime
+import unicodedata, json, os, subprocess, sys, time
 from playwright.sync_api import sync_playwright
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -34,6 +35,7 @@ state = {
 # Voyages d'exemple, datés par rapport à aujourd'hui (un voyage dans 3 jours, un voyage passé)
 _d = lambda n: (datetime.date.today() + datetime.timedelta(days=n)).isoformat()
 # Une date ecrite comme sur un billet francais : 25/11/2026
+_noacc = lambda t: unicodedata.normalize('NFD', t).encode('ascii', 'ignore').decode()
 _fr_date = lambda iso: '%s/%s/%s' % (iso[8:10], iso[5:7], iso[0:4])
 state['voyages'] = [
     ['v1', '', 'Voyage', 'Lisbonne', _d(3) + ' 08:35', _d(7) + ' 18:40', '', '', '', '', '', '{"emoji":"🏖️"}'],
@@ -600,8 +602,30 @@ def main():
                         assert '8611' in q[0][11] and '11:04' in q[0][11], q[0][11]
                         assert page.is_visible('#vview') and 'Quimper' in page.inner_text('#vv-title')
                         tk = page.inner_text('#vv-body .vl-tk >> nth=0')
-                        assert 'Quimper' in tk and '11:04' in tk and '8611' in tk, tk
+                        assert 'Quimper' in tk and '8611' in tk, tk
+                        # la ligne de trajet : depart, petit train avec la duree, arrivee
+                        assert page.input_value('#vv-body [data-trip=startA]') == '11:04'
+                        assert page.input_value('#vv-body [data-trip=endA]') == '21:35'
+                        durs = page.eval_on_selector_all('#vv-body .vrd', 'e => e.map(x => x.textContent)')
+                        assert durs == ['4 h 12', '4 h 15'], durs
                         page.screenshot(path=f'{OUT}/{name}-billet-voyage.png')
+                        # completer un voyage deja cree, depuis sa page
+                        pdf2 = _billet_pdf(f'{OUT}/billet2.pdf', [
+                            'ALLER', _fr_date(_d(41)),
+                            'PARIS MONTPARNASSE 1 ET 2 07h10', 'QUIMPER 11h28', 'TGV INOUI 8613',
+                            'RETOUR', _fr_date(_d(45)),
+                            'QUIMPER 18h02', 'PARIS MONTPARNASSE 1 ET 2 22h16', 'TGV INOUI 8688'])
+                        page.set_input_files('#vv-body [data-billet]', pdf2); page.wait_for_timeout(1900)
+                        assert page.input_value('[data-imp=dest]') == 'Quimper', 'le voyage garde son nom'
+                        assert 'Completer le voyage' in _noacc(page.inner_text('.sheet-card'))
+                        page.click('[data-act=imp-create]'); page.wait_for_timeout(1500)
+                        q2 = [r for r in state['voyages'] if r[3] == 'Quimper']
+                        assert len(q2) == 1, 'on complete, on ne cree pas un second voyage'
+                        assert q2[0][4] == f'{_d(41)} 07:10' and q2[0][5] == f'{_d(45)} 18:02', q2[0][4:6]
+                        assert page.input_value('#vv-body [data-trip=startA]') == '11:28'
+                        # l'heure d'arrivee se corrige a la main
+                        page.fill('#vv-body [data-trip=endA]', '23:05'); page.wait_for_timeout(1100)
+                        assert '23:05' in [r for r in state['voyages'] if r[3] == 'Quimper'][0][11]
                         page.click('[data-act=vview-close]'); page.wait_for_timeout(400)
                         page.click('.ttile >> nth=0'); page.wait_for_timeout(500)
                     page.click('.vt-when [data-v=apres]'); page.fill('#vt-in', 'Développer les photos'); page.keyboard.press('Enter'); page.wait_for_timeout(800)
@@ -639,7 +663,7 @@ def main():
                     page.click('[data-act=vview-close]'); page.wait_for_timeout(300)
                     page.click('[data-act=trip-new]'); page.wait_for_timeout(500)
                     page.fill('[data-trip=title]', 'Rome')
-                    assert page.locator('#vv-body .vft.off').count() == 2, 'sans date, pas d\'heure \u00e0 saisir'
+                    assert page.locator('#vv-body .vft.off').count() == 4, 'sans date, ni depart ni arrivee a saisir'
                     page.click('#vv-body .vleg >> nth=0 >> [data-act=vcal]'); page.wait_for_timeout(300)
                     _pick(_vcal(page), _d(20)); page.wait_for_timeout(600)   # la date d'abord, l'heure ensuite
                     page.fill('[data-trip=startT]', '07:15'); page.locator('[data-trip=startT]').dispatch_event('change'); page.wait_for_timeout(600)

@@ -1280,7 +1280,6 @@ body[data-tab="maison"] .addgrp{display:flex}
 .vg-n{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.07em;color:var(--ink2)}
 .vg-n i{flex:none;width:10px;height:10px;border-radius:50%;box-shadow:inset 0 0 0 3px var(--lav)}
 .vleg.off .vg-n i{box-shadow:inset 0 0 0 2px var(--n-dot)}
-.vg-f{display:grid;grid-template-columns:1fr 112px;gap:8px}
 .vf{position:relative;display:flex;flex-direction:column;justify-content:center;gap:1px;min-width:0;min-height:48px;padding:7px 12px;border:0;border-radius:15px;background:var(--n-bg);box-shadow:inset 0 0 0 1.5px rgba(141,123,240,.22);font:inherit;text-align:left}
 .vf small{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:var(--ink2);opacity:.85}
 .vf b{font-size:15px;font-weight:900;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1327,3 +1326,15 @@ body[data-tab="maison"] .addgrp{display:flex}
 .im-tr{margin-top:7px;font-size:12px;font-weight:800;color:var(--ink2)}
 .im-no{margin:0;font-size:13px;color:var(--ink2)}
 .vl-tk{display:block;margin-top:5px;font-size:11.5px;font-weight:700;color:var(--ink2);line-height:1.35}
+
+/* v108 : la ligne de trajet — départ, petit train, arrivée, et la durée dessous */
+.vleg{gap:7px}
+.vfw{width:100%}
+.vrun{display:grid;grid-template-columns:1fr 76px 1fr;align-items:center;gap:6px}
+.vrl{position:relative;display:flex;align-items:center;justify-content:center;height:48px}
+.vrl::before{content:"";position:absolute;left:-4px;right:-4px;top:19px;border-top:2px dotted rgba(141,123,240,.45)}
+.vrt{position:relative;font-size:16px;font-style:normal;line-height:1;background:#fff;padding:0 5px;margin-bottom:10px}
+.vrd{position:absolute;top:27px;left:0;right:0;text-align:center;font-size:10px;font-weight:900;letter-spacing:.02em;color:var(--ink2)}
+.vleg.off .vrl::before{border-top-color:rgba(141,123,240,.18)}
+.vleg.off .vrt{opacity:.45}
+.bimport.mini{margin:10px 0 0;padding:9px 12px;font-size:13px;background:transparent;box-shadow:inset 0 0 0 1.5px rgba(141,123,240,.22)}

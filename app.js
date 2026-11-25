@@ -1331,27 +1331,30 @@
     return '<div class="panel"><div class="pj-title">Ce que dit le billet</div>'+
       impField('dest','Destination',b.dest)+impSeg('go','Aller',b.go)+impSeg('back','Retour',b.back)+
       '<div class="prow"><button class="lnk" data-act="sheet-close">Annuler</button>'+
-      '<button class="btn valid" data-act="imp-create">Créer le voyage</button></div></div>'}
+      '<button class="btn valid" data-act="imp-create">'+(b.fill?'Compléter le voyage':'Créer le voyage')+'</button></div></div>'}
   function impSet(k,v){var a=k.split('.');
     if(a.length===1){impOpen[a[0]]=v;return}
     if(!impOpen[a[0]])impOpen[a[0]]={};
     impOpen[a[0]][a[1]]=v}
-  function impBtn(){return '<label class="bimport'+(impBusy?' busy':'')+'">'+
-    '<input type="file" accept="application/pdf,.pdf" data-billet hidden'+(impBusy?' disabled':'')+'>'+
-    (impBusy?'Lecture du billet\u2026':'\ud83d\udcc4 Importer un billet (PDF)')+'</label>'}
-  function impRead(file){
+  function impBtn(fill,lab){return '<label class="bimport'+(impBusy?' busy':'')+(fill?' mini':'')+'">'+
+    '<input type="file" accept="application/pdf,.pdf" data-billet'+(fill?' data-fill="'+esc(fill)+'"':'')+' hidden'+(impBusy?' disabled':'')+'>'+
+    (impBusy?'Lecture du billet\u2026':(lab||'\ud83d\udcc4 Importer un billet (PDF)'))+'</label>'}
+  function impPaint(){if(vOpen)renderVView();else renderTrips()}
+  function impRead(file,fill){
     if(!file)return;
     if(!/\.pdf$/i.test(file.name||'')&&file.type!=='application/pdf'){
       impOpen={err:'Seuls les PDF peuvent être lus : une photo ou une capture d\'écran ne contient pas de texte.'};renderSheet();return}
-    impBusy=true;renderTrips();
+    impBusy=true;impPaint();
     file.arrayBuffer().then(PDF.read).then(function(txt){
-      impBusy=false;renderTrips();
+      impBusy=false;impPaint();
       if(!txt||txt.replace(/\s/g,'').length<20){
         impOpen={err:'Aucun texte dans ce PDF : c\'est sans doute une image scannée.'};renderSheet();return}
       var b=BIL.parse(txt);
       if(!b.go){impOpen={err:'Ni date ni horaire trouvés dans ce billet.'};renderSheet();return}
+      if(fill){var ft=find('voyages',fill);
+        if(ft){b.fill=fill;if(ft.title)b.dest=ft.title}}   /* on ne renomme pas un voyage déjà nommé */
       impOpen=b;renderSheet()
-    }).catch(function(){impBusy=false;renderTrips();
+    }).catch(function(){impBusy=false;impPaint();
       impOpen={err:'Ce PDF n\'a pas pu être ouvert.'};renderSheet()})}
   function impTk(g){if(!g)return null;
     var o={};['arr','from','to','train'].forEach(function(k){if(g[k])o[k]=g[k]});
@@ -1513,10 +1516,18 @@
       '<div class="vt-row"><input class="in" id="vt-in" maxlength="120" autocomplete="off" placeholder="Ajouter…" aria-label="Nouveau truc à faire"><button class="btn">OK</button></div></form>';
     return h+'</section>'}
   /* Ce que le billet importé disait de ce trajet : gares, arrivée, numéro de train */
-  function tkLine(t,step){var d=t.tk&&t.tk[step===1?'back':'go'];if(!d)return'';
+  function tkOf(t,step){var k=step===1?'back':'go';return(t.tk&&typeof t.tk==='object'&&t.tk[k])||null}
+  function tkLine(t,step){var d=tkOf(t,step);if(!d)return'';
     var p=[];if(d.from&&d.to)p.push(d.from+' \u2192 '+d.to);
-    if(d.arr)p.push('arrivée '+d.arr);if(d.train)p.push(d.train);
+    if(d.train)p.push(d.train);
     return p.length?'<small class="vl-tk">'+esc(p.join(' \u00b7 '))+'</small>':''}
+  /* Durée entre deux heures ; après minuit, le trajet passe au lendemain */
+  function runTxt(dep,arr){
+    if(!/^\d{2}:\d{2}$/.test(dep||'')||!/^\d{2}:\d{2}$/.test(arr||''))return'';
+    var a=+dep.slice(0,2)*60+ +dep.slice(3),b=+arr.slice(0,2)*60+ +arr.slice(3),d=b-a;
+    if(d<0)d+=1440;if(!d)return'';
+    var h=Math.floor(d/60),m=d%60;
+    return h?(h+' h'+(m?' '+(m<10?'0':'')+m:'')):(m+' min')}
   function vMain(t){var h='';
     var sD=dPart(t.start),eD=dPart(t.end);
     /* Un bloc par trajet, comme un billet de train : date et heure sont deux champs
@@ -1524,15 +1535,21 @@
     var leg=function(lab,aria,p,v,day,step){var op=vCal&&vCalStep===step,
       /* retour le jour même : le dire plutôt que répéter la date de l'aller */
       dtx=day?(step===1&&day===sD?'Même jour':cap(fmtDay(day,{weekday:'short',day:'numeric',month:'short'}))):'Choisir';
-      return '<div class="vleg'+(day?'':' off')+'"><span class="vg-n"><i aria-hidden="true"></i>'+lab+'</span><div class="vg-f">'+
-        '<button type="button" class="vf vfd'+(op?' open':'')+(day?' set':'')+'" data-act="vcal" data-step="'+step+'" aria-expanded="'+op+'"><small>Date</small><b>'+esc(dtx)+'</b></button>'+
-        '<label class="vf vft'+(day?'':' off')+'"><small>Heure</small><input class="vt-i" type="time" data-trip="'+p+'T" value="'+esc(hPart(v))+'"'+(day?'':' disabled')+' aria-label="Heure '+aria+'"></label>'+
-        '</div>'+tkLine(t,step)+'</div>'};
+      var dep=hPart(v),arr=(tkOf(t,step)||{}).arr||'',dur=runTxt(dep,arr);
+      var hf=function(cl,sub,fld,val,al){return '<label class="vf vft'+(day?'':' off')+'"><small>'+sub+'</small>'+
+        '<input class="vt-i" type="time" data-trip="'+fld+'" value="'+esc(val)+'"'+(day?'':' disabled')+' aria-label="'+al+'"></label>'};
+      return '<div class="vleg'+(day?'':' off')+'"><span class="vg-n"><i aria-hidden="true"></i>'+lab+'</span>'+
+        '<button type="button" class="vf vfd vfw'+(op?' open':'')+(day?' set':'')+'" data-act="vcal" data-step="'+step+'" aria-expanded="'+op+'"><small>Date</small><b>'+esc(dtx)+'</b></button>'+
+        '<div class="vrun">'+hf('','Départ',p+'T',dep,'Heure de départ '+aria)+
+          '<span class="vrl" aria-hidden="true"><i class="vrt">'+esc(tEmo(t))+'</i>'+(dur?'<b class="vrd">'+dur+'</b>':'')+'</span>'+
+          hf('','Arrivée',p+'A',arr,'Heure d\'arrivée '+aria)+'</div>'+
+        tkLine(t,step)+'</div>'};
     h+='<section class="vinfo"><div class="vi-row"><button type="button" class="ibtn'+(vEmoOpen?' open':'')+'" data-act="trip-emo-tog" aria-label="Changer l\'icône">'+esc(tEmo(t))+'</button>'+
       '<input class="in vi-title" maxlength="80" data-trip="title" value="'+esc(t.title)+'" aria-label="Destination" placeholder="Destination"></div>'+
       (vEmoOpen?'<div class="emos pop">'+TRIPEMO.map(function(e){return '<button type="button" class="emo'+(t.emoji===e?' on':'')+'" data-act="trip-emo" data-e="'+e+'" aria-label="Icône '+e+'">'+e+'</button>'}).join('')+'</div>':'')+
       '<div class="vtrip">'+leg('Aller','de l\'aller','start',t.start,sD,0)+leg('Retour','du retour','end',t.end,eD,1)+'</div>'+
       (vCal?rangeCal(sD,eD,vCalM,'vcal',t.id,vCalStep===1?'Et le retour, c\'est quand&nbsp;?':'Quel jour on part&nbsp;?'):'')+
+      impBtn(t.id,'\ud83d\udcc4 Compléter avec un billet')+
       '</section>';
     var H=kids(t.id,'logement').sort(byStart);
     h+=vSecH('🛏️','Hébergement','logement')+(H.length?H.map(vStay).join(''):'<p class="vempty">Pas encore d\'hébergement.</p>');
@@ -1568,6 +1585,13 @@
   function tripField_(f,v){var t=vOpen&&find('voyages',vOpen);if(!t)return;
     if(f==='title'){var sp=splitEmoji(v);if(!sp.title){renderVView();return}var d={title:sp.title};if(sp.emoji)d.emoji=sp.emoji;upd('voyages',t.id,d);return}
     if(f==='link'){vBilEdit=false;upd('voyages',t.id,{link:safeUrl(v)});return}
+    if(f==='startA'||f==='endA'){      /* l'arrivée vit dans la colonne technique, avec le billet */
+      var side=f==='startA'?'go':'back',hv=/^\d{2}:\d{2}/.test(v)?v.slice(0,5):'';
+      var tk=(t.tk&&typeof t.tk==='object')?JSON.parse(JSON.stringify(t.tk)):{};
+      if(!tk[side])tk[side]={};
+      if(hv)tk[side].arr=hv;else delete tk[side].arr;
+      if(!Object.keys(tk[side]).length)delete tk[side];
+      upd('voyages',t.id,{tk:Object.keys(tk).length?tk:null});return}
     var c={sD:dPart(t.start),sT:hPart(t.start),eD:dPart(t.end),eT:hPart(t.end)},k={startD:'sD',startT:'sT',endD:'eD',endT:'eT'}[f];if(!k)return;
     c[k]=k.charAt(1)==='D'?(nDate(v)||''):(/^\d{2}:\d{2}/.test(v)?v.slice(0,5):'');
     if(k==='sD'&&c.sD&&(!c.eD||c.eD<c.sD))c.eD=c.sD;if(k==='eD'&&c.eD&&c.sD&&c.eD<c.sD)c.sD=c.eD;
@@ -1650,8 +1674,14 @@
       var g=ib.go||{},bk=ib.back||{};
       var mk=function(x){return x.date?x.date+(x.dep?' '+x.dep:''):''};
       var tk={};if(impTk(g))tk.go=impTk(g);if(bk.date&&impTk(bk))tk.back=impTk(bk);
+      tk=Object.keys(tk).length?tk:null;
+      var ft=ib.fill&&find('voyages',ib.fill);
+      if(ft){ /* compléter un voyage existant : on ne vide rien que le billet ne dise */
+        var ch={};if(ib.dest&&ib.dest!==ft.title)ch.title=ib.dest;
+        if(mk(g))ch.start=mk(g);if(mk(bk))ch.end=mk(bk);if(tk)ch.tk=tk;
+        upd('voyages',ft.id,ch);impOpen=null;renderVView();toastMsg('Voyage complété depuis le billet');return true}
       var ni=addDoc('voyages',{type:'voyage',trip:'',title:ib.dest||'Voyage',emoji:'\ud83d\ude86',
-        start:mk(g),end:mk(bk),done:false,tk:Object.keys(tk).length?tk:null});
+        start:mk(g),end:mk(bk),done:false,tk:tk});
       impOpen=null;renderTrips();if(ni)vview(ni,true);toastMsg('Voyage créé depuis le billet')}
     else if(a==='trips-past'){showPast=!showPast;renderTrips()}
     else if(a==='vview-close'){vCal=false;vCalStep=0;vview(null,true)}
@@ -2008,7 +2038,7 @@
   document.addEventListener('keydown',function(e){var t=e.target;if(e.key==='Enter'&&bilPop&&t&&t.hasAttribute&&t.hasAttribute('data-bil')){e.preventDefault();bilSave();return}if(e.key==='Enter'&&tEdit&&t&&t.tagName==='INPUT'&&t.hasAttribute('data-tf')){e.preventDefault();tEdit.d[t.getAttribute('data-tf')]=t.value;tSave();return}if(e.key==='Enter'&&evEdit&&t&&t.hasAttribute&&t.hasAttribute('data-evn')){e.preventDefault();evSave(false);return}if(e.key==='Enter'&&wishOpen&&t&&t.getAttribute&&t.getAttribute('data-wf')){e.preventDefault();wishSave()}});
   document.addEventListener('change',function(e){
     var t=e.target;
-    if(t.hasAttribute&&t.hasAttribute('data-billet')){var f=t.files&&t.files[0];t.value='';impRead(f);return}
+    if(t.hasAttribute&&t.hasAttribute('data-billet')){var f=t.files&&t.files[0],fl=t.getAttribute('data-fill');t.value='';impRead(f,fl);return}
     var imf=t.getAttribute&&t.getAttribute('data-imp');if(imf&&impOpen){impSet(imf,t.value);return}
     var trf=t.getAttribute&&t.getAttribute('data-trip');if(trf){tripField(trf,t.value);return}
     if(t.hasAttribute&&t.hasAttribute('data-pack-copy')){var pcv=t.value;t.blur();packCopy(pcv);return}
