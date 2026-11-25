@@ -406,7 +406,8 @@
       iconField(grpEdit.emoji,'data-grp="name"',grpEdit.name,'Vélo, Voiture, Potager…','data-act="grp-emo"',GEMO,grpEdit.emoji)+
       '<div class="prow">'+(grpEdit.id==='new'?'':'<button class="lnk del" data-act="grp-del">Supprimer</button>')+'<button class="btn valid" data-act="grp-save">Valider</button></div></div></div>';
       sh.hidden=false;var gqi=sh.querySelector('[data-grp]');if(gqi&&grpEdit.id==='new')gqi.focus();return}
-    if(evEdit){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card" role="dialog" aria-modal="true" aria-label="Renommer"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">×</button><div class="panel"><div class="pj-title">Renommer l\'événement</div><div class="lab">Nom affiché</div><input class="in" maxlength="80" data-evn value="'+esc(evEdit.v)+'" aria-label="Nom affiché"><div class="hint">Nom d\'origine : '+esc(evEdit.orig)+'<br>Le changement ne modifie que le dashboard, pas Google Agenda.</div><div class="prow"><button class="lnk" data-act="ev-reset">Nom d\'origine</button><button class="btn valid" data-act="ev-save">Valider</button></div></div></div>';sh.hidden=false;var ei=sh.querySelector('[data-evn]');if(ei){ei.focus();ei.select()}return}
+    if(evPick&&!evEdit){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card" role="dialog" aria-modal="true" aria-label="Lier à l\'agenda"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">\u00d7</button>'+evPickPanel()+'</div>';sh.hidden=false;return}
+    if(evEdit){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card" role="dialog" aria-modal="true" aria-label="Événement"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">×</button>'+evPanel()+'</div>';sh.hidden=false;var ei=sh.querySelector('[data-evn]');if(ei){ei.focus();ei.select()}return}
     if(agOpen&&!evEdit){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card wide" role="dialog" aria-modal="true" aria-label="Agenda"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">×</button>'+agendaPanel()+'</div>';sh.hidden=false;return}
     if(impOpen){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card" role="dialog" aria-modal="true" aria-label="Billet"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">\u00d7</button>'+impPanel()+'</div>';sh.hidden=false;return}
     if(bilPop){sh.innerHTML='<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-card" role="dialog" aria-modal="true" aria-label="Billets"><button class="sheet-x" data-act="sheet-close" aria-label="Fermer">×</button>'+bilPanel()+'</div>';sh.hidden=false;return}
@@ -984,7 +985,7 @@
      Pas de fichier : un billet = une référence + un lien (le script n'a volontairement pas accès à Drive). */
   var VT={voyage:'Voyage',trajet:'Trajet',transport:'Transport sur place',logement:'Hébergement',activite:'Activité',valise:'Valise'};
   var TRIPEMO=['🚆','🏖️','🏔️','🏙️','🏝️','🎿','⛺','🌍','🗺️','🏰','🌴','❄️','🎒','🚗','🍷'];
-  var V_OLD=false,showPast=false,vOpen=null,tEdit=null,lastMulti=null;
+  var V_OLD=false,showPast=false,vOpen=null,tEdit=null,lastMulti=null,evPick=null;
   var vtWhen=null,vtFocus=false,vEmoOpen=false,vPackOpen=false,vDelConfirm=false;
   function vType(v){var n=nrm(v);if(!n)return '';
     if(n.indexOf('traj')===0)return 'trajet';if(n.indexOf('transp')===0)return 'transport';
@@ -1381,7 +1382,7 @@
         return nrm(t.title)===nrm(dest)||(a&&gd>=a&&gd<=z);
       });
       if(known)continue;
-      return {id:go.e.id,dest:dest,start:go.d,end:back?back.d:null,
+      return {id:go.e.id,ids:[go.e.id].concat(back?[back.e.id]:[]),dest:dest,start:go.d,end:back?back.d:null,
         emoji:TRIP_EMO.test((go.e.summary||'')+' '+(back?back.e.summary:''))?'✈️':'🚆'};
     }
     return null;
@@ -1499,7 +1500,37 @@
     var da=departAt(t);if(!da)return '<span class="vcd-past">Choisis la date de départ pour lancer le compte à rebours</span>';
     return '<span class="flap" role="timer" data-cd="'+da.d.getTime()+'">'+flapInner(da.d-Date.now())+'</span>'+
       '<span class="vcd-sub">Départ '+esc(relDay(dPart(t.start)))+(da.exact?' à '+esc(hPart(t.start)):'')+'</span>'}
-  function vSecH(ic,lab,type){return '<div class="vsec-h"><h3>'+ic+' '+lab+'</h3>'+(type?'<button class="mini" data-act="v-add" data-v="'+type+'">+ Ajouter</button>':'')+'</div>'}
+  /* Événements d'agenda rattachés à un voyage : les billets de train vivent souvent là */
+  function tEvIds(t){return Array.isArray(t.evs)?t.evs.filter(Boolean).map(String):[]}
+  function tEvs(t){var ids=tEvIds(t);if(!ids.length||cal.status!=='ok')return[];
+    return cal.events.filter(function(e){return e&&ids.indexOf(e.id)>=0})
+      .sort(function(a,b){var x=evInfo(a),y=evInfo(b);return(x?+x.d:0)-(y?+y.d:0)})}
+  function tEvSet(t,ids){upd('voyages',t.id,{evs:ids.length?ids:null})}
+  function evWhen(e){var i=evInfo(e);if(!i)return'';
+    return cap(fmtDay(iso(i.d),{weekday:'short',day:'numeric',month:'short'}))+(i.allDay?'':' \u00b7 '+hm(i.d))}
+  function tEvRow(e){
+    return '<article class="vcard tev"><div class="vc-top"><div class="vc-h" role="button" tabindex="0" data-act="ev-edit" data-id="'+esc(e.id)+'" aria-label="Détails : '+esc(EVN[e.id]||e.summary||'')+'">'+
+      '<span class="em" aria-hidden="true">\ud83d\uddd3\ufe0f</span><div class="main"><span class="t">'+esc(EVN[e.id]||e.summary||'Sans titre')+'</span>'+
+      '<span class="sub">'+esc(evWhen(e))+'</span>'+(e.location?'<span class="vmeta">'+esc(e.location)+'</span>':'')+'</div></div>'+
+      '<button class="sx" data-act="tev-off" data-id="'+esc(e.id)+'" aria-label="Détacher de ce voyage" title="Détacher">\u00d7</button></div></article>'}
+  /* Choisir les événements à rattacher : ceux qui tombent pendant le voyage d'abord */
+  function evPickPanel(){var t=evPick&&find('voyages',evPick);if(!t)return'<div class="panel"></div>';
+    var ids=tEvIds(t),sD=dPart(t.start),eD=dPart(t.end)||sD;
+    var all=(cal.status==='ok'?cal.events:[]).filter(function(e){return e&&evInfo(e)})
+      .sort(function(a,b){return +evInfo(a).d-+evInfo(b).d});
+    var dur=function(e){var d=iso(evInfo(e).d);return sD&&d>=sD&&d<=eD},dedans=all.filter(dur),dehors=all.filter(function(e){return !dur(e)});
+    var row=function(e){var on=ids.indexOf(e.id)>=0;
+      return '<button type="button" class="epk'+(on?' on':'')+'" data-act="tev-tog" data-id="'+esc(e.id)+'">'+
+        '<span class="epk-c" aria-hidden="true">'+(on?CHECK:'')+'</span>'+
+        '<span class="epk-m"><b>'+esc(EVN[e.id]||e.summary||'Sans titre')+'</b><small>'+esc(evWhen(e))+'</small></span></button>'};
+    var h='<div class="panel"><div class="pj-title">Lier à l\'agenda</div>';
+    if(!all.length)h+='<p class="empty">'+(cal.status==='ok'?'Aucun événement dans les 35 prochains jours.':'Agenda indisponible.')+'</p>';
+    if(dedans.length)h+='<div class="epk-s">Pendant le voyage</div>'+dedans.map(row).join('');
+    if(dehors.length)h+='<div class="epk-s">'+(dedans.length?'Autres':'Prochains événements')+'</div>'+dehors.map(row).join('');
+    return h+'<div class="prow"><button class="btn valid" data-act="sheet-close">Terminé</button></div></div>'}
+  function vSecH(ic,lab,type,act,blab){return '<div class="vsec-h"><h3>'+ic+' '+lab+'</h3>'+
+    (type?'<button class="mini" data-act="v-add" data-v="'+type+'">+ Ajouter</button>'
+        :act?'<button class="mini" data-act="'+act+'">'+esc(blab||'+ Ajouter')+'</button>':'')+'</div>'}
   function vStay(k){var btn=k.place?'<a class="btn ghost" href="'+esc(mapsUrl(k.place))+'" target="_blank" rel="noopener noreferrer">📍 Plan ↗</a>':'';
     return '<article class="vcard"><div class="vc-top"><div class="vc-h" role="button" tabindex="0" data-act="v-item" data-id="'+esc(k.id)+'" aria-label="Modifier : '+esc(k.title)+'"><span class="em" aria-hidden="true">'+(k.hk==='ami'?'🏡':'🛏️')+'</span><div class="main"><span class="t">'+esc(k.title)+'</span>'+(k.place?'<span class="sub">'+esc(k.place)+'</span>':'')+(k.notes?'<span class="vmeta">'+esc(k.notes)+'</span>':'')+'</div></div>'+btn+'</div></article>'}
   /* Trucs à faire du voyage (avant, sur place, après) : checklist comme une quête */
@@ -1551,6 +1582,10 @@
       (vCal?rangeCal(sD,eD,vCalM,'vcal',t.id,vCalStep===1?'Et le retour, c\'est quand&nbsp;?':'Quel jour on part&nbsp;?'):'')+
       impBtn(t.id,'\ud83d\udcc4 Compléter avec un billet')+
       '</section>';
+    /* Les billets de train vivent dans l'agenda : on les rattache au voyage et on les voit ici */
+    var EV=tEvs(t);
+    h+=vSecH('\ud83d\uddd3\ufe0f','Dans l\'agenda',null,'tev-add','+ Lier')+
+      (EV.length?EV.map(tEvRow).join(''):'<p class="vempty">Rien de lié.</p>');
     var H=kids(t.id,'logement').sort(byStart);
     h+=vSecH('🛏️','Hébergement','logement')+(H.length?H.map(vStay).join(''):'<p class="vempty">Pas encore d\'hébergement.</p>');
     h+=vTodo(t);
@@ -1664,7 +1699,7 @@
     else if(a==='tguess-add'){var g=tripGuess();if(g&&g.id===id){
       var ni=addDoc('voyages',{trip:'',type:'voyage',title:g.dest,emoji:g.emoji,
         start:iso(g.start)+' '+pad(g.start.getHours())+':'+pad(g.start.getMinutes()),
-        end:g.end?iso(g.end)+' '+pad(g.end.getHours())+':'+pad(g.end.getMinutes()):'',done:false});
+        end:g.end?iso(g.end)+' '+pad(g.end.getHours())+':'+pad(g.end.getMinutes()):'',done:false,evs:g.ids});
       renderTrips();if(ni)vview(ni,true);toastMsg('Voyage créé depuis l\'agenda')}}
     else if(a==='trip-new'){if(V_OLD){toastMsg('Publie d\'abord la nouvelle version du script Google');return true}var nid=addDoc('voyages',{type:'voyage',trip:'',title:'Nouveau voyage',emoji:'🚆',start:'',end:'',done:false});
       vNew=nid;vEmoOpen=false;vDelConfirm=false;vBilEdit=false;setTab('voyage');vview(nid,true);
@@ -1683,6 +1718,12 @@
       var ni=addDoc('voyages',{type:'voyage',trip:'',title:ib.dest||'Voyage',emoji:'\ud83d\ude86',
         start:mk(g),end:mk(bk),done:false,tk:tk});
       impOpen=null;renderTrips();if(ni)vview(ni,true);toastMsg('Voyage créé depuis le billet')}
+    else if(a==='tev-add'){if(vOpen){evPick=vOpen;evEdit=null;renderSheet()}}
+    else if(a==='tev-tog'){var pt=evPick&&find('voyages',evPick);if(pt){
+      var pl=tEvIds(pt),pi=pl.indexOf(id);if(pi>=0)pl.splice(pi,1);else pl.push(id);
+      tEvSet(pt,pl);renderSheet();renderVView()}}
+    else if(a==='tev-off'){var ot=vOpen&&find('voyages',vOpen);if(ot){
+      var ol=tEvIds(ot),oi=ol.indexOf(id);if(oi>=0){ol.splice(oi,1);tEvSet(ot,ol);renderVView()}}}
     else if(a==='trips-past'){showPast=!showPast;renderTrips()}
     else if(a==='vview-close'){vCal=false;vCalStep=0;vview(null,true)}
     else if(a==='trip-ok'){var tt=vOpen&&find('voyages',vOpen);if(tt){
@@ -1756,6 +1797,29 @@
   }
   var calRange=lsGet('maison-cal-range')||'week',HID=[],showHid=false,EVN={},evEdit=null;
   function hideBtn(id,on){return '<button class="evx" data-act="ev-hide" data-id="'+esc(id)+'" aria-label="'+(on?'Réafficher':'Masquer')+'" title="'+(on?'Réafficher':'Masquer')+'">'+(on?UNDO:'×')+'</button>'}
+  function hm(d){return(d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes()}
+  /* Tout ce qu'on sait de l'événement. Les lignes absentes ne s'affichent pas : le script
+     n'envoie le lieu, la fin et les notes que depuis sa v4. */
+  function evPanel(){var ee=evEdit,e=ee.ev||{},i=evInfo(e),hid=HID.indexOf(ee.id)>=0,L=[];
+    if(i){
+      L.push(['\ud83d\udcc5',cap(fmtDay(iso(i.d),{weekday:'long',day:'numeric',month:'long'}))]);
+      var ht;
+      if(i.allDay)ht='Toute la journée';
+      else{ht=hm(i.d);
+        var f=e.end&&e.end.dateTime?new Date(e.end.dateTime):null;
+        if(f&&!isNaN(f.getTime())&&f>i.d){var du=runTxt(hm(i.d),hm(f));ht+=' \u2192 '+hm(f)+(du?' \u00b7 '+du:'')}}
+      L.push(['\ud83d\udd52',ht]);
+      L.push(['\u23f3',i.n===0?'Aujourd\'hui':i.n===1?'Demain':i.n>1?('Dans '+i.n+' jours'):(i.n===-1?'Hier':'Il y a '+(-i.n)+' jours')]);
+    }
+    if(e.location)L.push(['\ud83d\udccd',e.location]);
+    if(e.cal)L.push(['\ud83d\uddd3\ufe0f',e.cal]);
+    if(e.desc)L.push(['\ud83d\udcdd',e.desc]);
+    return '<div class="panel"><div class="pj-title">'+esc(EVN[ee.id]||ee.orig)+'</div>'+
+      (L.length?'<div class="evd">'+L.map(function(r){return '<div class="evd-r"><span aria-hidden="true">'+r[0]+'</span><b>'+esc(r[1])+'</b></div>'}).join('')+'</div>':'')+
+      '<div class="lab">Nom affiché</div><input class="in" maxlength="80" data-evn value="'+esc(ee.v)+'" aria-label="Nom affiché">'+
+      '<div class="hint">Nom d\'origine : '+esc(ee.orig)+'<br>Renommer ne change rien dans Google Agenda.</div>'+
+      '<div class="prow"><button class="lnk" data-act="ev-reset">Nom d\'origine</button><button class="btn valid" data-act="ev-save">Valider</button></div>'+
+      '<button class="evd-hide" data-act="ev-hide" data-id="'+esc(ee.id)+'">'+(hid?'Réafficher cet événement':'Masquer cet événement')+'</button></div>'}
   function evSave(reset){if(!evEdit)return;var v=String(evEdit.v||'').trim().slice(0,80);if(reset||!v||v===evEdit.orig)delete EVN[evEdit.id];else EVN[evEdit.id]=v;saveSetting('eventNames',EVN);evEdit=null;renderSheet();renderCal();renderAgenda();renderHub()}
   function setHid(list){HID=list;saveSetting('hiddenEvents',list);renderCal();renderAgenda();renderHub()}
 
@@ -1898,7 +1962,7 @@
       if(pv&&pq){upd('projects',id,{steps:steps(pq).concat([{t:pv,done:false}])})}
       projId=null;confirmDel=null;renderSheet()}
     else if(vClick(a,b,id)){}
-    else if(a==='sheet-close'){iconOpen=false;impOpen=null;tEdit=null;tplMgr=false;tplEdit=null;bilPop=null;grpEdit=null;qCal=null;if(evEdit){evEdit=null;renderSheet();return}agOpen=false;evEdit=null;wishOpen=null;projId=null;openId=null;histFor=null;confirmDel=null;renderSheet()}
+    else if(a==='sheet-close'){iconOpen=false;impOpen=null;evPick=null;tEdit=null;tplMgr=false;tplEdit=null;bilPop=null;grpEdit=null;qCal=null;if(evEdit){evEdit=null;renderSheet();return}agOpen=false;evEdit=null;wishOpen=null;projId=null;openId=null;histFor=null;confirmDel=null;renderSheet()}
     else if(a==='care-add'){var csec2=b.closest('section'),cf=csec2&&csec2.querySelector('form.care-add');if(cf){cf.hidden=!cf.hidden;if(!cf.hidden)cf.querySelector('input').focus()}}
     else if(a==='care-chk'){careToggle(id)}
     else if(a==='hub-go'){hubGo(b.getAttribute('data-v'))}
@@ -1957,10 +2021,11 @@
     else if(a==='add-toggle'){var fa=$('f-add');fa.hidden=!fa.hidden;if(!fa.hidden)$('a-title').focus()}
     else if(a==='sd'){it=find('projects',id);if(it){var i2=Number(b.getAttribute('data-i'));var st2=steps(it);st2.splice(i2,1);upd('projects',id,{steps:st2})}}
     else if(a==='cal-go'){load()}
-    else if(a==='ev-edit'){var ee=cal.events.filter(function(q){return q.id===id})[0];if(ee){evEdit={id:id,orig:ee.summary||'Sans titre',v:EVN[id]||ee.summary||''};projId=null;openId=null;wishOpen=null;renderSheet()}}
+    else if(a==='ev-edit'){var ee=cal.events.filter(function(q){return q.id===id})[0];if(ee){evEdit={id:id,orig:ee.summary||'Sans titre',v:EVN[id]||ee.summary||'',ev:ee};projId=null;openId=null;wishOpen=null;renderSheet()}}
     else if(a==='ev-save'){evSave(false)}
     else if(a==='ev-reset'){evSave(true)}
-    else if(a==='ev-hide'){var hl=HID.slice(),hi=hl.indexOf(id);if(hi>=0)hl.splice(hi,1);else hl.push(id);setHid(hl)}
+    else if(a==='ev-hide'){var hl=HID.slice(),hi=hl.indexOf(id);if(hi>=0)hl.splice(hi,1);else hl.push(id);setHid(hl);
+      if(evEdit&&evEdit.id===id){evEdit=null;renderSheet()}}   /* masqué depuis sa fiche : on referme */
     else if(a==='done-tog'){showDone=!showDone;lsSet('maison-show-done',showDone?'1':'0');renderTodo()}
     else if(a==='cal-range'){calRange=b.getAttribute('data-v');lsSet('maison-cal-range',calRange);renderCal()}
     else if(a==='ev-toggle'){showHid=!showHid;renderCal()}

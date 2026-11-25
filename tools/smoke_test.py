@@ -59,7 +59,11 @@ def handle(route):
         r = {'ok': True, 'sheets': state, 'settings': {'hiddenEvents': [], 'eventNames': {}},
              'people': {'p1': 'Personne A', 'p2': 'Personne B'},
              'weather': {'city': 'Paris', 'temp': 7.2, 'cond': 'partly', 'label': 'Éclaircies', 'isDay': True, 'low': 4, 'high': 9},
-             'events': [{'id': 'e1', 'summary': 'Vétérinaire', 'start': {'dateTime': (datetime.date.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%dT18:00:00Z')}},
+             'events': [{'id': 'e1', 'summary': 'Vétérinaire',
+                         'start': {'dateTime': (datetime.date.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%dT18:00:00')},
+                         'end': {'dateTime': (datetime.date.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%dT18:45:00')},
+                         'location': '12 rue des Lilas, Paris', 'cal': 'Maison',
+                         'desc': 'Apporter le carnet de santé de Kimchi'},
                         {'id': 'e2', 'summary': 'Train Paris → Bordeaux', 'start': {'dateTime': (datetime.date.today() + datetime.timedelta(days=26)).strftime('%Y-%m-%dT09:12:00')}},
                         {'id': 'e3', 'summary': 'Train Bordeaux → Paris', 'start': {'dateTime': (datetime.date.today() + datetime.timedelta(days=29)).strftime('%Y-%m-%dT17:40:00')}}]}
     elif body['a'] == 'put':
@@ -189,6 +193,22 @@ def main():
                     page.screenshot(path=f'{OUT}/{name}-agenda.png')
                     txt = page.inner_text('#agtab').lower()
                     assert 'cette semaine' in txt and 'semaine prochaine' in txt and "semaine d'après" in txt and 'lun.' in txt, 'agenda par semaines'
+                    # toucher un evenement montre ses details avant de pouvoir le renommer
+                    page.click('#agtab [data-act=ev-edit] >> nth=0'); page.wait_for_timeout(400)
+                    det = page.inner_text('.sheet-card')
+                    assert 'Vétérinaire' in det, det
+                    assert '18:00' in det and '18:45' in det and '45 min' in det, det
+                    assert 'Demain' in det, det
+                    assert '12 rue des Lilas' in det and 'Maison' in det, det
+                    assert 'carnet de santé' in det, det
+                    page.screenshot(path=f'{OUT}/{name}-evenement.png')
+                    page.fill('.sheet-card [data-evn]', 'Véto Kimchi')
+                    page.click('[data-act=ev-save]'); page.wait_for_timeout(900)
+                    assert 'Véto Kimchi' in page.inner_text('#agtab'), 'le nom affiché change'
+                    page.click('#agtab [data-act=ev-edit] >> nth=0'); page.wait_for_timeout(400)
+                    assert 'Vétérinaire' in page.inner_text('.sheet-card'), 'le nom d\'origine reste visible'
+                    page.click('[data-act=ev-reset]'); page.wait_for_timeout(900)
+                    assert 'Vétérinaire' in page.inner_text('#agtab')
                     page.click('.tabbar [data-tab=home]'); page.wait_for_timeout(300)
                     page.click('.head .calb'); page.wait_for_timeout(300)
                     assert page.get_attribute('body', 'data-tab') == 'agenda', 'bouton agenda en haut'
@@ -568,6 +588,10 @@ def main():
                         assert page.locator('.tguess').count() == 0, 'la proposition disparaît une fois le voyage créé'
                         assert page.is_visible('#vview'), 'le voyage créé s\'ouvre'
                         assert 'Bordeaux' in page.inner_text('#vv-title')
+                        # un voyage cree depuis l'agenda garde ses deux trajets rattaches
+                        assert page.locator('#vv-body .tev').count() == 2, 'les deux evenements sont lies'
+                        lies = page.inner_text('#vv-body')
+                        assert 'Train Paris' in lies and 'Train Bordeaux' in lies, lies
                         # les heures sont lisibles, une ligne par trajet
                         assert page.locator('#vv-body .vleg').count() == 2
                         assert 'aller' in page.inner_text('#vv-body .vleg >> nth=0').lower()
@@ -626,6 +650,24 @@ def main():
                         # l'heure d'arrivee se corrige a la main
                         page.fill('#vv-body [data-trip=endA]', '23:05'); page.wait_for_timeout(1100)
                         assert '23:05' in [r for r in state['voyages'] if r[3] == 'Quimper'][0][11]
+                        # lier un evenement d'agenda a ce voyage, puis le detacher
+                        assert 'Rien de li' in page.inner_text('#vv-body'), 'aucun evenement au depart'
+                        page.click('#vv-body [data-act=tev-add]'); page.wait_for_timeout(400)
+                        assert page.locator('.sheet-card .epk').count() >= 3, 'la liste des evenements'
+                        page.click('.sheet-card .epk >> nth=0'); page.wait_for_timeout(900)
+                        assert page.locator('.sheet-card .epk.on').count() == 1, 'coche'
+                        page.screenshot(path=f'{OUT}/{name}-agenda-lier.png')
+                        page.click('.sheet-card .sheet-x'); page.wait_for_timeout(600)
+                        assert page.locator('#vv-body .tev').count() == 1, 'l evenement apparait dans le voyage'
+                        qv = [r for r in state['voyages'] if r[3] == 'Quimper'][0]
+                        assert '"evs"' in qv[11], qv[11]
+                        page.screenshot(path=f'{OUT}/{name}-voyage-agenda.png')
+                        # toucher la ligne ouvre la fiche de l evenement
+                        page.click('#vv-body .tev .vc-h'); page.wait_for_timeout(500)
+                        assert page.is_visible('.sheet-card [data-evn]'), 'la fiche de l evenement'
+                        page.click('.sheet-card .sheet-x'); page.wait_for_timeout(600)
+                        page.click('#vv-body .tev .sx'); page.wait_for_timeout(1000)
+                        assert page.locator('#vv-body .tev').count() == 0, 'detache'
                         page.click('[data-act=vview-close]'); page.wait_for_timeout(400)
                         page.click('.ttile >> nth=0'); page.wait_for_timeout(500)
                     page.click('.vt-when [data-v=apres]'); page.fill('#vt-in', 'Développer les photos'); page.keyboard.press('Enter'); page.wait_for_timeout(800)

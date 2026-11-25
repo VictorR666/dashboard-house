@@ -237,11 +237,22 @@ function events_() {
       var allDay = ev.isAllDayEvent();
       var st = allDay ? { date: Utilities.formatDate(ev.getAllDayStartDate(), tz, 'yyyy-MM-dd') }
                       : { dateTime: ev.getStartTime().toISOString() };
+      var en = allDay ? { date: Utilities.formatDate(ev.getAllDayEndDate(), tz, 'yyyy-MM-dd') }
+                      : { dateTime: ev.getEndTime().toISOString() };
       var title = String(ev.getTitle() || '').slice(0, 120);
       var key = title + '|' + (st.date || st.dateTime);
       if (seen[key]) return;
       seen[key] = 1;
-      out.push({ id: shortHash_(ev.getId() + '|' + (st.date || st.dateTime)), summary: title, start: st });
+      // Juste de quoi reconnaitre et situer l'evenement : pas d'invites, pas d'adresses e-mail.
+      var loc = String(ev.getLocation() || '').slice(0, 150);
+      var des = String(ev.getDescription() || '').replace(/<br\s*\/?>/gi, ' ')
+                  .replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 400);
+      var row = { id: shortHash_(ev.getId() + '|' + (st.date || st.dateTime)), summary: title, start: st, end: en };
+      if (loc) row.location = loc;
+      if (des) row.desc = des;
+      var cn = String(c.getName() || '').slice(0, 60);
+      if (cn) row.cal = cn;
+      out.push(row);
     });
   });
   out.sort(function (a, b) {
