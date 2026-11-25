@@ -328,8 +328,23 @@ def main():
                     assert page.eval_on_selector_all('#l-courses .crow:not(.done) .ct', 'e => e.map(x => x.textContent)') == ['tomates']
                     page.click('#l-courses .cfil [data-v=std]'); page.wait_for_timeout(300)
                     assert page.eval_on_selector_all('#l-courses .crow:not(.done) .ct', 'e => e.map(x => x.textContent)') == ['pain', 'lait']
+                    # ajouter depuis un filtre range l'article dans cette catégorie
+                    page.click('#l-courses .cfil [data-v=exc]'); page.wait_for_timeout(300)
+                    page.fill('#f-course input', 'ampoules'); page.keyboard.press('Enter'); page.wait_for_timeout(900)
+                    assert page.eval_on_selector_all('#l-courses .crow:not(.done) .ct',
+                        'e => e.map(x => x.textContent)') == ['ampoules', 'tomates']
+                    amp = [r for r in state['courses'] if r[2] == 'ampoules']
+                    assert amp and '"cat": "exc"' in amp[0][6].replace('":"', '": "'), amp
+                    page.click('#l-courses .cfil [data-v=std]'); page.wait_for_timeout(300)
+                    page.fill('#f-course input', 'beurre'); page.keyboard.press('Enter'); page.wait_for_timeout(900)
+                    assert page.eval_on_selector_all('#l-courses .crow:not(.done) .ct',
+                        'e => e.map(x => x.textContent)') == ['beurre', 'pain', 'lait']
                     page.click('#l-courses .cfil [data-v=all]'); page.wait_for_timeout(300)
                     assert page.locator('#l-courses .csec').count() == 2
+                    # sur « Tout », un nouvel article reste dans Quotidien
+                    page.fill('#f-course input', 'riz'); page.keyboard.press('Enter'); page.wait_for_timeout(900)
+                    rz = [r for r in state['courses'] if r[2] == 'riz']
+                    assert rz and '"cat"' not in rz[0][6], rz
                 page.screenshot(path=f'{OUT}/{name}-courses.png', full_page=True)
                 page.click('.tabbar [data-tab=home]'); page.wait_for_timeout(300)
                 if name == 'mobile':

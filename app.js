@@ -1963,8 +1963,11 @@
     if(f.id==='f-course'||f.id==='f-course2'){
       var ci2=f.querySelector('input'),pc=parseCourse(ci2.value);if(!pc.title)return;
       var dup=S.courses.filter(function(c){return nrm(c.title)===nrm(pc.title)})[0];
+      /* Le filtre affiché dit dans quelle catégorie on range : sur « Tout », c'est Quotidien.
+         Un article déjà dans la liste garde la sienne, on ne le déplace pas sous le doigt. */
+      if(!dup&&cFil!=='all')pc.cat=cFil==='exc'?'exc':null;
       /* Un nouvel article (ou un article remis dans la liste) arrive en haut de sa catégorie */
-      var xc=dup?cExc(dup):false;
+      var xc=dup?cExc(dup):(pc.cat==='exc');
       var ks=S.courses.filter(function(c){return !c.done&&c!==dup&&cExc(c)===xc}).map(cKey),top=ks.length?Math.min.apply(null,ks)-1000:null;
       if(dup){var dch={done:false,qty:pc.qty||dup.qty};if(top!==null)dch.ord=top;upd('courses',dup.id,dch)}else{if(top!==null)pc.ord=top;addDoc('courses',pc)}
       ci2.value='';ci2.focus();return;
