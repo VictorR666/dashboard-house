@@ -162,6 +162,10 @@ def main():
                 page.screenshot(path=f'{OUT}/{name}-accueil-simple.png') if name == 'mobile' else None
                 if name == 'mobile':
                     assert page.is_visible('.scene') and page.is_visible('.sc-trip'), 'vue simple (scène météo)'
+                    # une quete principale porte sa propre icone sur l'accueil
+                    ics = page.eval_on_selector_all('#hub3 .sc-ic', 'e => e.map(x => x.textContent)')
+                    assert '🔧' in ics, ics
+                    assert '📌' not in ''.join(ics), ics
                     # ranger l'accueil soi-même : appui long sur un bloc, puis glisser vers le haut
                     hb = lambda: page.locator('#hub3 .sc-rows .hbk').evaluate_all('es=>es.map(e=>e.dataset.hb)')
                     avant = hb()
