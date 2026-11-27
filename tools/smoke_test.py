@@ -725,6 +725,31 @@ def main():
                     page.keyboard.press('Escape'); page.wait_for_timeout(900)
                     assert 'Bidon' not in page.inner_text('.vpack'), 'Echap annule le renommage'
                     assert 'Grande gourde' in page.inner_text('.vpack')
+                    # glisser un objet dans une autre categorie (appui long)
+                    page.locator('.vpack .steps>li >> nth=4').scroll_into_view_if_needed()
+                    page.wait_for_timeout(300)
+                    lignes = lambda: page.eval_on_selector_all(
+                        '.vpack .steps>li', 'e => e.map(x => x.textContent.trim())')
+                    av = lignes()
+                    assert av[0].startswith('Grande gourde'), av[:3]
+                    src = page.locator('.vpack .steps>li >> nth=0').bounding_box()
+                    dst = page.locator('.vpack .steps>li >> nth=3').bounding_box()
+                    assert src and dst and src['y'] > 120, (src, dst)
+                    x, y = src['x'] + src['width'] / 2, src['y'] + src['height'] / 2
+                    page.mouse.move(x, y); page.mouse.down(); page.wait_for_timeout(500)
+                    assert page.locator('.vpack .steps>li.pdrag').count() == 1, 'la ligne se souleve'
+                    cible = dst['y'] + dst['height'] / 2 + 3
+                    while y < cible:
+                        y = min(y + 12, cible); page.mouse.move(x, y); page.wait_for_timeout(40)
+                    page.mouse.up(); page.wait_for_timeout(1300)
+                    ap = lignes()
+                    assert not ap[0].startswith('Grande gourde'), ap[:5]
+                    assert any(l.startswith('Grande gourde') for l in ap), ap[:5]
+                    pk4 = [r for r in state['voyages'] if r[1] == 'v1' and r[2] == 'Valise'][0]
+                    ls = pk4[9].split('\n')
+                    gi = ls.index('Grande gourde')
+                    assert any(l.startswith('# ') for l in ls[:gi]), 'range sous une categorie'
+                    assert len([l for l in ls if l.startswith('# ')]) >= 3, 'les categories sont intactes'
                     # cocher un objet repeint la liste meme si le champ garde le focus
                     page.click('.vpack .step .chk >> nth=0'); page.wait_for_timeout(1100)
                     assert page.locator('.vpack .step.done').count() >= 1, 'la case cochee se voit'

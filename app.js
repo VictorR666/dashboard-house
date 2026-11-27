@@ -1440,6 +1440,59 @@
     ['🏠','Sans Kimchi',['# 🐕 Organisation de la garde','Garde de Kimchi organisée','Clés pour le gardien','Numéro du véto donné',
       '# 🥣 À laisser au gardien','Croquettes','Médicaments de Kimchi','Carnet de santé']]];
   function packOf(tid){return kids(tid,'valise')[0]||null}
+  /* Déplacer un objet d'une catégorie à l'autre : appui long puis glisser, comme les courses.
+     Les titres restent en place et servent de repères : lâcher sous un titre range dedans. */
+  var pDrag=null,pNoClick=0;
+  (function(){
+    var pend=null,HOLD=350;
+    function begin(li,y){var ul=li.parentElement,r=li.getBoundingClientRect();
+      pDrag={li:li,ul:ul,i:+li.getAttribute('data-i'),y:y,y0:y,top0:r.top,sc:scrollerOf(li),raf:0};
+      li.classList.add('pdrag');ul.classList.add('pdragging');
+      try{if(navigator.vibrate)navigator.vibrate(12)}catch(e){}
+      var sel=window.getSelection&&window.getSelection();if(sel&&sel.removeAllRanges)sel.removeAllRanges();
+      frame()}
+    function frame(){
+      if(!pDrag)return;var d=pDrag,li=d.li,y=d.y;
+      var vh=window.innerHeight,sp=y<90?-Math.ceil((90-y)/6):y>vh-110?Math.ceil((y-(vh-110))/6):0;
+      if(sp){if(d.sc)d.sc.scrollTop+=sp;else window.scrollBy(0,sp);d.top0-=sp}
+      var mid,moved=true;
+      while(moved){moved=false;
+        var nx=li.nextElementSibling,pv=li.previousElementSibling;
+        if(nx){var rn=nx.getBoundingClientRect();mid=rn.top+rn.height/2;if(rn.height&&y>mid){d.ul.insertBefore(li,nx.nextSibling);moved=true;continue}}
+        if(pv){var rp=pv.getBoundingClientRect();mid=rp.top+rp.height/2;if(rp.height&&y<mid){d.ul.insertBefore(li,pv);moved=true}}}
+      li.style.transform='';var lay=li.getBoundingClientRect().top;
+      li.style.transform='translateY('+(d.top0+(y-d.y0)-lay)+'px)';
+      d.raf=requestAnimationFrame(frame)}
+    function finish(){
+      var d=pDrag;if(!d)return;cancelAnimationFrame(d.raf);pDrag=null;pNoClick=Date.now()+500;
+      d.li.classList.remove('pdrag');d.ul.classList.remove('pdragging');d.li.style.transform='';
+      var t=vOpen&&find('voyages',vOpen);if(!t){vPaint();return}
+      var src=pitems((packOf(t.id)||{items:[]}).items),me=src[d.i];
+      if(!me||me.h){vPaint();return}
+      var lis=[].slice.call(d.ul.children),pos=lis.indexOf(d.li),prev=null,k;
+      for(k=pos-1;k>=0;k--){var n=+lis[k].getAttribute('data-i');if(!isNaN(n)){prev=src[n];break}}
+      src.splice(src.indexOf(me),1);
+      src.splice(prev?src.indexOf(prev)+1:0,0,me);
+      setPack(t.id,src);vPaint()}
+    function cancelPend(){if(pend){clearTimeout(pend.t);pend=null}}
+    function start(e,x,y){if(!e.target.closest)return;
+      var li=e.target.closest('.vpack .steps>li.step');
+      if(!li||isNaN(+li.getAttribute('data-i')))return;
+      if(e.target.closest('input'))return;                  /* un renommage en cours ne se glisse pas */
+      cancelPend();pend={li:li,x:x,y:y,t:setTimeout(function(){var q=pend;pend=null;if(q)begin(q.li,q.y)},HOLD)}}
+    function move(x,y,e){
+      if(pDrag){pDrag.y=y;if(e&&e.cancelable)e.preventDefault();return}
+      if(pend&&(Math.abs(x-pend.x)>8||Math.abs(y-pend.y)>8))cancelPend()}
+    document.addEventListener('touchstart',function(e){if(e.touches.length!==1){cancelPend();return}var t=e.touches[0];start(e,t.clientX,t.clientY)},{passive:true});
+    document.addEventListener('touchmove',function(e){var t=e.touches[0];if(t)move(t.clientX,t.clientY,e)},{passive:false});
+    document.addEventListener('touchend',function(){cancelPend();finish()});
+    document.addEventListener('touchcancel',function(){cancelPend();finish()});
+    document.addEventListener('mousedown',function(e){if(e.button===0)start(e,e.clientX,e.clientY)});
+    document.addEventListener('mousemove',function(e){move(e.clientX,e.clientY,e)});
+    document.addEventListener('mouseup',function(){cancelPend();finish()});
+    document.addEventListener('contextmenu',function(e){if(pDrag||(e.target.closest&&e.target.closest('.vpack .steps>li.step')))e.preventDefault()});
+    document.addEventListener('click',function(e){if(Date.now()<pNoClick&&e.target.closest&&e.target.closest('.vpack .steps>li')){e.preventDefault();e.stopPropagation()}},true);
+  })();
   /* Renommer un objet de la valise en touchant son texte, comme une mini-quête */
   function packRen(b){
     var i=+b.getAttribute('data-i'),t=vOpen&&find('voyages',vOpen),li=b.parentElement;
@@ -1495,11 +1548,11 @@
     var nb=pcount(items),done=items.filter(function(x){return !x.h&&x.done}).length,pc=nb?Math.round(done/nb*100):0;
     /* tri : chaque section garde ses objets, les cochés descendent dans leur section */
     var secs=[],curS={h:null,rows:[]};
-    items.forEach(function(x,i){if(x.h){if(curS.rows.length||curS.h)secs.push(curS);curS={h:x.h,rows:[]}}else curS.rows.push({x:x,i:i})});
+    items.forEach(function(x,i){if(x.h){if(curS.rows.length||curS.h)secs.push(curS);curS={h:x.h,hi:i,rows:[]}}else curS.rows.push({x:x,i:i})});
     if(curS.rows.length||curS.h)secs.push(curS);
-    var srt=[];secs.forEach(function(sc){if(sc.h)srt.push({hdr:sc.h});sc.rows.sort(function(a,b){return (a.x.done?1:0)-(b.x.done?1:0)||a.i-b.i}).forEach(function(r){srt.push(r)})});
+    var srt=[];secs.forEach(function(sc){if(sc.h)srt.push({hdr:sc.h,i:sc.hi});sc.rows.sort(function(a,b){return (a.x.done?1:0)-(b.x.done?1:0)||a.i-b.i}).forEach(function(r){srt.push(r)})});
     return '<div class="vpack"><div class="qc-prog"><div class="bar"><i style="width:'+pc+'%"></i></div><span>'+done+'/'+nb+(nb&&done===nb?' · prête ! 🎉':'')+'</span></div>'+form+
-      '<ul class="steps">'+srt.map(function(o){if(o.hdr)return '<li class="vt-g pk-g">'+esc(o.hdr)+'</li>';var x=o.x,i=o.i;return '<li class="step'+(x.done?' done':'')+'"><button class="chk" data-act="pack-tog" data-i="'+i+'" aria-label="'+(x.done?'Ressortir : ':'Dans la valise : ')+esc(x.t)+'">'+CHECK+'</button><button class="pk-t" data-act="pack-ren" data-i="'+i+'">'+esc(x.t)+'</button><button class="sx" data-act="pack-del" data-i="'+i+'" aria-label="Retirer : '+esc(x.t)+'" title="Retirer">×</button></li>'}).join('')+'</ul>'+
+      '<ul class="steps">'+srt.map(function(o){if(o.hdr)return '<li class="vt-g pk-g" data-i="'+o.i+'">'+esc(o.hdr)+'</li>';var x=o.x,i=o.i;return '<li class="step'+(x.done?' done':'')+'" data-i="'+i+'"><button class="chk" data-act="pack-tog" data-i="'+i+'" aria-label="'+(x.done?'Ressortir : ':'Dans la valise : ')+esc(x.t)+'">'+CHECK+'</button><button class="pk-t" data-act="pack-ren" data-i="'+i+'">'+esc(x.t)+'</button><button class="sx" data-act="pack-del" data-i="'+i+'" aria-label="Retirer : '+esc(x.t)+'" title="Retirer">×</button></li>'}).join('')+'</ul>'+
       '<div class="prow">'+(done?'<button class="lnk" data-act="pack-reset">'+UNDO+'Tout décocher</button>':'')+'<button class="lnk" data-act="tpl-from-pack">💾 Enregistrer comme liste type</button></div>'+chips+'</div>'}
   /* Départ = date et heure de l'aller, enregistrées sur le voyage lui-même */
   function departAt(t){if(!t.start)return null;var h=hPart(t.start);return h?{d:new Date(dPart(t.start)+'T'+h),exact:true}:{d:parse(dPart(t.start)),exact:false}}

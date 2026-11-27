@@ -1362,3 +1362,9 @@ body[data-tab="maison"] .addgrp{display:flex}
 .vpack .step .pk-t{line-height:1.35}
 .vpack .step.done .pk-t{text-decoration:line-through;color:var(--ink2)}
 .vpack .step .pk-ed{flex:1;min-width:0;min-height:34px;padding:4px 9px;font-size:15px;font-weight:700}
+
+/* v113 : glisser un objet de la valise d'une catégorie à l'autre */
+.vpack .steps>li.step{border-radius:12px}
+.vpack .steps.pdragging{touch-action:none}
+.vpack .steps>li.step.pdrag{position:relative;z-index:5;background:#fff;box-shadow:0 10px 24px rgba(91,72,180,.28);padding-left:6px;padding-right:6px}
+.vpack .steps.pdragging>li:not(.pdrag){transition:transform .15s}
