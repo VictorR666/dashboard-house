@@ -685,7 +685,15 @@ def main():
                     r = [r for r in state['voyages'] if r[3] == 'Fado au Clube']
                     assert r and '"when": "avant"' in r[0][11].replace('":"', '": "'), r
                     page.screenshot(path=f'{OUT}/{name}-voyage-todo.png', full_page=True)
-                    page.click('[data-act=pack-fold]'); page.wait_for_timeout(1500)
+                    # la valise s'ouvre depliee, et se replie si on le demande
+                    page.wait_for_timeout(1500)
+                    assert page.is_visible('.vpack'), 'la valise est depliee par defaut'
+                    page.click('[data-act=pack-fold]'); page.wait_for_timeout(600)
+                    assert not page.is_visible('.vpack'), 'on peut la replier'
+                    assert page.evaluate("localStorage.getItem('maison-pack-open')") == '0'
+                    page.click('[data-act=pack-fold]'); page.wait_for_timeout(900)
+                    assert page.is_visible('.vpack') and page.evaluate(
+                        "localStorage.getItem('maison-pack-open')") == '1'
                     tp = [r for r in state['voyages'] if r[2] == 'Valise' and r[1] == '']
                     assert len(tp) == 5, tp
                     assert all('# ' in x[9] for x in tp), 'les listes types ont des titres de catégories'
