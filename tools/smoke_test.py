@@ -703,9 +703,28 @@ def main():
                     pk2 = [r for r in state['voyages'] if r[1] == 'v1' and r[2] == 'Valise'][0]
                     assert 'Gourde' in pk2[9], pk2[9]
                     assert 'Gourde' in page.inner_text('.vpack'), 'l objet apparait tout de suite'
+                    # bug : ajouter un objet effacait les titres de categories
+                    assert page.locator('.vpack .pk-g').count() >= 3, 'les categories survivent a un ajout'
+                    assert pk2[9].split('Gourde')[1].count('# ') >= 3, pk2[9]
                     assert page.evaluate(
                         "document.activeElement && document.activeElement.hasAttribute('data-packinput')"
                     ), 'et on peut enchainer un second objet'
+                    # renommer un objet en touchant son texte
+                    page.click('.vpack .step .pk-t >> nth=0'); page.wait_for_timeout(500)
+                    assert page.locator('.vpack .step .pk-ed').count() == 1, 'le texte devient un champ'
+                    page.wait_for_timeout(400)
+                    assert page.locator('.vpack .step .pk-ed').count() == 1, 'et il survit au redessin differe'
+                    page.fill('.vpack .step .pk-ed', 'Grande gourde')
+                    page.keyboard.press('Enter'); page.wait_for_timeout(1200)
+                    pk3 = [r for r in state['voyages'] if r[1] == 'v1' and r[2] == 'Valise'][0]
+                    assert pk3[9].split('\n')[0] == 'Grande gourde', pk3[9][:60]
+                    assert 'Grande gourde' in page.inner_text('.vpack')
+                    # echap annule
+                    page.click('.vpack .step .pk-t >> nth=0'); page.wait_for_timeout(500)
+                    page.fill('.vpack .step .pk-ed', 'Bidon')
+                    page.keyboard.press('Escape'); page.wait_for_timeout(900)
+                    assert 'Bidon' not in page.inner_text('.vpack'), 'Echap annule le renommage'
+                    assert 'Grande gourde' in page.inner_text('.vpack')
                     # cocher un objet repeint la liste meme si le champ garde le focus
                     page.click('.vpack .step .chk >> nth=0'); page.wait_for_timeout(1100)
                     assert page.locator('.vpack .step.done').count() >= 1, 'la case cochee se voit'

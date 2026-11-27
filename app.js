@@ -1440,6 +1440,25 @@
     ['🏠','Sans Kimchi',['# 🐕 Organisation de la garde','Garde de Kimchi organisée','Clés pour le gardien','Numéro du véto donné',
       '# 🥣 À laisser au gardien','Croquettes','Médicaments de Kimchi','Carnet de santé']]];
   function packOf(tid){return kids(tid,'valise')[0]||null}
+  /* Renommer un objet de la valise en touchant son texte, comme une mini-quête */
+  function packRen(b){
+    var i=+b.getAttribute('data-i'),t=vOpen&&find('voyages',vOpen),li=b.parentElement;
+    if(!t||!li||isNaN(i))return;
+    var cur=b.textContent,inp=document.createElement('input'),fini=false;
+    inp.className='in pk-ed';inp.value=cur;inp.maxLength=80;
+    inp.setAttribute('enterkeyhint','done');inp.setAttribute('aria-label','Renommer : '+cur);
+    li.replaceChild(inp,b);
+    inp.focus();try{inp.setSelectionRange(cur.length,cur.length)}catch(e){}
+    var end=function(save){
+      if(fini)return;fini=true;
+      var v=inp.value.trim().slice(0,80);inp.blur();
+      if(save&&v&&v!==cur){var it=pitems((packOf(t.id)||{items:[]}).items);
+        if(it[i]&&!it[i].h){it[i].t=v;setPack(t.id,it)}}
+      vPaint()};
+    inp.addEventListener('keydown',function(e){
+      if(e.key==='Enter'){e.preventDefault();e.stopPropagation();end(true)}
+      else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();end(false)}});
+    inp.addEventListener('focusout',function(){setTimeout(function(){end(true)},0)})}
   function setPack(tid,items){var v=packOf(tid);items=items.slice(0,200);
     if(v)upd('voyages',v.id,{items:items});else addDoc('voyages',{trip:tid,type:'valise',title:'Valise',items:items,done:false})}
   function pitems(arr){return (arr||[]).map(function(x){return x.h?{h:x.h}:{t:x.t,done:!!x.done}})}
@@ -1480,7 +1499,7 @@
     if(curS.rows.length||curS.h)secs.push(curS);
     var srt=[];secs.forEach(function(sc){if(sc.h)srt.push({hdr:sc.h});sc.rows.sort(function(a,b){return (a.x.done?1:0)-(b.x.done?1:0)||a.i-b.i}).forEach(function(r){srt.push(r)})});
     return '<div class="vpack"><div class="qc-prog"><div class="bar"><i style="width:'+pc+'%"></i></div><span>'+done+'/'+nb+(nb&&done===nb?' · prête ! 🎉':'')+'</span></div>'+form+
-      '<ul class="steps">'+srt.map(function(o){if(o.hdr)return '<li class="vt-g pk-g">'+esc(o.hdr)+'</li>';var x=o.x,i=o.i;return '<li class="step'+(x.done?' done':'')+'"><button class="chk" data-act="pack-tog" data-i="'+i+'" aria-label="'+(x.done?'Ressortir : ':'Dans la valise : ')+esc(x.t)+'">'+CHECK+'</button><span>'+esc(x.t)+'</span><button class="sx" data-act="pack-del" data-i="'+i+'" aria-label="Retirer : '+esc(x.t)+'" title="Retirer">×</button></li>'}).join('')+'</ul>'+
+      '<ul class="steps">'+srt.map(function(o){if(o.hdr)return '<li class="vt-g pk-g">'+esc(o.hdr)+'</li>';var x=o.x,i=o.i;return '<li class="step'+(x.done?' done':'')+'"><button class="chk" data-act="pack-tog" data-i="'+i+'" aria-label="'+(x.done?'Ressortir : ':'Dans la valise : ')+esc(x.t)+'">'+CHECK+'</button><button class="pk-t" data-act="pack-ren" data-i="'+i+'">'+esc(x.t)+'</button><button class="sx" data-act="pack-del" data-i="'+i+'" aria-label="Retirer : '+esc(x.t)+'" title="Retirer">×</button></li>'}).join('')+'</ul>'+
       '<div class="prow">'+(done?'<button class="lnk" data-act="pack-reset">'+UNDO+'Tout décocher</button>':'')+'<button class="lnk" data-act="tpl-from-pack">💾 Enregistrer comme liste type</button></div>'+chips+'</div>'}
   /* Départ = date et heure de l'aller, enregistrées sur le voyage lui-même */
   function departAt(t){if(!t.start)return null;var h=hPart(t.start);return h?{d:new Date(dPart(t.start)+'T'+h),exact:true}:{d:parse(dPart(t.start)),exact:false}}
@@ -1766,6 +1785,7 @@
     else if(a==='undo-multi'){if(lastMulti){var l=lastMulti;lastMulti=null;hideToast();l.forEach(function(o){if(!find('voyages',o.id)){S.voyages.push(o);shWrite('voyages',o)}});render()}}
     else if(a==='pack-tog'||a==='pack-del'){t=vOpen&&packOf(vOpen);if(t){var items=pitems(t.items),i=Number(b.getAttribute('data-i'));
       if(items[i]){if(a==='pack-tog')items[i].done=!items[i].done;else items.splice(i,1);setPack(vOpen,items)}}}
+    else if(a==='pack-ren'){packRen(b)}
     else if(a==='pack-reset'){t=vOpen&&packOf(vOpen);if(t)updUndo('voyages',t.id,{items:t.items.map(function(x){return x.h?{h:x.h}:{t:x.t,done:false}})},'Valise décochée')}
     else return false;
     return true}
@@ -2079,8 +2099,11 @@
       tplEdit.items.push(tv2);renderSheet();var ti3=document.querySelector('.sheet-card [data-tplinput]');if(ti3)ti3.focus();return}
     if(f.getAttribute('data-form')==='pack'){
       var pi=f.querySelector('input'),pv=pi.value.trim().slice(0,80),pt=vOpen&&find('voyages',vOpen);if(!pv||!pt)return;
-      var cur=(packOf(pt.id)||{items:[]}).items.map(function(x){return {t:x.t,done:!!x.done}});
-      pi.value='';setPack(pt.id,cur.concat([{t:pv,done:false}]));vPaint();
+      var cur=pitems((packOf(pt.id)||{items:[]}).items);   /* pitems garde les titres de catégorie */
+      var at=cur.length,fh=-1;cur.some(function(x,n){if(x.h){fh=n;return true}});
+      if(fh>=0)at=fh;                                      /* un objet neuf se range avant la première catégorie */
+      cur.splice(at,0,{t:pv,done:false});
+      pi.value='';setPack(pt.id,cur);vPaint();
       var pi2=document.querySelector('#vv-body [data-packinput]');if(pi2)pi2.focus();return;
     }
     if(f.id==='f-qadd3'){var q3t=$('q-title3'),q3s=splitEmoji(q3t.value);if(!q3s.title&&!q3s.emoji)return;var np=newProj(q3s);if(QCATL[qtCat])np.cat=qtCat;addDoc('projects',np);q3t.value='';f.hidden=true;return}
@@ -2140,7 +2163,8 @@
   ['pointerup','pointercancel'].forEach(function(ev){document.addEventListener(ev,function(e){
     if(vPressed){vPressed=false;
       var vb=e&&e.target&&e.target.closest?e.target.closest('[data-act]'):null;
-      setTimeout(vb?vPaint:renderVView,150)}   /* bouton : on force ; champ : on laisse le clavier */if(!sheetPressed)return;sheetPressed=false;setTimeout(function(){renderSheet(true)},150)},true)});
+      /* bouton : on force le redessin — sauf s'il vient d'ouvrir un champ, qu'on ne remplace pas */
+      setTimeout(function(){if(vb&&!vTyping())vPaint();else renderVView()},150)}if(!sheetPressed)return;sheetPressed=false;setTimeout(function(){renderSheet(true)},150)},true)});
   document.addEventListener('focusout',function(e){
     var t=e.target;if(t&&t.closest&&t.closest('.sheet-card'))setTimeout(function(){renderSheet(true)},80);
   });
