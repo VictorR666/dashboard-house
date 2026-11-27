@@ -113,6 +113,12 @@
   var DONE_RE=/^(✓|✔|✅|\[x\]|x\s)\s*/i;
   var PEOPLE={p1:'',p2:''}; /* prénoms : réglés dans le script Google, jamais dans le code */
   function setPeople(pp){pp=pp||{};PEOPLE={p1:String(pp.p1||'').slice(0,30),p2:String(pp.p2||'').slice(0,30)}}
+  /* Une ligne de valise : « ✓ », une quantité facultative (« 3× », ou « n× » = selon le voyage), le nom */
+  var Q_RE=/^(\d{1,2}|n)\s*[×xX*]\s+/;
+  function pkItem(x){var done=DONE_RE.test(x),t=x.replace(DONE_RE,'').trim(),q=null,m=Q_RE.exec(t);
+    if(m){var r=t.slice(m[0].length).trim();
+      if(r){q=m[1]==='n'?'n':String(Math.max(1,Math.min(99,+m[1])));t=r}}
+    return q?{t:t,done:done,q:q}:{t:t,done:done}}
   function fromRow(k,r,i){var c=SHT[k].cols,o={},t={};
     try{t=JSON.parse(r[c.indexOf('_t')]||'{}')||{}}catch(e){t={}}
     if(typeof t!=='object'||Array.isArray(t))t={};
@@ -126,7 +132,7 @@
     if(k==='courses'){o.done=yes(o.done)}
     if(k==='voyages'){o.type=vType(o.type)||(o.trip?'activite':'voyage');o.start=nDT(o.start);o.end=nDT(o.end);o.done=yes(o.done);
       if(o.price!=null&&o.price!=='')o.price=Number(String(o.price).replace(',','.'))||'';
-      if(o.type==='valise')o.items=String(o.notes||'').split(/\n/).map(function(x){return x.trim()}).filter(Boolean).map(function(x){return /^#\s*/.test(x)?{h:x.replace(/^#\s*/,'')}:{t:x.replace(DONE_RE,''),done:DONE_RE.test(x)}})}
+      if(o.type==='valise')o.items=String(o.notes||'').split(/\n/).map(function(x){return x.trim()}).filter(Boolean).map(function(x){return /^#\s*/.test(x)?{h:x.replace(/^#\s*/,'')}:pkItem(x)})}
     if(k==='projects'){o.main=yes(o.main);o.steps=String(o.steps||'').split(/\n/).map(function(x){return x.trim()}).filter(Boolean).map(function(x){return {t:x.replace(DONE_RE,''),done:DONE_RE.test(x)}})}
     return o}
   function toRow(k,o){var c=SHT[k].cols,t={};
@@ -139,7 +145,7 @@
       if((k==='shop'&&f==='done')||(k==='projects'&&f==='main')||(k==='courses'&&f==='done'))return v?'oui':'';
       if(k==='voyages'&&f==='type')return VT[v]||'Activité';
       if(k==='voyages'&&f==='done')return v?'oui':'';
-      if(k==='voyages'&&f==='notes'&&o.type==='valise')return (o.items||[]).map(function(x){return x.h?'# '+x.h:(x.done?'✓ ':'')+x.t}).join('\n');
+      if(k==='voyages'&&f==='notes'&&o.type==='valise')return (o.items||[]).map(function(x){return x.h?'# '+x.h:(x.done?'✓ ':'')+(x.q?x.q+'× ':'')+x.t}).join('\n');
       if(k==='projects'&&f==='steps')return (v||[]).map(function(x){return (x.done?'✓ ':'')+x.t}).join('\n');
       if(typeof v==='number')return v;
       return v==null?'':String(v)})}
@@ -1416,7 +1422,7 @@
     if((id||null)!==vOpen)vtWhen=null;vOpen=id||null;var el=$('vview');el.hidden=!vOpen;document.documentElement.classList.toggle('q-open',!!vOpen);
     if(vOpen)lsSet('maison-trip',vOpen);
     if(push){try{if(vOpen)history.pushState({v:1},'','#voyage');else if(history.state&&history.state.v)history.back();else history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
-    if(vOpen&&vPackOpen){seedTpls();upgradeTpls()}   /* la valise s'ouvre dépliée : ses listes types doivent exister */
+    if(vOpen&&vPackOpen){seedTpls();upgradeTpls();upgradeQ()}   /* la valise s'ouvre dépliée : ses listes types doivent exister */
     if(vOpen){renderVView();el.scrollTop=0;var b=el.querySelector('.qv-back');if(b)b.focus({preventScroll:true})}
   }
   window.addEventListener('popstate',function(){if(location.hash!=='#voyage'&&vOpen)vview(null,false)});
@@ -1424,7 +1430,7 @@
   var TPL_SEED=[['🎒','Essentiels',['# 🪪 Papiers et argent','Papiers d\'identité','Billets et réservations','Carte bancaire','Clés de la maison',
       '# 💻 Tech','Chargeur de téléphone','Batterie externe','Adaptateur de prise','Écouteurs',
       '# 🧴 Toilette et santé','Médicaments','Brosse à dents et dentifrice','Trousse de toilette',
-      '# 👖 Vêtements','Pyjama','Sous-vêtements','Chaussettes','Hauts','Bas','Veste','Chaussures','Lunettes de soleil',
+      '# 👖 Vêtements','Pyjama','n× Sous-vêtements','n× Chaussettes','n× Hauts','Bas','Veste','Chaussures','Lunettes de soleil',
       '# 🐶 Kimchi','Garde de Kimchi organisée']],
     ['⛺','Camping',['# ⚠️ À ne pas oublier','Passeport','Passeport de Kimchi','Cadenas',
       '# 👖 Vêtements','T-shirts (4 + 1 de secours)','Sous-vêtements (4 + 1 de secours)','Chaussettes (4 + 1 de secours)','1 pull','1 pantalon « dégueu »','1 jean','Pantalon habillé','Chemise','Pyjama','Kway','Tenue de sport','2e paire de chaussures',
@@ -1517,19 +1523,39 @@
     inp.addEventListener('focusout',function(){setTimeout(function(){end(true)},0)})}
   function setPack(tid,items){var v=packOf(tid);items=items.slice(0,200);
     if(v)upd('voyages',v.id,{items:items});else addDoc('voyages',{trip:tid,type:'valise',title:'Valise',items:items,done:false})}
-  function pitems(arr){return (arr||[]).map(function(x){return x.h?{h:x.h}:{t:x.t,done:!!x.done}})}
+  function pitems(arr){return (arr||[]).map(function(x){return x.h?{h:x.h}:(x.q?{t:x.t,done:!!x.done,q:x.q}:{t:x.t,done:!!x.done})})}
+  /* Nuits du voyage : c'est ce que vaut une quantité « selon le voyage » */
+  function nightsOf(t){var sp=t&&tripState(t).sp;
+    if(!sp||!sp.s||!sp.e)return 0;return Math.max(0,Math.round((parse(sp.e)-parse(sp.s))/864e5))}
+  function qNum(x,nu){if(!x||!x.q)return 0;
+    return x.q==='n'?Math.max(1,nu||1):Math.max(1,+x.q||1)}
+  /* Le sélecteur de quantité : un petit nombre, et le choix natif par-dessus */
+  function qSel(i,x,nu){var q=x&&x.q||'',o='<option value=""'+(q?'':' selected')+'>Sans nombre</option>'+
+      '<option value="n"'+(q==='n'?' selected':'')+'>Selon le voyage ('+Math.max(1,nu||1)+')</option>',k;
+    for(k=1;k<=12;k++)o+='<option value="'+k+'"'+(q===String(k)?' selected':'')+'>'+k+'</option>';
+    return '<span class="pk-q'+(q?'':' none')+(q==='n'?' auto':'')+'"><b>'+(q?qNum(x,nu):'\u2013')+'</b>'+
+      '<select data-packq="'+i+'" aria-label="Combien en prendre">'+o+'</select></span>'}
   function pcount(arr){return (arr||[]).filter(function(x){return !x.h}).length}
-  function packCopy(fromId){var src=fromId&&packOf(fromId);if(!src||!vOpen)return;setPack(vOpen,src.items.map(function(x){return x.h?{h:x.h}:{t:x.t,done:false}}))}
+  function packCopy(fromId){var src=fromId&&packOf(fromId);if(!src||!vOpen)return;
+    setPack(vOpen,src.items.map(function(x){return x.h?{h:x.h}:(x.q?{t:x.t,done:false,q:x.q}:{t:x.t,done:false})}))}
   /* Listes types : lignes « Valise » sans voyage parent, dans le même onglet du Sheet */
   function tpls(){return S.voyages.filter(function(x){return x.type==='valise'&&!x.trip}).sort(function(a,b){return (a.createdAt||0)-(b.createdAt||0)})}
   function seedItems(lines){return lines.map(function(x){return /^#\s*/.test(x)?{h:x.replace(/^#\s*/,'')}:{t:x,done:false}})}
-  function seedTpls(){if(V_OLD||!loaded.voyages||fromCache||tpls().length||lsGet('maison-tpl-seed')==='1')return;lsSet('maison-tpl-seed','1');lsSet('maison-tpl-v2','1');
+  function seedTpls(){if(V_OLD||!loaded.voyages||fromCache||tpls().length||lsGet('maison-tpl-seed')==='1')return;lsSet('maison-tpl-seed','1');lsSet('maison-tpl-v2','1');lsSet('maison-tpl-q','1');
     TPL_SEED.forEach(function(x){addDoc('voyages',{trip:'',type:'valise',title:x[1],emoji:x[0],items:seedItems(x[2]),done:false})})}
   /* 16/11 : les listes types passent en sections ; les 5 listes d'origine sont mises à niveau une seule fois */
   function upgradeTpls(){if(V_OLD||!loaded.voyages||fromCache||!tpls().length||lsGet('maison-tpl-v2')==='1')return;
     TPL_SEED.forEach(function(x){var tp=tpls().filter(function(t){return nrm(t.title)===nrm(x[1])})[0];
       if(tp&&!(tp.items||[]).some(function(it){return it.h}))upd('voyages',tp.id,{items:seedItems(x[2])})});
     lsSet('maison-tpl-v2','1')}
+  /* 27/11 : les vêtements suivent la durée du voyage. On marque « selon le voyage » les lignes
+     de vêtements des listes types, sauf celles où Victor a déjà écrit un nombre lui-même. */
+  var PERNUIT=/^(t-?shirts?|hauts?|maillots?|sous-?v[ê e]tements?|slips?|culottes?|cale[çc]ons?|chaussettes?|bas)\b/i;
+  function upgradeQ(){if(V_OLD||!loaded.voyages||fromCache||lsGet('maison-tpl-q')==='1'||!tpls().length)return;
+    lsSet('maison-tpl-q','1');
+    tpls().forEach(function(tp){var it=pitems(tp.items),ch=false;
+      it.forEach(function(x){if(!x.h&&!x.q&&!/\d/.test(x.t)&&PERNUIT.test(x.t)){x.q='n';ch=true}});
+      if(ch)upd('voyages',tp.id,{items:it})})}
   function applyTpl(id){var tp=find('voyages',id);if(!tp||!vOpen)return;var p=packOf(vOpen),cur=pitems(p?p.items:[]),have={},n=0,curKey=null;
     cur.forEach(function(x){if(x.t)have[nrm(x.t)]=1});
     (tp.items||[]).forEach(function(x){
@@ -1537,9 +1563,9 @@
       if(x.t&&!have[nrm(x.t)]){
         var at=cur.length;
         if(curKey!==null){for(var j=0;j<cur.length;j++)if(cur[j].h&&nrm(cur[j].h)===curKey){at=j+1;while(at<cur.length&&!cur[at].h)at++;break}}
-        cur.splice(at,0,{t:x.t,done:false});have[nrm(x.t)]=1;n++}});
+        cur.splice(at,0,x.q?{t:x.t,done:false,q:x.q}:{t:x.t,done:false});have[nrm(x.t)]=1;n++}});
     if(n)setPack(vOpen,cur);toastMsg(n?'« '+tp.title+' » : '+n+' objet'+(n>1?'s':'')+' ajouté'+(n>1?'s':''):'Tout est déjà dans la valise')}
-  function vPack(t){var v=packOf(t.id),items=v?v.items:[];
+  function vPack(t){var v=packOf(t.id),items=v?v.items:[],nu=nightsOf(t);
     var form='<form class="stepform" data-form="pack"><input class="in" maxlength="80" data-packinput required enterkeyhint="done" placeholder="Ajouter…" aria-label="Ajouter à la valise"><button class="btn" type="submit">+</button></form>';
     var T=tpls(),chips='<div class="lab">Ajouter une liste type</div><div class="tchips">'+T.map(function(tp){return '<button class="tchip" data-act="tpl-use" data-id="'+esc(tp.id)+'">'+esc((tp.emoji||'🧳')+' '+tp.title)+' <i>'+pcount(tp.items)+'</i></button>'}).join('')+
       '<button class="tchip ghost" data-act="tpl-mgr">⚙️ Gérer les listes</button></div>';
@@ -1555,7 +1581,7 @@
     if(curS.rows.length||curS.h)secs.push(curS);
     var srt=[];secs.forEach(function(sc){if(sc.h)srt.push({hdr:sc.h,i:sc.hi});sc.rows.sort(function(a,b){return (a.x.done?1:0)-(b.x.done?1:0)||a.i-b.i}).forEach(function(r){srt.push(r)})});
     return '<div class="vpack"><div class="qc-prog"><div class="bar"><i style="width:'+pc+'%"></i></div><span>'+done+'/'+nb+(nb&&done===nb?' · prête ! 🎉':'')+'</span></div>'+form+
-      '<ul class="steps">'+srt.map(function(o){if(o.hdr)return '<li class="vt-g pk-g" data-i="'+o.i+'">'+esc(o.hdr)+'</li>';var x=o.x,i=o.i;return '<li class="step'+(x.done?' done':'')+'" data-i="'+i+'"><button class="chk" data-act="pack-tog" data-i="'+i+'" aria-label="'+(x.done?'Ressortir : ':'Dans la valise : ')+esc(x.t)+'">'+CHECK+'</button><button class="pk-t" data-act="pack-ren" data-i="'+i+'">'+esc(x.t)+'</button><button class="sx" data-act="pack-del" data-i="'+i+'" aria-label="Retirer : '+esc(x.t)+'" title="Retirer">×</button></li>'}).join('')+'</ul>'+
+      '<ul class="steps">'+srt.map(function(o){if(o.hdr)return '<li class="vt-g pk-g" data-i="'+o.i+'">'+esc(o.hdr)+'</li>';var x=o.x,i=o.i;return '<li class="step'+(x.done?' done':'')+'" data-i="'+i+'"><button class="chk" data-act="pack-tog" data-i="'+i+'" aria-label="'+(x.done?'Ressortir : ':'Dans la valise : ')+esc(x.t)+'">'+CHECK+'</button>'+qSel(i,x,nu)+'<button class="pk-t" data-act="pack-ren" data-i="'+i+'">'+esc(x.t)+'</button><button class="sx" data-act="pack-del" data-i="'+i+'" aria-label="Retirer : '+esc(x.t)+'" title="Retirer">×</button></li>'}).join('')+'</ul>'+
       '<div class="prow">'+(done?'<button class="lnk" data-act="pack-reset">'+UNDO+'Tout décocher</button>':'')+'<button class="lnk" data-act="tpl-from-pack">💾 Enregistrer comme liste type</button></div>'+chips+'</div>'}
   /* Départ = date et heure de l'aller, enregistrées sur le voyage lui-même */
   function departAt(t){if(!t.start)return null;var h=hPart(t.start);return h?{d:new Date(dPart(t.start)+'T'+h),exact:true}:{d:parse(dPart(t.start)),exact:false}}
@@ -1665,7 +1691,8 @@
     h+=vSecH('🛏️','Hébergement','logement')+(H.length?H.map(vStay).join(''):'<p class="vempty">Pas encore d\'hébergement.</p>');
     h+=vTodo(t);
     var P=packOf(t.id),pn=P?pcount(P.items):0,pd=P?P.items.filter(function(x){return !x.h&&x.done}).length:0;
-    h+='<button class="vfold" data-act="pack-fold" aria-expanded="'+vPackOpen+'"><span>🧳 Valise</span><i>'+(pn?pd+'/'+pn:'vide')+'</i><b>'+(vPackOpen?'▾':'▸')+'</b></button>'+(vPackOpen?vPack(t):'');
+    var pnu=nightsOf(t);
+    h+='<button class="vfold" data-act="pack-fold" aria-expanded="'+vPackOpen+'"><span>🧳 Valise</span><i>'+(pnu?pnu+' nuit'+(pnu>1?'s':'')+' · ':'')+(pn?pd+'/'+pn:'vide')+'</i><b>'+(vPackOpen?'▾':'▸')+'</b></button>'+(vPackOpen?vPack(t):'');
     h+='<div class="vdel"><button class="lnk del" data-act="trip-del">'+(vDelConfirm?'Oui, supprimer « '+esc(t.title)+' » et tout son contenu':'Supprimer ce voyage')+'</button>'+(vNew===t.id?'<button class="btn valid vi-ok" data-act="trip-ok">Valider</button>':'')+'</div>';
     return h}
   function renderVView(){if(!vOpen)return;var B=$('vv-body');if(!B)return;
@@ -1828,7 +1855,7 @@
     else if(a==='tpl-del'){it=find('voyages',id);if(it){delUndo('voyages',id,'Liste « '+it.title+' » supprimée');renderSheet()}}
     else if(a==='trip-emo-tog'){vEmoOpen=!vEmoOpen;renderVView()}
     else if(a==='trip-emo'){vEmoOpen=false;if(vOpen)upd('voyages',vOpen,{emoji:b.getAttribute('data-e')})}
-    else if(a==='pack-fold'){vPackOpen=!vPackOpen;lsSet(LS_PACK,vPackOpen?'1':'0');if(vPackOpen){seedTpls();upgradeTpls()}renderVView()}
+    else if(a==='pack-fold'){vPackOpen=!vPackOpen;lsSet(LS_PACK,vPackOpen?'1':'0');if(vPackOpen){seedTpls();upgradeTpls();upgradeQ()}renderVView()}
     else if(a==='trip-del'){if(!vOpen)return true;if(!vDelConfirm){vDelConfirm=true;renderVView()}else tripDelete(vOpen)}
     else if(a==='v-add'){if(V_OLD){toastMsg('Publie d\'abord la nouvelle version du script Google');return true}if(vOpen)tOpen(b.getAttribute('data-v'),null,vOpen)}
     else if(a==='v-item'){it=find('voyages',id);if(it&&(it.type==='logement'||it.type==='activite'))tOpen(it.type,id)}
@@ -1842,7 +1869,7 @@
     else if(a==='pack-tog'||a==='pack-del'){t=vOpen&&packOf(vOpen);if(t){var items=pitems(t.items),i=Number(b.getAttribute('data-i'));
       if(items[i]){if(a==='pack-tog')items[i].done=!items[i].done;else items.splice(i,1);setPack(vOpen,items)}}}
     else if(a==='pack-ren'){packRen(b)}
-    else if(a==='pack-reset'){t=vOpen&&packOf(vOpen);if(t)updUndo('voyages',t.id,{items:t.items.map(function(x){return x.h?{h:x.h}:{t:x.t,done:false}})},'Valise décochée')}
+    else if(a==='pack-reset'){t=vOpen&&packOf(vOpen);if(t)updUndo('voyages',t.id,{items:t.items.map(function(x){return x.h?{h:x.h}:(x.q?{t:x.t,done:false,q:x.q}:{t:x.t,done:false})})},'Valise décochée')}
     else return false;
     return true}
 
@@ -2192,6 +2219,11 @@
     var t=e.target;
     if(t.hasAttribute&&t.hasAttribute('data-billet')){var f=t.files&&t.files[0],fl=t.getAttribute('data-fill');t.value='';impRead(f,fl);return}
     var imf=t.getAttribute&&t.getAttribute('data-imp');if(imf&&impOpen){impSet(imf,t.value);return}
+    var pq=t.getAttribute&&t.getAttribute('data-packq');
+    if(pq!==null&&pq!==undefined&&pq!==''&&vOpen){var pqt=find('voyages',vOpen);
+      if(pqt){var pqi=pitems((packOf(pqt.id)||{items:[]}).items),pqx=pqi[+pq];
+        if(pqx&&!pqx.h){if(t.value)pqx.q=t.value;else delete pqx.q;setPack(pqt.id,pqi);vPaint()}}
+      return}
     var trf=t.getAttribute&&t.getAttribute('data-trip');if(trf){tripField(trf,t.value);return}
     if(t.hasAttribute&&t.hasAttribute('data-pack-copy')){var pcv=t.value;t.blur();packCopy(pcv);return}
     var tf2=t.getAttribute&&t.getAttribute('data-tf');if(tf2&&tEdit){tEdit.d[tf2]=t.value;return}

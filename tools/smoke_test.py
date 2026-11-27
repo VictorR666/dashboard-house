@@ -9,6 +9,7 @@ ajoute des articles de courses, ouvre la page des quêtes, puis enregistre des c
 dans tools/out/. Il échoue si la page affiche une erreur JavaScript.
 """
 import datetime
+import re
 import unicodedata, json, os, subprocess, sys, time
 from playwright.sync_api import sync_playwright
 
@@ -733,11 +734,33 @@ def main():
                     page.keyboard.press('Escape'); page.wait_for_timeout(900)
                     assert 'Bidon' not in page.inner_text('.vpack'), 'Echap annule le renommage'
                     assert 'Grande gourde' in page.inner_text('.vpack')
+                    # combien en prendre : « selon le voyage » = une par nuit
+                    assert 'nuits' in page.inner_text('[data-act=pack-fold]'), page.inner_text('[data-act=pack-fold]')
+                    assert page.locator('.vpack .pk-q').count() == page.locator('.vpack .step').count()
+                    page.select_option('.vpack .step >> nth=0 >> select[data-packq]', 'n')
+                    page.wait_for_timeout(1200)
+                    pkq = [r for r in state['voyages'] if r[1] == 'v1' and r[2] == 'Valise'][0]
+                    assert pkq[9].split('\n')[0].startswith('n\u00d7 '), pkq[9][:40]
+                    nuits = re.search(r'(\d+) nuit', page.inner_text('[data-act=pack-fold]')).group(1)
+                    chip = page.inner_text('.vpack .step >> nth=0 >> .pk-q b')
+                    assert chip == nuits, (chip, nuits)   # une par nuit
+                    assert page.locator('.vpack .step >> nth=0 >> .pk-q.auto').count() == 1
+                    page.screenshot(path=f'{OUT}/{name}-valise-nombre.png')
+                    page.select_option('.vpack .step >> nth=0 >> select[data-packq]', '2')
+                    page.wait_for_timeout(1200)
+                    pkq2 = [r for r in state['voyages'] if r[1] == 'v1' and r[2] == 'Valise'][0]
+                    assert pkq2[9].split('\n')[0].startswith('2\u00d7 '), pkq2[9][:40]
+                    assert page.inner_text('.vpack .step >> nth=0 >> .pk-q b') == '2'
+                    page.select_option('.vpack .step >> nth=0 >> select[data-packq]', '')
+                    page.wait_for_timeout(1200)
+                    pkq3 = [r for r in state['voyages'] if r[1] == 'v1' and r[2] == 'Valise'][0]
+                    assert '\u00d7' not in pkq3[9].split('\n')[0], pkq3[9][:40]
                     # glisser un objet dans une autre categorie (appui long)
                     page.locator('.vpack .steps>li >> nth=4').scroll_into_view_if_needed()
                     page.wait_for_timeout(300)
                     lignes = lambda: page.eval_on_selector_all(
-                        '.vpack .steps>li', 'e => e.map(x => x.textContent.trim())')
+                        '.vpack .steps>li',
+                        'e => e.map(x => (x.querySelector(".pk-t") || x).textContent.trim())')
                     av = lignes()
                     assert av[0].startswith('Grande gourde'), av[:3]
                     src = page.locator('.vpack .steps>li >> nth=0').bounding_box()

@@ -1368,3 +1368,11 @@ body[data-tab="maison"] .addgrp{display:flex}
 .vpack .steps.pdragging{touch-action:none}
 .vpack .steps>li.step.pdrag{position:relative;z-index:5;background:#fff;box-shadow:0 10px 24px rgba(91,72,180,.28);padding-left:6px;padding-right:6px}
 .vpack .steps.pdragging>li:not(.pdrag){transition:transform .15s}
+
+/* v115 : combien en prendre — un petit nombre par objet, « selon le voyage » = une par nuit */
+.step .pk-q{position:relative;flex:none;display:flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 5px;border-radius:9px;background:var(--n-bg);font-size:12.5px;font-weight:900;color:var(--ink2);line-height:1}
+.step .pk-q.auto{background:var(--lav-soft);color:var(--lav)}
+.step .pk-q.none{min-width:14px;padding:0;background:transparent}
+.step .pk-q.none b{opacity:.22;font-size:11px;font-weight:800}
+.step .pk-q select{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;margin:0;-webkit-appearance:none;appearance:none;cursor:pointer}
+.vpack .steps>li.step{gap:6px}
