@@ -1597,7 +1597,9 @@
     var ae=document.activeElement,t=find('voyages',vOpen);
     /* un doigt est posé sur la page : la reconstruire maintenant avalerait l'appui */
     if(vPressed&&!vForce)return;
-    if(vSkip||ae&&$('vview').contains(ae)&&((ae.tagName==='INPUT'||ae.tagName==='SELECT')&&ae.value||ae.hasAttribute('data-trip'))){if(t)$('vv-title').textContent=tEmo(t)+' '+t.title;return}
+    /* Un champ qui a le focus n'est jamais remplacé, même vide : sur mobile, reconstruire la
+       page sous un champ qu'on vient de toucher referme le clavier aussitôt (bug v110). */
+    if(vSkip||(!vForce&&vTyping())){if(t)$('vv-title').textContent=tEmo(t)+' '+t.title;return}
     if(!t||t.type!=='voyage'){if(loaded.voyages&&!fromCache)vview(null,true);else B.innerHTML='<p class="empty">Chargement…</p>';return}
     var st=tripState(t);
     $('vv-title').textContent=tEmo(t)+' '+t.title;
@@ -1612,6 +1614,11 @@
     var el=$('toast');el.innerHTML='<span>Voyage supprimé</span><button type="button" data-act="undo-multi">Annuler</button>';el.hidden=false;
     clearTimeout(toastT);toastT=setTimeout(function(){lastMulti=null;hideToast()},8000)}
   /* Champs du voyage : enregistrés sans redessiner la page, pour ne pas perdre le champ suivant en cours de saisie */
+  function vTyping(){var ae=document.activeElement,V=$('vview');
+    if(!ae||!V||!V.contains(ae))return false;
+    if(ae.isContentEditable)return true;
+    if(ae.tagName==='TEXTAREA'||ae.tagName==='SELECT')return true;
+    return ae.tagName==='INPUT'&&!/^(button|submit|reset|checkbox|radio|file|image)$/i.test(ae.type||'text')}
   var vSkip=false;
   var vCal=false,vCalM=null,vCalStep=0;   /* 1 = on attend le jour du retour */
   var vForce=false;
@@ -2054,7 +2061,8 @@
     if(f.id==='f-vtodo'){var vi=$('vt-in'),vt=vOpen&&find('voyages',vOpen),vs=splitEmoji(vi.value);if(!vt||(!vs.title&&!vs.emoji))return;
       if(V_OLD){toastMsg('Publie d\'abord la nouvelle version du script Google');return}
       var ttl=((vs.emoji?vs.emoji+' ':'')+vs.title).trim().slice(0,120);vi.value='';vtFocus=true;
-      addDoc('voyages',{type:'activite',trip:vt.id,title:ttl,start:'',notes:'',done:false,when:vtWhen||defWhen(vt)});return}
+      addDoc('voyages',{type:'activite',trip:vt.id,title:ttl,start:'',notes:'',done:false,when:vtWhen||defWhen(vt)});
+      vPaint();return}
     if(f.id==='f-course'||f.id==='f-course2'){
       var ci2=f.querySelector('input'),pc=parseCourse(ci2.value);if(!pc.title)return;
       var dup=S.courses.filter(function(c){return nrm(c.title)===nrm(pc.title)})[0];
@@ -2072,7 +2080,7 @@
     if(f.getAttribute('data-form')==='pack'){
       var pi=f.querySelector('input'),pv=pi.value.trim().slice(0,80),pt=vOpen&&find('voyages',vOpen);if(!pv||!pt)return;
       var cur=(packOf(pt.id)||{items:[]}).items.map(function(x){return {t:x.t,done:!!x.done}});
-      pi.value='';setPack(pt.id,cur.concat([{t:pv,done:false}]));
+      pi.value='';setPack(pt.id,cur.concat([{t:pv,done:false}]));vPaint();
       var pi2=document.querySelector('#vv-body [data-packinput]');if(pi2)pi2.focus();return;
     }
     if(f.id==='f-qadd3'){var q3t=$('q-title3'),q3s=splitEmoji(q3t.value);if(!q3s.title&&!q3s.emoji)return;var np=newProj(q3s);if(QCATL[qtCat])np.cat=qtCat;addDoc('projects',np);q3t.value='';f.hidden=true;return}
@@ -2129,7 +2137,10 @@
   /* Quand on quitte un champ de la fiche, on la redessine — sauf si le doigt vient d'appuyer
      sur un bouton de cette fiche : sinon le redessin avale le tout premier appui (croix, Valider…). */
   document.addEventListener('pointerdown',function(e){var t=e.target;if(!t||!t.closest)return;if(t.closest('.sheet-card'))sheetPressed=true;if(t.closest('#vv-body'))vPressed=true},true);
-  ['pointerup','pointercancel'].forEach(function(ev){document.addEventListener(ev,function(){if(vPressed){vPressed=false;setTimeout(renderVView,150)}if(!sheetPressed)return;sheetPressed=false;setTimeout(function(){renderSheet(true)},150)},true)});
+  ['pointerup','pointercancel'].forEach(function(ev){document.addEventListener(ev,function(e){
+    if(vPressed){vPressed=false;
+      var vb=e&&e.target&&e.target.closest?e.target.closest('[data-act]'):null;
+      setTimeout(vb?vPaint:renderVView,150)}   /* bouton : on force ; champ : on laisse le clavier */if(!sheetPressed)return;sheetPressed=false;setTimeout(function(){renderSheet(true)},150)},true)});
   document.addEventListener('focusout',function(e){
     var t=e.target;if(t&&t.closest&&t.closest('.sheet-card'))setTimeout(function(){renderSheet(true)},80);
   });

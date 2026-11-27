@@ -693,6 +693,22 @@ def main():
                     pk = [r for r in state['voyages'] if r[1] == 'v1' and r[2] == 'Valise'][0]
                     assert 'Tente' in pk[9] and '# ' in pk[9], pk
                     assert page.locator('.vpack .pk-g').count() >= 3, 'titres de catégories dans la valise'
+                    # bug v110 : toucher le champ vide de la valise refermait le clavier aussitot
+                    page.click('.vpack [data-packinput]'); page.wait_for_timeout(700)
+                    assert page.evaluate(
+                        "document.activeElement && document.activeElement.hasAttribute('data-packinput')"
+                    ), 'le champ garde le focus apres le redessin differe'
+                    page.keyboard.type('Gourde'); page.wait_for_timeout(200)
+                    page.keyboard.press('Enter'); page.wait_for_timeout(1200)
+                    pk2 = [r for r in state['voyages'] if r[1] == 'v1' and r[2] == 'Valise'][0]
+                    assert 'Gourde' in pk2[9], pk2[9]
+                    assert 'Gourde' in page.inner_text('.vpack'), 'l objet apparait tout de suite'
+                    assert page.evaluate(
+                        "document.activeElement && document.activeElement.hasAttribute('data-packinput')"
+                    ), 'et on peut enchainer un second objet'
+                    # cocher un objet repeint la liste meme si le champ garde le focus
+                    page.click('.vpack .step .chk >> nth=0'); page.wait_for_timeout(1100)
+                    assert page.locator('.vpack .step.done').count() >= 1, 'la case cochee se voit'
                     page.evaluate("document.getElementById('vview').scrollTop=99999"); page.wait_for_timeout(200)
                     page.screenshot(path=f'{OUT}/{name}-voyage-valise.png')
                     page.click('[data-act=tpl-from-pack]'); page.wait_for_timeout(300)
