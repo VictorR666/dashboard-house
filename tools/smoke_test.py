@@ -784,6 +784,29 @@ def main():
                     # cocher un objet repeint la liste meme si le champ garde le focus
                     page.click('.vpack .step .chk >> nth=0'); page.wait_for_timeout(1100)
                     assert page.locator('.vpack .step.done').count() >= 1, 'la case cochee se voit'
+                    # a qui sont ces affaires : trois onglets
+                    assert page.locator('.vpack .pkwho .vtw').count() == 3
+                    assert 'Personne A' in page.inner_text('.vpack .pkwho')
+                    n_tout = page.locator('.vpack .step').count()
+                    page.click('.vpack .step .pk-t >> nth=0'); page.wait_for_timeout(500)
+                    page.select_option('.vpack .pk-ws', '1')
+                    page.keyboard.press('Enter'); page.wait_for_timeout(1300)
+                    pw = [r for r in state['voyages'] if r[1] == 'v1' and r[2] == 'Valise'][0]
+                    assert any(l.endswith(' @1') for l in pw[9].split('\n')), pw[9][:80]
+                    assert page.locator('.vpack .step >> nth=0 >> .pk-w').count() == 1, 'pastille de la personne'
+                    page.click('.vpack .pkwho [data-v="2"]'); page.wait_for_timeout(900)
+                    assert page.locator('.vpack .step').count() == n_tout - 1, 'ses affaires a elle sont masquees'
+                    page.fill('.vpack [data-packinput]', 'Rasoir')
+                    page.keyboard.press('Enter'); page.wait_for_timeout(1300)
+                    pw2 = [r for r in state['voyages'] if r[1] == 'v1' and r[2] == 'Valise'][0]
+                    assert 'Rasoir @2' in pw2[9], pw2[9][:60]
+                    page.click('.vpack .pkwho [data-v="1"]'); page.wait_for_timeout(900)
+                    txt_a = page.inner_text('.vpack')
+                    assert 'Rasoir' not in txt_a, 'les affaires de l autre sont masquees'
+                    page.click('.vpack .pkwho [data-v=""]'); page.wait_for_timeout(900)
+                    assert 'Rasoir' in page.inner_text('.vpack')
+                    assert page.locator('.vpack .step').count() == n_tout + 1
+                    page.screenshot(path=f'{OUT}/{name}-valise-qui.png')
                     page.evaluate("document.getElementById('vview').scrollTop=99999"); page.wait_for_timeout(200)
                     page.screenshot(path=f'{OUT}/{name}-voyage-valise.png')
                     page.click('[data-act=tpl-from-pack]'); page.wait_for_timeout(300)

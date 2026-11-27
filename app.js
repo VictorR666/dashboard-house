@@ -115,10 +115,12 @@
   function setPeople(pp){pp=pp||{};PEOPLE={p1:String(pp.p1||'').slice(0,30),p2:String(pp.p2||'').slice(0,30)}}
   /* Une ligne de valise : « ✓ », une quantité facultative (« 3× », ou « n× » = selon le voyage), le nom */
   var Q_RE=/^(\d{1,2}|n)\s*[×xX*]\s+/;
-  function pkItem(x){var done=DONE_RE.test(x),t=x.replace(DONE_RE,'').trim(),q=null,m=Q_RE.exec(t);
+  var W_RE=/\s@([12])$/;
+  function pkItem(x){var done=DONE_RE.test(x),t=x.replace(DONE_RE,'').trim(),q=null,w=null,m=Q_RE.exec(t);
     if(m){var r=t.slice(m[0].length).trim();
       if(r){q=m[1]==='n'?'n':String(Math.max(1,Math.min(99,+m[1])));t=r}}
-    return q?{t:t,done:done,q:q}:{t:t,done:done}}
+    var mw=W_RE.exec(t);if(mw&&t.length>mw[0].length){w=mw[1];t=t.slice(0,t.length-mw[0].length).trim()}
+    var o={t:t,done:done};if(q)o.q=q;if(w)o.w=w;return o}
   function fromRow(k,r,i){var c=SHT[k].cols,o={},t={};
     try{t=JSON.parse(r[c.indexOf('_t')]||'{}')||{}}catch(e){t={}}
     if(typeof t!=='object'||Array.isArray(t))t={};
@@ -145,7 +147,7 @@
       if((k==='shop'&&f==='done')||(k==='projects'&&f==='main')||(k==='courses'&&f==='done'))return v?'oui':'';
       if(k==='voyages'&&f==='type')return VT[v]||'Activité';
       if(k==='voyages'&&f==='done')return v?'oui':'';
-      if(k==='voyages'&&f==='notes'&&o.type==='valise')return (o.items||[]).map(function(x){return x.h?'# '+x.h:(x.done?'✓ ':'')+(x.q?x.q+'× ':'')+x.t}).join('\n');
+      if(k==='voyages'&&f==='notes'&&o.type==='valise')return (o.items||[]).map(function(x){return x.h?'# '+x.h:(x.done?'✓ ':'')+(x.q?x.q+'× ':'')+x.t+(x.w?' @'+x.w:'')}).join('\n');
       if(k==='projects'&&f==='steps')return (v||[]).map(function(x){return (x.done?'✓ ':'')+x.t}).join('\n');
       if(typeof v==='number')return v;
       return v==null?'':String(v)})}
@@ -1487,7 +1489,7 @@
     function start(e,x,y){if(!e.target.closest)return;
       var li=e.target.closest('.vpack .steps>li.step');
       if(!li||isNaN(+li.getAttribute('data-i')))return;
-      if(e.target.closest('input'))return;                  /* un renommage en cours ne se glisse pas */
+      if(e.target.closest('input,select'))return;           /* un renommage en cours ne se glisse pas */
       cancelPend();pend={li:li,x:x,y:y,t:setTimeout(function(){var q=pend;pend=null;if(q)begin(q.li,q.y)},HOLD)}}
     function move(x,y,e){
       if(pDrag){pDrag.y=y;if(e&&e.cancelable)e.preventDefault();return}
@@ -1506,24 +1508,54 @@
   function packRen(b){
     var i=+b.getAttribute('data-i'),t=vOpen&&find('voyages',vOpen),li=b.parentElement;
     if(!t||!li||isNaN(i))return;
-    var cur=b.textContent,inp=document.createElement('input'),fini=false;
+    var cur=b.textContent,fini=false;
+    var x0=pitems((packOf(t.id)||{items:[]}).items)[i]||{},w=x0.w||'';
+    var box=document.createElement('span');box.className='pk-ren';
+    var inp=document.createElement('input');
     inp.className='in pk-ed';inp.value=cur;inp.maxLength=80;
     inp.setAttribute('enterkeyhint','done');inp.setAttribute('aria-label','Renommer : '+cur);
-    li.replaceChild(inp,b);
+    box.appendChild(inp);
+    /* Le même geste sert à dire à qui sont ces affaires */
+    var sel=null;
+    if(pplOn()){sel=document.createElement('select');sel.className='pk-ws';
+      sel.setAttribute('aria-label','À qui sont ces affaires');
+      [['','Les deux'],['1',PEOPLE.p1],['2',PEOPLE.p2]].forEach(function(o){
+        var op=document.createElement('option');op.value=o[0];op.textContent=o[1];
+        if(w===o[0])op.selected=true;sel.appendChild(op)});
+      sel.addEventListener('change',function(){w=sel.value});
+      box.appendChild(sel)}
+    li.replaceChild(box,b);
     inp.focus();try{inp.setSelectionRange(cur.length,cur.length)}catch(e){}
     var end=function(save){
       if(fini)return;fini=true;
-      var v=inp.value.trim().slice(0,80);inp.blur();
-      if(save&&v&&v!==cur){var it=pitems((packOf(t.id)||{items:[]}).items);
-        if(it[i]&&!it[i].h){it[i].t=v;setPack(t.id,it)}}
+      var v=inp.value.trim().slice(0,80);inp.blur();if(sel)sel.blur();
+      var it=pitems((packOf(t.id)||{items:[]}).items),x=it[i],ch=false;
+      if(save&&x&&!x.h){
+        if(v&&v!==cur){x.t=v;ch=true}
+        if((x.w||'')!==w){if(w)x.w=w;else delete x.w;ch=true}}
+      if(ch)setPack(t.id,it);
       vPaint()};
-    inp.addEventListener('keydown',function(e){
+    var key=function(e){
       if(e.key==='Enter'){e.preventDefault();e.stopPropagation();end(true)}
-      else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();end(false)}});
-    inp.addEventListener('focusout',function(){setTimeout(function(){end(true)},0)})}
+      else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();end(false)}};
+    var out=function(){setTimeout(function(){
+      if(box.contains(document.activeElement))return;   /* on est juste passé au sélecteur */
+      end(true)},0)};
+    inp.addEventListener('keydown',key);inp.addEventListener('focusout',out);
+    if(sel){sel.addEventListener('keydown',key);sel.addEventListener('focusout',out)}}
   function setPack(tid,items){var v=packOf(tid);items=items.slice(0,200);
     if(v)upd('voyages',v.id,{items:items});else addDoc('voyages',{trip:tid,type:'valise',title:'Valise',items:items,done:false})}
-  function pitems(arr){return (arr||[]).map(function(x){return x.h?{h:x.h}:(x.q?{t:x.t,done:!!x.done,q:x.q}:{t:x.t,done:!!x.done})})}
+  function pcopy(x,done){var o={t:x.t,done:done===undefined?!!x.done:done};if(x.q)o.q=x.q;if(x.w)o.w=x.w;return o}
+  function pitems(arr){return (arr||[]).map(function(x){return x.h?{h:x.h}:pcopy(x)})}
+  /* Trois onglets dans la valise : les deux, puis chacun. Les affaires communes restent visibles. */
+  var LS_WHO='maison-pack-who',pkWho=lsGet(LS_WHO)||'';
+  function pplName(w){return(w==='1'?PEOPLE.p1:w==='2'?PEOPLE.p2:'')||('Personne '+w)}
+  function pplOn(){return !!(PEOPLE.p1&&PEOPLE.p2)}
+  /* L'initiale suffit — sauf si les deux prénoms commencent pareil */
+  function pplIni(w){var n=pplName(w),a=(PEOPLE.p1||'').charAt(0),b=(PEOPLE.p2||'').charAt(0);
+    var k=(a&&b&&a.toLowerCase()===b.toLowerCase())?2:1;
+    return n.slice(0,k).toUpperCase()}
+  function pkShow(x){return !pkWho||!x.w||x.w===pkWho}
   /* Nuits du voyage : c'est ce que vaut une quantité « selon le voyage » */
   function nightsOf(t){var sp=t&&tripState(t).sp;
     if(!sp||!sp.s||!sp.e)return 0;return Math.max(0,Math.round((parse(sp.e)-parse(sp.s))/864e5))}
@@ -1537,7 +1569,7 @@
       '<select data-packq="'+i+'" aria-label="Combien en prendre">'+o+'</select></span>'}
   function pcount(arr){return (arr||[]).filter(function(x){return !x.h}).length}
   function packCopy(fromId){var src=fromId&&packOf(fromId);if(!src||!vOpen)return;
-    setPack(vOpen,src.items.map(function(x){return x.h?{h:x.h}:(x.q?{t:x.t,done:false,q:x.q}:{t:x.t,done:false})}))}
+    setPack(vOpen,src.items.map(function(x){return x.h?{h:x.h}:pcopy(x,false)}))}
   /* Listes types : lignes « Valise » sans voyage parent, dans le même onglet du Sheet */
   function tpls(){return S.voyages.filter(function(x){return x.type==='valise'&&!x.trip}).sort(function(a,b){return (a.createdAt||0)-(b.createdAt||0)})}
   function seedItems(lines){return lines.map(function(x){return /^#\s*/.test(x)?{h:x.replace(/^#\s*/,'')}:{t:x,done:false}})}
@@ -1563,7 +1595,7 @@
       if(x.t&&!have[nrm(x.t)]){
         var at=cur.length;
         if(curKey!==null){for(var j=0;j<cur.length;j++)if(cur[j].h&&nrm(cur[j].h)===curKey){at=j+1;while(at<cur.length&&!cur[at].h)at++;break}}
-        cur.splice(at,0,x.q?{t:x.t,done:false,q:x.q}:{t:x.t,done:false});have[nrm(x.t)]=1;n++}});
+        cur.splice(at,0,pcopy(x,false));have[nrm(x.t)]=1;n++}});
     if(n)setPack(vOpen,cur);toastMsg(n?'« '+tp.title+' » : '+n+' objet'+(n>1?'s':'')+' ajouté'+(n>1?'s':''):'Tout est déjà dans la valise')}
   function vPack(t){var v=packOf(t.id),items=v?v.items:[],nu=nightsOf(t);
     var form='<form class="stepform" data-form="pack"><input class="in" maxlength="80" data-packinput required enterkeyhint="done" placeholder="Ajouter…" aria-label="Ajouter à la valise"><button class="btn" type="submit">+</button></form>';
@@ -1571,17 +1603,22 @@
       '<button class="tchip ghost" data-act="tpl-mgr">⚙️ Gérer les listes</button></div>';
     if(!items.length){
       var others=trips().filter(function(o){var p=packOf(o.id);return o.id!==t.id&&p&&pcount(p.items)});
-      return '<div class="vpack"><p class="empty">La valise est vide.</p>'+chips+
+      return '<div class="vpack">'+tabs+'<p class="empty">La valise est vide.</p>'+chips+
         (others.length?'<select class="in" data-pack-copy aria-label="Copier la valise d\'un autre voyage"><option value="">Ou copier la valise d\'un autre voyage…</option>'+others.map(function(o){return '<option value="'+esc(o.id)+'">'+esc(tEmo(o)+' '+o.title)+'</option>'}).join('')+'</select>':'')+
         '<div class="lab">Ou ajoute tes objets un par un</div>'+form+'</div>'}
-    var nb=pcount(items),done=items.filter(function(x){return !x.h&&x.done}).length,pc=nb?Math.round(done/nb*100):0;
+    var tabs=pplOn()?'<div class="cfil pkwho" role="tablist" aria-label="À qui sont les affaires">'+
+      [['','Les deux'],['1',PEOPLE.p1],['2',PEOPLE.p2]].map(function(f){
+        return '<button type="button" role="tab" class="vtw'+(pkWho===f[0]?' on':'')+'" aria-selected="'+(pkWho===f[0])+'" data-act="pk-who" data-v="'+f[0]+'">'+esc(f[1])+'</button>'}).join('')+'</div>':'';
+    var vis=items.filter(function(x){return !x.h&&pkShow(x)});
+    var nb=vis.length,done=vis.filter(function(x){return x.done}).length,pc=nb?Math.round(done/nb*100):0;
     /* tri : chaque section garde ses objets, les cochés descendent dans leur section */
     var secs=[],curS={h:null,rows:[]};
-    items.forEach(function(x,i){if(x.h){if(curS.rows.length||curS.h)secs.push(curS);curS={h:x.h,hi:i,rows:[]}}else curS.rows.push({x:x,i:i})});
+    items.forEach(function(x,i){if(x.h){if(curS.rows.length||curS.h)secs.push(curS);curS={h:x.h,hi:i,rows:[]}}else if(pkShow(x))curS.rows.push({x:x,i:i})});
     if(curS.rows.length||curS.h)secs.push(curS);
-    var srt=[];secs.forEach(function(sc){if(sc.h)srt.push({hdr:sc.h,i:sc.hi});sc.rows.sort(function(a,b){return (a.x.done?1:0)-(b.x.done?1:0)||a.i-b.i}).forEach(function(r){srt.push(r)})});
-    return '<div class="vpack"><div class="qc-prog"><div class="bar"><i style="width:'+pc+'%"></i></div><span>'+done+'/'+nb+(nb&&done===nb?' · prête ! 🎉':'')+'</span></div>'+form+
-      '<ul class="steps">'+srt.map(function(o){if(o.hdr)return '<li class="vt-g pk-g" data-i="'+o.i+'">'+esc(o.hdr)+'</li>';var x=o.x,i=o.i;return '<li class="step'+(x.done?' done':'')+'" data-i="'+i+'"><button class="chk" data-act="pack-tog" data-i="'+i+'" aria-label="'+(x.done?'Ressortir : ':'Dans la valise : ')+esc(x.t)+'">'+CHECK+'</button>'+qSel(i,x,nu)+'<button class="pk-t" data-act="pack-ren" data-i="'+i+'">'+esc(x.t)+'</button><button class="sx" data-act="pack-del" data-i="'+i+'" aria-label="Retirer : '+esc(x.t)+'" title="Retirer">×</button></li>'}).join('')+'</ul>'+
+    var srt=[];secs.forEach(function(sc){if(pkWho&&!sc.rows.length)return;   /* catégorie vide pour cette personne */
+      if(sc.h)srt.push({hdr:sc.h,i:sc.hi});sc.rows.sort(function(a,b){return (a.x.done?1:0)-(b.x.done?1:0)||a.i-b.i}).forEach(function(r){srt.push(r)})});
+    return '<div class="vpack">'+tabs+'<div class="qc-prog"><div class="bar"><i style="width:'+pc+'%"></i></div><span>'+done+'/'+nb+(nb&&done===nb?' · prête ! 🎉':'')+'</span></div>'+form+
+      '<ul class="steps">'+srt.map(function(o){if(o.hdr)return '<li class="vt-g pk-g" data-i="'+o.i+'">'+esc(o.hdr)+'</li>';var x=o.x,i=o.i;return '<li class="step'+(x.done?' done':'')+'" data-i="'+i+'"><button class="chk" data-act="pack-tog" data-i="'+i+'" aria-label="'+(x.done?'Ressortir : ':'Dans la valise : ')+esc(x.t)+'">'+CHECK+'</button>'+qSel(i,x,nu)+(x.w&&!pkWho?'<span class="pk-w'+(pplIni(x.w).length>1?' two':'')+'" title="'+esc(pplName(x.w))+'">'+esc(pplIni(x.w))+'</span>':'')+'<button class="pk-t" data-act="pack-ren" data-i="'+i+'">'+esc(x.t)+'</button><button class="sx" data-act="pack-del" data-i="'+i+'" aria-label="Retirer : '+esc(x.t)+'" title="Retirer">×</button></li>'}).join('')+'</ul>'+
       '<div class="prow">'+(done?'<button class="lnk" data-act="pack-reset">'+UNDO+'Tout décocher</button>':'')+'<button class="lnk" data-act="tpl-from-pack">💾 Enregistrer comme liste type</button></div>'+chips+'</div>'}
   /* Départ = date et heure de l'aller, enregistrées sur le voyage lui-même */
   function departAt(t){if(!t.start)return null;var h=hPart(t.start);return h?{d:new Date(dPart(t.start)+'T'+h),exact:true}:{d:parse(dPart(t.start)),exact:false}}
@@ -1868,8 +1905,9 @@
     else if(a==='undo-multi'){if(lastMulti){var l=lastMulti;lastMulti=null;hideToast();l.forEach(function(o){if(!find('voyages',o.id)){S.voyages.push(o);shWrite('voyages',o)}});render()}}
     else if(a==='pack-tog'||a==='pack-del'){t=vOpen&&packOf(vOpen);if(t){var items=pitems(t.items),i=Number(b.getAttribute('data-i'));
       if(items[i]){if(a==='pack-tog')items[i].done=!items[i].done;else items.splice(i,1);setPack(vOpen,items)}}}
+    else if(a==='pk-who'){pkWho=b.getAttribute('data-v')||'';lsSet(LS_WHO,pkWho);vPaint()}
     else if(a==='pack-ren'){packRen(b)}
-    else if(a==='pack-reset'){t=vOpen&&packOf(vOpen);if(t)updUndo('voyages',t.id,{items:t.items.map(function(x){return x.h?{h:x.h}:(x.q?{t:x.t,done:false,q:x.q}:{t:x.t,done:false})})},'Valise décochée')}
+    else if(a==='pack-reset'){t=vOpen&&packOf(vOpen);if(t)updUndo('voyages',t.id,{items:t.items.map(function(x){return x.h?{h:x.h}:pcopy(x,false)})},'Valise décochée')}
     else return false;
     return true}
 
@@ -2185,7 +2223,8 @@
       var cur=pitems((packOf(pt.id)||{items:[]}).items);   /* pitems garde les titres de catégorie */
       var at=cur.length,fh=-1;cur.some(function(x,n){if(x.h){fh=n;return true}});
       if(fh>=0)at=fh;                                      /* un objet neuf se range avant la première catégorie */
-      cur.splice(at,0,{t:pv,done:false});
+      var nw={t:pv,done:false};if(pkWho)nw.w=pkWho;   /* l'onglet affiché dit à qui c'est */
+      cur.splice(at,0,nw);
       pi.value='';setPack(pt.id,cur);vPaint();
       var pi2=document.querySelector('#vv-body [data-packinput]');if(pi2)pi2.focus();return;
     }
