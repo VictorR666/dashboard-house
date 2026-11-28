@@ -1516,19 +1516,18 @@
     inp.setAttribute('enterkeyhint','done');inp.setAttribute('aria-label','Renommer : '+cur);
     box.appendChild(inp);
     /* Le même geste sert à dire à qui sont ces affaires */
-    var sel=null;
-    if(pplOn()){sel=document.createElement('select');sel.className='pk-ws';
-      sel.setAttribute('aria-label','À qui sont ces affaires');
-      [['','Les deux'],['1',PEOPLE.p1],['2',PEOPLE.p2]].forEach(function(o){
-        var op=document.createElement('option');op.value=o[0];op.textContent=o[1];
-        if(w===o[0])op.selected=true;sel.appendChild(op)});
-      sel.addEventListener('change',function(){w=sel.value});
-      box.appendChild(sel)}
+    var sel=document.createElement('select');sel.className='pk-ws';
+    sel.setAttribute('aria-label','À qui sont ces affaires');
+    [['','Les deux'],['1',pplName('1')],['2',pplName('2')]].forEach(function(o){
+      var op=document.createElement('option');op.value=o[0];op.textContent=o[1];
+      if(w===o[0])op.selected=true;sel.appendChild(op)});
+    sel.addEventListener('change',function(){w=sel.value});
+    box.appendChild(sel);
     li.replaceChild(box,b);
     inp.focus();try{inp.setSelectionRange(cur.length,cur.length)}catch(e){}
     var end=function(save){
       if(fini)return;fini=true;
-      var v=inp.value.trim().slice(0,80);inp.blur();if(sel)sel.blur();
+      var v=inp.value.trim().slice(0,80);inp.blur();sel.blur();
       var it=pitems((packOf(t.id)||{items:[]}).items),x=it[i],ch=false;
       if(save&&x&&!x.h){
         if(v&&v!==cur){x.t=v;ch=true}
@@ -1542,19 +1541,19 @@
       if(box.contains(document.activeElement))return;   /* on est juste passé au sélecteur */
       end(true)},0)};
     inp.addEventListener('keydown',key);inp.addEventListener('focusout',out);
-    if(sel){sel.addEventListener('keydown',key);sel.addEventListener('focusout',out)}}
+    sel.addEventListener('keydown',key);sel.addEventListener('focusout',out)}
   function setPack(tid,items){var v=packOf(tid);items=items.slice(0,200);
     if(v)upd('voyages',v.id,{items:items});else addDoc('voyages',{trip:tid,type:'valise',title:'Valise',items:items,done:false})}
   function pcopy(x,done){var o={t:x.t,done:done===undefined?!!x.done:done};if(x.q)o.q=x.q;if(x.w)o.w=x.w;return o}
   function pitems(arr){return (arr||[]).map(function(x){return x.h?{h:x.h}:pcopy(x)})}
   /* Trois onglets dans la valise : les deux, puis chacun. Les affaires communes restent visibles. */
   var LS_WHO='maison-pack-who',pkWho=lsGet(LS_WHO)||'';
-  function pplName(w){return(w==='1'?PEOPLE.p1:w==='2'?PEOPLE.p2:'')||('Personne '+w)}
-  function pplOn(){return !!(PEOPLE.p1&&PEOPLE.p2)}
-  /* L'initiale suffit — sauf si les deux prénoms commencent pareil */
-  function pplIni(w){var n=pplName(w),a=(PEOPLE.p1||'').charAt(0),b=(PEOPLE.p2||'').charAt(0);
-    var k=(a&&b&&a.toLowerCase()===b.toLowerCase())?2:1;
-    return n.slice(0,k).toUpperCase()}
+  /* Les onglets s'affichent toujours : sans prénoms réglés dans le script, on dit
+     « Personne 1 » / « Personne 2 », comme la wishlist le fait déjà. */
+  function pplName(w){return whoLabel('p'+w)}
+  function pplIni(w){var k='p'+w;if(!PEOPLE[k])return w;   /* pas de prénom : le numéro suffit */
+    var a=(PEOPLE.p1||'').charAt(0),b=(PEOPLE.p2||'').charAt(0);
+    return PEOPLE[k].slice(0,(a&&b&&a.toLowerCase()===b.toLowerCase())?2:1).toUpperCase()}
   function pkShow(x){return !pkWho||!x.w||x.w===pkWho}
   /* Nuits du voyage : c'est ce que vaut une quantité « selon le voyage » */
   function nightsOf(t){var sp=t&&tripState(t).sp;
@@ -1606,9 +1605,9 @@
       return '<div class="vpack">'+tabs+'<p class="empty">La valise est vide.</p>'+chips+
         (others.length?'<select class="in" data-pack-copy aria-label="Copier la valise d\'un autre voyage"><option value="">Ou copier la valise d\'un autre voyage…</option>'+others.map(function(o){return '<option value="'+esc(o.id)+'">'+esc(tEmo(o)+' '+o.title)+'</option>'}).join('')+'</select>':'')+
         '<div class="lab">Ou ajoute tes objets un par un</div>'+form+'</div>'}
-    var tabs=pplOn()?'<div class="cfil pkwho" role="tablist" aria-label="À qui sont les affaires">'+
-      [['','Les deux'],['1',PEOPLE.p1],['2',PEOPLE.p2]].map(function(f){
-        return '<button type="button" role="tab" class="vtw'+(pkWho===f[0]?' on':'')+'" aria-selected="'+(pkWho===f[0])+'" data-act="pk-who" data-v="'+f[0]+'">'+esc(f[1])+'</button>'}).join('')+'</div>':'';
+    var tabs='<div class="cfil pkwho" role="tablist" aria-label="À qui sont les affaires">'+
+      [['','Les deux'],['1',pplName('1')],['2',pplName('2')]].map(function(f){
+        return '<button type="button" role="tab" class="vtw'+(pkWho===f[0]?' on':'')+'" aria-selected="'+(pkWho===f[0])+'" data-act="pk-who" data-v="'+f[0]+'">'+esc(f[1])+'</button>'}).join('')+'</div>';
     var vis=items.filter(function(x){return !x.h&&pkShow(x)});
     var nb=vis.length,done=vis.filter(function(x){return x.done}).length,pc=nb?Math.round(done/nb*100):0;
     /* tri : chaque section garde ses objets, les cochés descendent dans leur section */

@@ -807,6 +807,10 @@ def main():
                     assert 'Rasoir' in page.inner_text('.vpack')
                     assert page.locator('.vpack .step').count() == n_tout + 1
                     page.screenshot(path=f'{OUT}/{name}-valise-qui.png')
+                    # sans prenoms regles dans le script, les onglets restent (bug v116) :
+                    # pplName() passe par whoLabel(), qui dit « Personne 1 » / « Personne 2 »
+                    assert page.evaluate(
+                        "!!document.querySelector('.vpack .pkwho')"), 'les onglets sont toujours la'
                     page.evaluate("document.getElementById('vview').scrollTop=99999"); page.wait_for_timeout(200)
                     page.screenshot(path=f'{OUT}/{name}-voyage-valise.png')
                     page.click('[data-act=tpl-from-pack]'); page.wait_for_timeout(300)
